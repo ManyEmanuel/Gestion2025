@@ -58,44 +58,36 @@ export const useDisposicionDocStore = defineStore('DisposicionDocStore', {
       this.disposicion.disposicion_Documental = null
     },
 
+    // MIGRADO al backend nuevo (corte de clientes): GET /api/disposiciones?tipo=C|S
+    // devuelve un array directo con nombres resueltos. Se remapea a la forma de la tabla.
     async loadDisposiciones(tipo) {
       try {
         this.disposiciones = []
-        const resp = await api.get(`/Archivo/DisposicionesDocumentales/${tipo}`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            if (data) {
-              this.disposiciones = data.map((element) => {
-                return {
-                  id: element.id,
-                  seccion_Id: element.seccion_Id,
-                  seccion: element.seccion,
-                  serie_Id: element.serie_Id,
-                  serie: element.serie,
-                  subSerie_Id: element.subSerie_Id,
-                  subSerie: element.subSerie,
-                  nivel_Seguridad_Id: element.nivel_Seguridad_Id,
-                  nivel_Seguridad: element.nivel_Seguridad,
-                  valor_Documental_Id: element.valor_Documental_Id,
-                  valor_Documental: element.valor_Documental,
-                  nombre: element.nombre,
-                  vigencia_Archivo_Tramite: element.vigencia_Archivo_Tramite,
-                  vigencia_Archivo_Concentracion: element.vigencia_Archivo_Concentracion,
-                  disposicion_Documental: element.disposicion_Documental,
-                  total_Vigencia: element.total_Vigencia
-                }
-              })
-              return { success }
-            } else {
-              return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        const resp = await api.get(`/disposiciones?tipo=${tipo}`)
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          this.disposiciones = resp.data.map((element) => {
+            return {
+              id: element.id,
+              seccion_Id: element.seccionId,
+              seccion: element.seccionClave,
+              serie_Id: element.serieId,
+              serie: element.serieClave,
+              subSerie_Id: element.subSerieId,
+              subSerie: element.subSerieClave,
+              nivel_Seguridad_Id: element.nivelSeguridadId,
+              nivel_Seguridad: element.nivelSeguridad,
+              valor_Documental_Id: element.valorDocumentalId,
+              valor_Documental: element.valorDocumental,
+              nombre: element.nombre,
+              vigencia_Archivo_Tramite: element.vigenciaTramite,
+              vigencia_Archivo_Concentracion: element.vigenciaConcentracion,
+              disposicion_Documental: element.destinoFinal,
+              total_Vigencia: element.totalVigencia
             }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+          })
+          return { success: true }
         }
+        return { success: false, data: "Respuesta inesperada del servidor." }
       } catch (e) {
         console.error(e)
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }

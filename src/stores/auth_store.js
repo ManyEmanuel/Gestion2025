@@ -6,6 +6,7 @@ import { api } from 'src/boot/axios';
 // de permiso archivo.<grupo>.*. Se extiende a medida que se migra cada módulo.
 const MAPA_SIGLAS_GRUPO = {
   'AI-CAT-SECCIONES': 'clasificacion',
+  'AI-CAT-DISP-DOC': 'disposicion',
 };
 
 function permisosDelToken() {
