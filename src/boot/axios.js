@@ -8,9 +8,10 @@ import axios from 'axios'
 // good idea to move this instance creation inside of the
 // "export default () => {}" function below (which runs individually
 // for each client)
-//Produccion
-const api = axios.create({ baseURL: 'http://sistema.ieenayarit.org:9270/api' })
-//const api = axios.create({ baseURL: 'https://pgcfrl9c-7289.usw3.devtunnels.ms/api' })
+// baseURL parametrizada por entorno (quasar.config.js > build.env.API_URL).
+// Por defecto el backend legado (:9270); para el corte se define API_URL al construir.
+const api = axios.create({ baseURL: process.env.API_URL || 'http://sistema.ieenayarit.org:9270/api' })
+//const api = axios.create({ baseURL: 'https://qg971dfb-7289.usw3.devtunnels.ms/api' })
 
 const apiLog = axios.create({ baseURL: "http://sistema.ieenayarit.org:9120/api" });
 
