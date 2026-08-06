@@ -26,5 +26,17 @@ export default route(function (/* { store, ssrContext } */) {
     history: createHistory(process.env.MODE === 'ssr' ? void 0 : process.env.VUE_ROUTER_BASE)
   })
 
+  // Guard de autenticación (login propio del backend nuevo): sin token -> /login.
+  Router.beforeEach((to) => {
+    const autenticado = !!localStorage.getItem('key')
+    if (to.path !== '/login' && !autenticado) {
+      return '/login'
+    }
+    if (to.path === '/login' && autenticado) {
+      return '/'
+    }
+    return true
+  })
+
   return Router
 })

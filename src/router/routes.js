@@ -1,6 +1,12 @@
 
 const routes = [
   {
+    // Login propio contra el backend nuevo (corte de clientes). Sin el layout principal.
+    path: '/login',
+    name: 'login',
+    component: () => import('../Modulos/acceso/pages/Login_Nuevo.vue')
+  },
+  {
     path: '/',
     name: 'home',
     component: () => import('layouts/MainLayout.vue'),

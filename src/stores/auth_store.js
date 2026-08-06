@@ -1,6 +1,27 @@
 import { defineStore } from 'pinia';
 import { api } from 'src/boot/axios';
 
+// Corte al backend nuevo: los permisos por módulo se derivan de los claims del JWT
+// (no del endpoint legado /PermisosModulosUsuarios). Mapa siglas del cliente -> grupo
+// de permiso archivo.<grupo>.*. Se extiende a medida que se migra cada módulo.
+const MAPA_SIGLAS_GRUPO = {
+  'AI-CAT-SECCIONES': 'clasificacion',
+};
+
+function permisosDelToken() {
+  try {
+    const token = localStorage.getItem('key');
+    if (!token) return [];
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(decodeURIComponent(escape(atob(base64))));
+    const p = payload.permiso;
+    return Array.isArray(p) ? p : (p ? [p] : []);
+  } catch (e) {
+    console.log(e);
+    return [];
+  }
+}
+
 export const useAuthStore = defineStore('AuthStore', {
   state: () => ({
     modulos: [],
@@ -124,13 +145,22 @@ export const useAuthStore = defineStore('AuthStore', {
 
 
     async loadModulo(siglas) {
-      try {
-        if (this.modulos = []) await this.loadModulos()
-        this.modulo = this.modulos.find((x) => x.siglas_Modulo == siglas);
-      } catch (error) {
-        console.log(error)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+      // Backend nuevo: deriva los permisos del módulo desde los claims del JWT.
+      const grupo = MAPA_SIGLAS_GRUPO[siglas];
+      if (!grupo) {
+        // Módulo aún no mapeado (migración por fases): permisivo en UI; el backend
+        // aplica 401/403 en cada llamada real.
+        this.modulo = { siglas_Modulo: siglas, leer: true, registrar: true, actualizar: true, eliminar: true };
+        return;
       }
+      const permisos = permisosDelToken();
+      this.modulo = {
+        siglas_Modulo: siglas,
+        leer: permisos.includes(`archivo.${grupo}.ver`),
+        registrar: permisos.includes(`archivo.${grupo}.registrar`),
+        actualizar: permisos.includes(`archivo.${grupo}.actualizar`),
+        eliminar: permisos.includes(`archivo.${grupo}.eliminar`),
+      };
     },
   },
 });

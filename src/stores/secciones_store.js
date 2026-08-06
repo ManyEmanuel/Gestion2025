@@ -28,33 +28,31 @@ export const useSeccionStore = defineStore('SeccionStore', {
       this.seccion.descripcion = null
     },
 
+    // MIGRADO al backend nuevo (corte de clientes, piloto): GET /api/secciones devuelve
+    // un array directo de { id (guid), clave, nombre }. La clave = codigo + tipo (C/S);
+    // se deriva codigo/tipo/compuesto para conservar la forma que espera la pantalla.
     async loadSecciones() {
       try {
-        this.secciones = [];
-        const resp = await api.get('/Archivo/Secciones')
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            if (data) {
-              const secciones = data.map((element) => {
-                return {
-                  id: element.id,
-                  codigo: element.codigo,
-                  descripcion: element.descripcion,
-                  tipo: element.tipo,
-                  compuesto: element.compuesto
-                }
-              })
-              this.seccionesC = secciones.filter(x => x.tipo == "C")
-              this.seccionesS = secciones.filter(x => x.tipo == "S")
-              return { success: true }
+        this.seccionesC = [];
+        this.seccionesS = [];
+        const resp = await api.get('/secciones')
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          const secciones = resp.data.map((element) => {
+            const clave = element.clave || ''
+            const tipo = clave.slice(-1)
+            return {
+              id: element.id,
+              codigo: clave.slice(0, -1),
+              descripcion: element.nombre,
+              tipo,
+              compuesto: clave
             }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+          })
+          this.seccionesC = secciones.filter(x => x.tipo == "C")
+          this.seccionesS = secciones.filter(x => x.tipo == "S")
+          return { success: true }
         }
+        return { success: false, data: "Respuesta inesperada del servidor." }
       } catch (e) {
         console.error(e)
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
@@ -64,27 +62,17 @@ export const useSeccionStore = defineStore('SeccionStore', {
     async loadListaSecciones() {
       try {
         this.listaSecciones = [];
-        const resp = await api.get('/Archivo/Secciones')
-
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            if (data) {
-
-              this.listaSecciones = data.map((element) => {
-                return {
-                  value: element.id,
-                  label: `${element.compuesto}-${element.descripcion}`
-                }
-              })
-              return { success: true }
+        const resp = await api.get('/secciones')
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          this.listaSecciones = resp.data.map((element) => {
+            return {
+              value: element.id,
+              label: `${element.clave}-${element.nombre}`
             }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+          })
+          return { success: true }
         }
+        return { success: false, data: "Respuesta inesperada del servidor." }
       } catch (e) {
         console.error(e)
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
