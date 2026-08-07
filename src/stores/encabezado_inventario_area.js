@@ -42,42 +42,37 @@ export const useEncabezadoInventarioStore = defineStore('encabezado', {
         this.encabezado.nombre = null
     },
 
+    // MIGRADO al backend nuevo (corte de clientes): GET /api/encabezados devuelve un array
+    // scoped por el usuario (ámbito global -> todas las áreas; usuario de área -> la suya),
+    // con nombres resueltos. Los roles de firma (elaboró/validó/VoBo/supervisa) no los modela
+    // el dominio nuevo -> van en null.
     async loadEncabezados() {
       try {
         this.encabezados = []
         this.loadindg = true
-        const resp = await api.get("/Archivo/InventariosGeneralesAreasEncabezado")
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            if (data) {
-              data.forEach(element => {
-                const { id, area_Responsable_Id, area_Responsable, area_Generadora_Id,
-                  area_Generadora, enlace_Id, enlace, elaboro_Id, elaboro, valido_Id,
-                  valido, visto_Bueno_Id, visto_Bueno, supervisa_Id, supervisa,
-                  nombre, fecha_Registro, estatus, ano } = element
-
-                const encabezadoItem = {
-                  id, area_Responsable_Id, area_Responsable, area_Generadora_Id,
-                  area_Generadora, enlace_Id, enlace, elaboro_Id, elaboro, valido_Id,
-                  valido, visto_Bueno_Id, visto_Bueno, supervisa_Id, supervisa,
-                  nombre, fecha_Registro, estatus, ano
-                }
-                this.encabezados.push(encabezadoItem);
-              });
-              this.loadindg = false
-              return { success }
-            } else {
-              return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-            }
-          } else {
-            this.loadindg = false
-            return { success, data }
-          }
-        } else {
-          this.loadindg = false
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        const resp = await api.get("/encabezados")
+        this.loadindg = false
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          this.encabezados = resp.data.map((e) => ({
+            id: e.id,
+            area_Responsable_Id: e.areaResponsableId,
+            area_Responsable: e.areaResponsable,
+            area_Generadora_Id: e.areaGeneradoraId,
+            area_Generadora: e.areaGeneradora,
+            enlace_Id: e.enlaceId,
+            enlace: e.enlace,
+            elaboro_Id: null, elaboro: null,
+            valido_Id: null, valido: null,
+            visto_Bueno_Id: null, visto_Bueno: null,
+            supervisa_Id: null, supervisa: null,
+            nombre: e.nombre,
+            fecha_Registro: null,
+            estatus: e.estatus,
+            ano: e.ano
+          }))
+          return { success: true }
         }
+        return { success: false, data: "Respuesta inesperada del servidor." }
       } catch (e) {
         this.loadindg = false
         console.error(e)
