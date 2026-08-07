@@ -37,33 +37,28 @@ export const useDetalleCedulaPrestamoStore = defineStore('detalleCedulaPrestamo'
       this.arrayDetalles = []
     },
 
+    // MIGRADO al backend nuevo: GET /api/prestamos/{id}/detalle (expedientes prestados, con el
+    // expediente del inventario resuelto). Array directo, camelCase.
     async loadDetalles(cedulaId) {
       try {
-        const resp = await api.get(`/Archivo/DetalleCedulaPrestamoExpedientes/ObtenTodos/${cedulaId}`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          console.log("Esto es detalle de prestamo", data)
-          if (success === true) {
-            if (data) {
-              this.detalles = []
-              let detalleArray = data.map((detalle) => {
-                return {
-                  id: detalle.id,
-                  cedula_Prestamo_Id: detalle.cedula_Prestamo_Id,
-                  inventario_Id: detalle.inventario_Id,
-                  inventario_Clave_Clasificacion: detalle.inventario_Clave_Clasificacion,
-                  inventario_No_Expediente_Interno: detalle.inventario_No_Expediente_Interno,
-                  empleado_Id: detalle.empleado_Id,
-                  ubicacion: detalle.ubicacion,
-                  descripcion: detalle.descripcion,
-                  observaciones: detalle.observaciones,
-                  fecha_Inicio_Conclusion: detalle.fecha_Inicio_Conclusion
-                }
-              })
-              this.detalles = detalleArray;
-            }
-          }
+        const resp = await api.get(`/prestamos/${cedulaId}/detalle`)
+        this.detalles = []
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          this.detalles = resp.data.map((detalle) => ({
+            id: detalle.id,
+            cedula_Prestamo_Id: detalle.prestamoId,
+            inventario_Id: detalle.inventarioGeneralId,
+            inventario_Clave_Clasificacion: detalle.claveClasificacion,
+            inventario_No_Expediente_Interno: null,
+            empleado_Id: null,
+            ubicacion: detalle.ubicacion,
+            descripcion: detalle.descripcion,
+            observaciones: detalle.observaciones,
+            fecha_Inicio_Conclusion: detalle.fechaInicio ? String(detalle.fechaInicio).substring(0, 10) : null
+          }))
+          return { success: true }
         }
+        return { success: false, data: "Respuesta inesperada del servidor." }
       } catch (error) {
         console.error(error)
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }

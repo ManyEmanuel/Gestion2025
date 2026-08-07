@@ -14,6 +14,7 @@ const MAPA_SIGLAS_GRUPO = {
   'AI-CJS-BAJAS': 'baja',
   'AI-CAT-ENLACE': 'enlace',
   'AI-CAT-VOBO': 'visto-bueno',
+  'AI-PRESTAMOS': 'prestamo',
 };
 
 function permisosDelToken() {

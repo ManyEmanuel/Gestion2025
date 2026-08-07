@@ -1,5 +1,29 @@
 import { defineStore } from 'pinia';
 import { api } from 'src/boot/axios';
+
+// Corte al backend nuevo: los endpoints REST devuelven fechas ISO y camelCase. Estos helpers
+// adaptan una fila de préstamo del backend nuevo a la forma que ya consume la UI del cliente.
+const soloFecha = (iso) => (iso ? String(iso).substring(0, 10) : null)
+
+const mapFilaPrestamo = (p) => ({
+  id: p.id,
+  area_Responsable_Id: p.areaResponsableId,
+  area_Responsable: p.areaResponsable,
+  area_Solicitante_Id: p.areaSolicitanteId,
+  area_Solicitante: p.areaSolicitante,
+  solicitante_Id: p.solicitanteId,
+  solicitante: p.solicitante,
+  empleado_Registro_Id: p.empleadoRegistroId,
+  empleado_Registro: p.empleadoRegistro,
+  fecha_Prestamo: soloFecha(p.fechaPrestamo),
+  fecha_Devolucion: soloFecha(p.fechaDevolucion),
+  folio: p.folio,
+  folio_Solicitud: null, // el modelo nuevo unifica el folio; el legado tenía uno de solicitud aparte
+  estatus: p.estatus,
+  fisico: p.fisico,
+  digital: p.digital
+})
+
 export const useCedulaPrestamoStore = defineStore('CedulaPrestamo', {
   state: () => ({
     isLoading: false,
@@ -64,51 +88,19 @@ export const useCedulaPrestamoStore = defineStore('CedulaPrestamo', {
       this.registro.fisico = false
     },
 
+    // MIGRADO al backend nuevo: GET /api/prestamos/mis-solicitudes?clasificado= (préstamos que el
+    // usuario, como empleado, solicitó). Array directo, Guid, camelCase; nombres resueltos.
     async loadMisSolicitudes(clasificado) {
       try {
         this.isLoading = true
-        let resp = null;
-        if (clasificado == true) {
-          resp = await api.get('/Archivo/CedulasPrestamosExpedientes/MisSolicitudesClasificados')
-        } else {
-          resp = await api.get('/Archivo/CedulasPrestamosExpedientes/MisSolicitudes')
+        this.misSolicitudes = []
+        const resp = await api.get(`/prestamos/mis-solicitudes?clasificado=${clasificado === true}`)
+        this.isLoading = false
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          this.misSolicitudes = resp.data.map(mapFilaPrestamo)
+          return { success: true }
         }
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            if (data) {
-              this.misSolicitudes = []
-              let misSolicitudesArray = data.map((prestamo) => {
-                return {
-                  id: prestamo.id,
-                  area_Responsable_Id: prestamo.area_Responsable_Id,
-                  area_Responsable: prestamo.area_Responsable,
-                  area_Solicitante_Id: prestamo.area_Solicitante_Id,
-                  area_Solicitante: prestamo.area_Solicitante,
-                  solicitante_Id: prestamo.solicitante_Id,
-                  solicitante: prestamo.solicitante,
-                  empleado_Registro_Id: prestamo.empleado_Registro_Id,
-                  empleado_Registro: prestamo.empleado_Registro,
-                  fecha_Prestamo: prestamo.fecha_Prestamo,
-                  fecha_Devolucion: prestamo.fecha_Devolucion,
-                  folio: prestamo.folio,
-                  folio_Solicitud: prestamo.folio_Solicitud,
-                  estatus: prestamo.estatus,
-                  fisico: prestamo.fisico,
-                  digital: prestamo.digital
-                }
-              })
-              this.misSolicitudes = misSolicitudesArray;
-              this.isLoading = false
-            }
-          } else {
-            this.isLoading = false
-            return { success, data }
-          }
-        } else {
-          this.isLoading = false
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-        }
+        return { success: false, data: "Respuesta inesperada del servidor." }
       } catch (error) {
         this.isLoading = false
         console.error(error)
@@ -116,52 +108,19 @@ export const useCedulaPrestamoStore = defineStore('CedulaPrestamo', {
       }
     },
 
+    // MIGRADO al backend nuevo: GET /api/prestamos?clasificado= ("Solicitudes al área": préstamos donde
+    // el área del usuario es la responsable; ámbito global ⇒ todas). Array directo, camelCase, resuelto.
     async loadSolicitudesAreas(clasificado) {
       try {
         this.isLoading = true
-        let resp = null;
-        if (clasificado == true) {
-          resp = await api.get('/Archivo/CedulasPrestamosExpedientes/SolicitudesAreaClasificados')
-        } else {
-          resp = await api.get('/Archivo/CedulasPrestamosExpedientes/SolicitudesArea')
+        this.solicitudesArea = []
+        const resp = await api.get(`/prestamos?clasificado=${clasificado === true}`)
+        this.isLoading = false
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          this.solicitudesArea = resp.data.map(mapFilaPrestamo)
+          return { success: true }
         }
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            if (data) {
-              this.solicitudesArea = []
-              let solicitudesAreasArray = data.map((prestamo) => {
-                return {
-                  id: prestamo.id,
-                  area_Responsable_Id: prestamo.area_Responsable_Id,
-                  area_Responsable: prestamo.area_Responsable,
-                  area_Solicitante_Id: prestamo.area_Solicitante_Id,
-                  area_Solicitante: prestamo.area_Solicitante,
-                  solicitante_Id: prestamo.solicitante_Id,
-                  solicitante: prestamo.solicitante,
-                  empleado_Registro_Id: prestamo.empleado_Registro_Id,
-                  empleado_Registro: prestamo.empleado_Registro,
-                  fecha_Prestamo: prestamo.fecha_Prestamo,
-                  fecha_Devolucion: prestamo.fecha_Devolucion,
-                  folio: prestamo.folio,
-                  folio_Solicitud: prestamo.folio_Solicitud,
-                  estatus: prestamo.estatus,
-                  fisico: prestamo.fisico,
-                  digital: prestamo.digital
-
-                }
-              })
-              this.solicitudesArea = solicitudesAreasArray;
-              this.isLoading = false
-            }
-          } else {
-            this.isLoading = false
-            return { success, data }
-          }
-        } else {
-          this.isLoading = false
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-        }
+        return { success: false, data: "Respuesta inesperada del servidor." }
       } catch (error) {
         this.isLoading = false
         console.error(error)
@@ -215,47 +174,48 @@ export const useCedulaPrestamoStore = defineStore('CedulaPrestamo', {
       }
     },
 
+    // MIGRADO al backend nuevo: GET /api/prestamos/{id} (encabezado con nombres resueltos). Acceso
+    // permitido al solicitante o a quien accede al área responsable.
     async loadPrestamo(id) {
       try {
-        const resp = await api.get(`/Archivo/CedulasPrestamosExpedientes/${id}`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success == true) {
-            if (data) {
-              this.registro.id = data.id
-              this.registro.folio = data.folio
-              this.registro.folio_Solicitud = data.folio_Solicitud
-              this.registro.area_Responsable_Id = data.area_Responsable_Id
-              this.registro.area_Responsable = data.area_Responsable
-              this.registro.area_Solicitante_Id = data.area_Solicitante_Id
-              this.registro.area_Solicitante = data.area_Solicitante
-              this.registro.solicitante_Id = data.solicitante_Id
-              this.registro.solicitante = data.solicitante
-              this.registro.fecha_Prestamo = data.fecha_Prestamo
-              this.registro.fecha_Devolucion = data.fecha_Devolucion
-              this.registro.observaciones = data.observaciones
-              this.registro.fisico = data.fisico
-              this.registro.digital = data.digital
-              this.registro.clasificado = data.clasificado
-
-              let respSolicitante = await api.get(`/Empleados`)
-              let solicitante = respSolicitante.data.data
-              let respResponsable = await api.get(`/ResponsablesAreas/ResposableByArea/${data.area_Responsable_Id}`)
-              let responsable = respResponsable.data.data
-
-              let filtroSolicitante = solicitante.find(x => x.id == data.solicitante_Id)
-              let filtroTitularArchivo = solicitante.find(x => x.puesto_Id == 63)
-              this.complementoAnexo.puesto = filtroSolicitante.puesto
-              this.complementoAnexo.responsable = responsable.empleado
-              this.complementoAnexo.titular = filtroTitularArchivo.nombre_Completo.split(" -")[0]
-
-            }
-          } else {
-            return { success, data }
-          }
-        } else {
+        const resp = await api.get(`/prestamos/${id}`)
+        if (resp.status != 200 || !resp.data) {
           return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
         }
+        const data = resp.data
+        this.registro.id = data.id
+        this.registro.folio = data.folio
+        this.registro.folio_Solicitud = null
+        this.registro.area_Responsable_Id = data.areaResponsableId
+        this.registro.area_Responsable = data.areaResponsable
+        this.registro.area_Solicitante_Id = data.areaSolicitanteId
+        this.registro.area_Solicitante = data.areaSolicitante
+        this.registro.solicitante_Id = data.solicitanteId
+        this.registro.solicitante = data.solicitante
+        this.registro.fecha_Prestamo = soloFecha(data.fechaPrestamo)
+        this.registro.fecha_Devolucion = soloFecha(data.fechaDevolucion)
+        this.registro.observaciones = data.observaciones
+        this.registro.fisico = data.fisico
+        this.registro.digital = data.digital
+        this.registro.clasificado = data.clasificado
+
+        // El complemento del Anexo 7/8 (puesto del solicitante, responsable y titular del archivo) usa
+        // /Empleados y /ResponsablesAreas, que aún NO están en el backend nuevo. Se aísla para no romper
+        // el detalle; el recibo PDF se completará al migrar esos catálogos.
+        try {
+          const respSolicitante = await api.get(`/Empleados`)
+          const solicitante = respSolicitante.data.data
+          const respResponsable = await api.get(`/ResponsablesAreas/ResposableByArea/${data.areaResponsableId}`)
+          const responsable = respResponsable.data.data
+          const filtroSolicitante = solicitante.find(x => x.id == data.solicitanteId)
+          const filtroTitularArchivo = solicitante.find(x => x.puesto_Id == 63)
+          this.complementoAnexo.puesto = filtroSolicitante ? filtroSolicitante.puesto : null
+          this.complementoAnexo.responsable = responsable ? responsable.empleado : null
+          this.complementoAnexo.titular = filtroTitularArchivo ? filtroTitularArchivo.nombre_Completo.split(" -")[0] : null
+        } catch (errAnexo) {
+          console.warn("Complemento de anexo no disponible (catálogos aún no migrados):", errAnexo?.message)
+        }
+        return { success: true }
       } catch (error) {
         console.error(error)
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
