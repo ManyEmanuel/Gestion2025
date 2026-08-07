@@ -79,38 +79,42 @@ export const useInventarioAreaStore = defineStore('InventarioArea', {
       this.inventario.disposicion_Documental = null;
     },
 
+    // MIGRADO al backend nuevo (corte de clientes): GET /api/expedientes/por-encabezado/{id}
+    // devuelve un array (aislado por el área del encabezado) con nombres de clasificación
+    // resueltos. Se remapea a la forma de la tabla; los campos que el dominio nuevo no modela
+    // (valor documental, empleado, ubicación, ampliaciones, disposición-por-id) van en null.
     async loadInventarios(encabezadoId) {
       try {
         this.loading = true
         this.inventarios = []
-        const resp = await api.get(`/Archivo/InventariosGneralesAreas/ByEncabezado/${encabezadoId}`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success == true) {
-            if (data) {
-              data.forEach(element => {
-                const { id, inventario_General_Area_Encabezado_Id, seccion_Id, seccion, serie_Id, serie, sub_Serie_Id, sub_Serie,
-                  disposicion_Documental_Id, empleado, nombre_Expediente, clave_Clasificacion,
-                  descripcion, fecha_Inicio, fecha_Termino, ubicacion, valor_Documental, vigencia_Tramite, vigencia_Concentracion
-                  , vigencia_Completa, disposicion_Documental, fecha_Clasificacion, fecha_Desclasificacion, fecha_Ampliacion, estatus, motivo_Rechazo,
-                  clasificado, clasificado_Texto, total_Paginas, total_Ampliacion
-                } = element;
-                const obj = {
-                  id, inventario_General_Area_Encabezado_Id, seccion_Id, seccion, serie_Id, serie, sub_Serie_Id, sub_Serie,
-                  disposicion_Documental_Id, empleado, nombre_Expediente, clave_Clasificacion,
-                  descripcion, fecha_Inicio, fecha_Termino, ubicacion, valor_Documental, vigencia_Tramite, vigencia_Concentracion
-                  , vigencia_Completa, disposicion_Documental, fecha_Clasificacion, fecha_Desclasificacion, fecha_Ampliacion, estatus, motivo_Rechazo,
-                  clasificado, clasificado_Texto, total_Paginas, total_Ampliacion, Seleccion: false
-                }
-                this.inventarios.push(obj)
-              });
-            }
-            this.loading = false
-          } else {
-            this.loading = false
-            return { success, data }
-          }
+        const resp = await api.get(`/expedientes/por-encabezado/${encabezadoId}`)
+        this.loading = false
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          this.inventarios = resp.data.map((e) => ({
+            id: e.id,
+            inventario_General_Area_Encabezado_Id: e.encabezadoId,
+            seccion_Id: e.seccionId, seccion: e.seccionClave,
+            serie_Id: e.serieId, serie: e.serieClave,
+            sub_Serie_Id: e.subSerieId, sub_Serie: e.subSerieClave,
+            disposicion_Documental_Id: null, empleado: null,
+            nombre_Expediente: e.nombreExpediente,
+            clave_Clasificacion: e.claveClasificacion,
+            descripcion: e.descripcion,
+            fecha_Inicio: e.fechaInicio, fecha_Termino: e.fechaTermino,
+            ubicacion: null, valor_Documental: null,
+            vigencia_Tramite: e.vigenciaTramite, vigencia_Concentracion: e.vigenciaConcentracion,
+            vigencia_Completa: e.vigenciaTotal,
+            disposicion_Documental: null,
+            fecha_Clasificacion: null, fecha_Desclasificacion: null, fecha_Ampliacion: null,
+            estatus: e.estatus, motivo_Rechazo: e.motivoRechazo,
+            clasificado: e.clasificado,
+            clasificado_Texto: e.clasificado ? 'Clasificado' : 'Público',
+            total_Paginas: e.totalPaginas, total_Ampliacion: null,
+            Seleccion: false
+          }))
+          return { success: true }
         }
+        return { success: false, data: "Respuesta inesperada del servidor." }
       } catch (error) {
         this.loading = false
         console.error(error)
