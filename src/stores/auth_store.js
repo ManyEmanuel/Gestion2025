@@ -9,6 +9,7 @@ const MAPA_SIGLAS_GRUPO = {
   'AI-CAT-DISP-DOC': 'disposicion',
   'AI-INV-AREA': 'inventario',
   'AI-TP': 'transferencia',
+  'AI-CJS-TRANS': 'transferencia',
 };
 
 function permisosDelToken() {

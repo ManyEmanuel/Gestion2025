@@ -46,41 +46,38 @@ export const useDetalleCajaTransferenciaStore = defineStore('DetalleCajaTransfer
       this.arrayDetalles = []
     },
 
+    // MIGRADO al backend nuevo (corte de clientes): GET /api/transferenciasprimarias/cajas/{cajaId}/detalle
+    // devuelve un array (aislado por el área de la transferencia) con datos del expediente resueltos.
+    // no_Expediente_Interno se deriva de la clave; valor documental/destino final no los modela el dominio.
     async loadDetalles(cajaId, ubicacion) {
       try {
-        const resp = await api.get(`/DetallesCajasTrasnferencias/${cajaId}/GetAll`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            console.log("informacion de detallesCajas", data)
-            if (data) {
-              this.detalles = []
-              let detalleArray = data.map((detalle) => {
-                return {
-                  id: detalle.id,
-                  nombre_Expediente: detalle.nombre_Expediente,
-                  caja_Id: detalle.caja_Id,
-                  inventario_Area_Id: detalle.inventario_Area_Id,
-                  clave_Clasificacion: detalle.clave_Clasificacion,
-                  no_Expediente_Interno: detalle.no_Expediente_Interno,
-                  destino_Final: detalle.destino_Final,
-                  vigencia_Concentracion: detalle.vigencia_Concentracion,
-                  descripcion: detalle.descripcion,
-                  signatura_Topografica: detalle.signatura_Topografica,
-                  total_Paginas: detalle.total_Paginas,
-                  fecha_Inicio: detalle.fecha_Inicio,
-                  fecha_Termino: detalle.fecha_Termino,
-                  valor_Documental: detalle.valor_Documental,
-                  estatus: detalle.estatus,
-                  motivo_Rechazo: detalle.motivo_Rechazo,
-                  ubicacion: ubicacion || detalle.ubicacion
-                }
-              })
-              this.detalles = detalleArray;
-
+        const resp = await api.get(`/transferenciasprimarias/cajas/${cajaId}/detalle`)
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          this.detalles = resp.data.map((d) => {
+            const partes = (d.claveClasificacion || '').split('/')
+            return {
+              id: d.id,
+              nombre_Expediente: d.nombreExpediente,
+              caja_Id: d.cajaId,
+              inventario_Area_Id: d.inventarioGeneralId,
+              clave_Clasificacion: d.claveClasificacion,
+              no_Expediente_Interno: partes.length > 3 ? partes[3] : null,
+              destino_Final: null,
+              vigencia_Concentracion: d.vigenciaConcentracion,
+              descripcion: d.descripcion,
+              signatura_Topografica: d.signaturaTopografica,
+              total_Paginas: d.totalPaginas,
+              fecha_Inicio: d.fechaInicio,
+              fecha_Termino: d.fechaTermino,
+              valor_Documental: null,
+              estatus: d.estatus,
+              motivo_Rechazo: d.motivoRechazo,
+              ubicacion: ubicacion || null
             }
-          }
+          })
+          return { success: true }
         }
+        return { success: false, data: "Respuesta inesperada del servidor." }
       } catch (error) {
         console.error(error)
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }

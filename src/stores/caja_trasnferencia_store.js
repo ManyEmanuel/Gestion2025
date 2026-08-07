@@ -54,44 +54,31 @@ export const useCajaTransferenciaStore = defineStore('CajaTransferenciaStore', {
       this.caja.estatus = null
     },
 
+    // MIGRADO al backend nuevo (corte de clientes): GET /api/transferenciasprimarias/{id}/cajas
+    // devuelve un array de cajas (aislado por el área de la transferencia). Campos de secundaria
+    // (sección, fechas extremas, total de páginas, año) van en null.
     async loadCajas(transferenciaId) {
       try {
-        const resp = await api.get(`/Archivo/CajasTransferencias/${transferenciaId}/GetAll`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            if (data) {
-              let cajasArray = data.map((caja) => {
-                return {
-                  id: caja.id,
-                  trasnferencia_Primaria_Encabezado_Id: caja.trasnferencia_Primaria_Encabezado_Id,
-                  trasnferencia: caja.trasnferencia,
-                  no_Caja: caja.no_Caja,
-                  seccion_Id: caja.seccion_Id,
-                  seccion: caja.seccion,
-                  peso: caja.peso,
-                  fecha_Antigua: caja.fecha_Antigua,
-                  fecha_Reciente: caja.fecha_Reciente,
-                  total_Expedientes: caja.total_Expedientes,
-                  total_Paginas: caja.total_Paginas,
-                  estatus: caja.estatus,
-                  year: caja.year
-                }
-              })
-              this.cajas = cajasArray
-            }
-            let filtro = this.cajas.filter((caja) => caja.estatus == "Afectado")
-            if (filtro.length === this.cajas.length) {
-              this.isCompleto = true
-            } else {
-              this.isCompleto = false
-            }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        const resp = await api.get(`/transferenciasprimarias/${transferenciaId}/cajas`)
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          this.cajas = resp.data.map((caja) => ({
+            id: caja.id,
+            trasnferencia_Primaria_Encabezado_Id: caja.transferenciaId,
+            trasnferencia: null,
+            no_Caja: caja.noCaja,
+            seccion_Id: null, seccion: null,
+            peso: caja.peso,
+            fecha_Antigua: null, fecha_Reciente: null,
+            total_Expedientes: caja.totalExpedientes,
+            total_Paginas: null,
+            estatus: caja.estatus,
+            year: null
+          }))
+          let filtro = this.cajas.filter((caja) => caja.estatus == "Afectada")
+          this.isCompleto = this.cajas.length > 0 && filtro.length === this.cajas.length
+          return { success: true }
         }
+        return { success: false, data: "Respuesta inesperada del servidor." }
       } catch (error) {
         console.log(error)
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
