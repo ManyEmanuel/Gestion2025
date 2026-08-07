@@ -197,59 +197,51 @@ export const useTransferenciaPrimariaEncabezadoStore = defineStore('Transferenci
       }
     },
 
+    // MIGRADO al backend nuevo (corte de clientes): GET /api/transferenciasprimarias devuelve
+    // un array scoped por el usuario (ámbito global -> todas; usuario de área -> la suya), con
+    // áreas y enlace resueltos. Los roles de firma (valida/coteja) y pesos/fechas extremas, que
+    // el dominio nuevo no modela, van en null.
     async loadEncabezados() {
       try {
         this.isLoading = true
-        const resp = await api.get('Archivo/TransferenciasPrimariasEncabezados')
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (data) {
-            this.encabezados = []
-            let areas = []
-            const encabezadosArray = data.map((enc) => {
-              areas.push(enc.area_Generadora)
-              return {
-                id: enc.id,
-                area_Responsable_Id: enc.area_Responsable_Id,
-                area_Responsable: enc.area_Responsable,
-                fecha_Registro: enc.fecha_Registro,
-                area_Generadora_Id: enc.area_Generadora_Id,
-                area_Generadora: enc.area_Generadora,
-                enlace_Id: enc.enlace_Id,
-                enlace: enc.enlace,
-                puesto_Enlace: enc.puesto_Enlace,
-                valida_Area_Id: enc.valida_Area_Id,
-                valida_Area: enc.valida_Area,
-                puesto_Valida_Area: enc.puesto_Valida_Area,
-                coteja_Id: enc.coteja_Id,
-                coteja: enc.coteja,
-                puesto_Coteja: enc.puesto_Coteja,
-                valida_Id: enc.valida_Id,
-                valida: enc.valida,
-                puesto_Valida: enc.puesto_Valida,
-                nombre: enc.nombre,
-                numero_Transferencia: enc.numero_Transferencia,
-                total_Cajas: enc.total_Cajas,
-                total_Expedientes: enc.total_Expedientes,
-                peso_Total: enc.peso_Total,
-                fecha_Antigua: enc.fecha_Antigua,
-                fecha_Reciente: enc.fecha_Reciente,
-                estatus: enc.estatus,
-                conteo_Cajas: enc.conteo_Cajas,
-              }
-            })
-            this.encabezados = encabezadosArray
-            this.encabezadosFiltro = encabezadosArray
-            this.isLoading = false
-            let areasUnicas = [...new Set(areas)].sort();
-            areasUnicas.unshift("Ver todos");
-            this.listaAreasGeneradoras = areasUnicas
-            return { success }
-          }
-        } else {
-          this.isLoading = false
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        const resp = await api.get('/transferenciasprimarias')
+        this.isLoading = false
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          let areas = []
+          const encabezadosArray = resp.data.map((enc) => {
+            areas.push(enc.areaGeneradora)
+            return {
+              id: enc.id,
+              area_Responsable_Id: enc.areaResponsableId,
+              area_Responsable: enc.areaResponsable,
+              fecha_Registro: null,
+              area_Generadora_Id: enc.areaGeneradoraId,
+              area_Generadora: enc.areaGeneradora,
+              enlace_Id: enc.enlaceId,
+              enlace: enc.enlace,
+              puesto_Enlace: null,
+              valida_Area_Id: null, valida_Area: null, puesto_Valida_Area: null,
+              coteja_Id: null, coteja: null, puesto_Coteja: null,
+              valida_Id: null, valida: null, puesto_Valida: null,
+              nombre: enc.nombre,
+              numero_Transferencia: enc.numeroTransferencia,
+              total_Cajas: enc.totalCajas,
+              total_Expedientes: enc.totalExpedientes,
+              peso_Total: null,
+              fecha_Antigua: null,
+              fecha_Reciente: null,
+              estatus: enc.estatus,
+              conteo_Cajas: enc.totalCajas,
+            }
+          })
+          this.encabezados = encabezadosArray
+          this.encabezadosFiltro = encabezadosArray
+          let areasUnicas = [...new Set(areas)].sort();
+          areasUnicas.unshift("Ver todos");
+          this.listaAreasGeneradoras = areasUnicas
+          return { success: true }
         }
+        return { success: false, data: "Respuesta inesperada del servidor." }
       } catch (error) {
         this.isLoading = false
         console.error(error)
