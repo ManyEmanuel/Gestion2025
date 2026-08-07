@@ -68,43 +68,41 @@ export const useBajaDocumentalStore = defineStore('BajaDocumental', {
 
     },
 
+    // MIGRADO al backend nuevo (corte de clientes): GET /api/bajasdocumentales devuelve un array
+    // scoped por el usuario (ámbito global -> todas; usuario de área -> la suya), con áreas y
+    // enlace resueltos. Los roles de firma (valida/visto bueno/aprobó), no modelados, van en null;
+    // 'elaboro' se mapea al enlace resuelto.
     async loadEncabezados() {
       try {
         this.isLoading = true
-        const resp = await api.get('/Archivo/BajaDocumental')
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (data) {
-            this.encabezados = []
-            let areas = []
-            const encabezadosArray = data.map((enc) => {
-              areas.push(enc.area_Generadora)
-              return {
-                id: enc.id,
-                no_Transferencia: enc.no_Transferencia,
-                area_Responsable: enc.area_Responsable,
-                area_Generadora: enc.area_Generadora,
-                fecha_Elaboracion: enc.fecha_Elaboracion,
-                elaboro: enc.elaboro,
-                valida: enc.valida,
-                visto_Bueno: enc.visto_Bueno,
-                aprobo: enc.aprobo,
-                estatus: enc.estatus,
-                nombre: enc.nombre,
-              }
-            })
-            this.encabezados = encabezadosArray
-            this.encabezadosFiltro = encabezadosArray
-            this.isLoading = false
-            let areasUnicas = [...new Set(areas)].sort();
-            areasUnicas.unshift("Ver todos");
-            this.listaAreasGeneradoras = areasUnicas
-            return { success }
-          }
-        } else {
-          this.isLoading = false
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        const resp = await api.get('/bajasdocumentales')
+        this.isLoading = false
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          let areas = []
+          const encabezadosArray = resp.data.map((enc) => {
+            areas.push(enc.areaGeneradora)
+            return {
+              id: enc.id,
+              no_Transferencia: enc.numeroBaja,
+              area_Responsable: enc.areaResponsable,
+              area_Generadora: enc.areaGeneradora,
+              fecha_Elaboracion: null,
+              elaboro: enc.enlace,
+              valida: null,
+              visto_Bueno: null,
+              aprobo: null,
+              estatus: enc.estatus,
+              nombre: enc.nombre,
+            }
+          })
+          this.encabezados = encabezadosArray
+          this.encabezadosFiltro = encabezadosArray
+          let areasUnicas = [...new Set(areas)].sort();
+          areasUnicas.unshift("Ver todos");
+          this.listaAreasGeneradoras = areasUnicas
+          return { success: true }
         }
+        return { success: false, data: "Respuesta inesperada del servidor." }
       } catch (error) {
         this.isLoading = false
         console.error(error)

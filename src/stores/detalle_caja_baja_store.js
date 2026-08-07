@@ -36,30 +36,24 @@ export const useDetalleCajaBajaStore = defineStore('detalleCajaBaja', {
       this.arrayDetalles = []
     },
 
+    // MIGRADO al backend nuevo (corte de clientes): GET /api/bajasdocumentales/cajas/{cajaId}/detalle
+    // (aislado por el área de la baja) con datos del expediente resueltos.
     async load_detalles(caja_id) {
       try {
-        const resp = await api.get(`/Archivo/DetalleCajasBajas/GetAll/${caja_id}`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            if (data) {
-              console.log(data)
-              this.detalles = []
-              let detalleArray = data.map((detalle) => {
-                return {
-                  id: detalle.id,
-                  clave_Clasificacion: detalle.clave_Clasificacion,
-                  descripcion: detalle.descripcion,
-                  total_Paginas: detalle.total_Paginas,
-                  observaciones: detalle.observaciones,
-                  fecha_Inicio: detalle.fecha_Inicio,
-                  fecha_Termino: detalle.fecha_Termino
-                }
-              })
-              this.detalles = detalleArray;
-            }
-          }
+        const resp = await api.get(`/bajasdocumentales/cajas/${caja_id}/detalle`)
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          this.detalles = resp.data.map((d) => ({
+            id: d.id,
+            clave_Clasificacion: d.claveClasificacion,
+            descripcion: d.descripcion,
+            total_Paginas: d.totalPaginas,
+            observaciones: d.observaciones,
+            fecha_Inicio: d.fechaInicio,
+            fecha_Termino: d.fechaTermino
+          }))
+          return { success: true }
         }
+        return { success: false, data: "Respuesta inesperada del servidor." }
       } catch (error) {
         console.error(error)
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }

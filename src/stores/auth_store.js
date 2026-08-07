@@ -10,6 +10,8 @@ const MAPA_SIGLAS_GRUPO = {
   'AI-INV-AREA': 'inventario',
   'AI-TP': 'transferencia',
   'AI-CJS-TRANS': 'transferencia',
+  'AI-BD': 'baja',
+  'AI-CJS-BAJAS': 'baja',
 };
 
 function permisosDelToken() {
