@@ -1,6 +1,11 @@
 import { defineStore } from 'pinia';
 import { api } from 'src/boot/axios';
 
+// Corte al backend nuevo: las escrituras REST no usan la envoltura {success,data}; responden
+// 201/204 en éxito y problem+json en error (axios lanza). Este helper saca el mensaje del error.
+const mensajeError = (e, defecto = "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte") =>
+  (e && e.response && e.response.data && (e.response.data.detail || e.response.data.title)) || defecto
+
 export const useSeccionStore = defineStore('SeccionStore', {
   state: () => ({
     modal: false,
@@ -79,88 +84,67 @@ export const useSeccionStore = defineStore('SeccionStore', {
       }
     },
 
-    async loadSeccion(id) {
-      try {
-        this.initSeccion()
-        const resp = await api.get(`/Archivo/Secciones/${id}`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            if (data) {
-              this.seccion.id = data.id
-              this.seccion.codigo = data.codigo
-              this.seccion.descripcion = data.descripcion
-              this.seccion.tipo = data.tipo
-            }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-        }
-      } catch (e) {
-        console.error(e)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+    // MIGRADO: el backend nuevo no expone GET /secciones/{id}. La edición se llena desde la lista
+    // ya cargada (seccionesC/seccionesS), que trae id/codigo/descripcion/tipo.
+    loadSeccion(id) {
+      this.initSeccion()
+      const seccion = [...this.seccionesC, ...this.seccionesS].find((s) => s.id == id)
+      if (seccion) {
+        this.seccion.id = seccion.id
+        this.seccion.codigo = seccion.codigo
+        this.seccion.descripcion = seccion.descripcion
+        this.seccion.tipo = seccion.tipo
+        return { success: true }
       }
+      return { success: false, data: "No se encontró la sección." }
     },
 
+    // MIGRADO: POST /api/secciones { clave = codigo+tipo, nombre = descripcion } -> 201 { id }.
     async createSeccion(seccion) {
       try {
-        const resp = await api.post("/Archivo/Secciones", seccion)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            return { success, data }
-          } else {
-            return { success, data }
-          }
+        const resp = await api.post("/secciones", {
+          clave: `${seccion.codigo}${seccion.tipo}`,
+          nombre: seccion.descripcion
+        })
+        if (resp.status === 201 || resp.status === 200) {
+          return { success: true, data: "Sección registrada con éxito" }
         }
-        else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-        }
+        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
       } catch (e) {
         console.error(e)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        return { success: false, data: mensajeError(e) }
       }
     },
 
+    // MIGRADO: PUT /api/secciones/{id} { clave, nombre } -> 204.
     async updateSeccion(seccion, id) {
       try {
-        const resp = await api.put(`/Archivo/Secciones/${id}`, seccion)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            return { success, data }
-          } else {
-            return { success, data }
-          }
+        const resp = await api.put(`/secciones/${id}`, {
+          clave: `${seccion.codigo}${seccion.tipo}`,
+          nombre: seccion.descripcion
+        })
+        if (resp.status === 204 || resp.status === 200) {
+          return { success: true, data: "Sección actualizada con éxito" }
         }
-        else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-        }
+        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
       } catch (e) {
         console.error(e)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        return { success: false, data: mensajeError(e) }
       }
     },
 
+    // MIGRADO: DELETE /api/secciones/{id} -> 204. Un 409 (referenciada) llega como problem+json.
     async deleteSeccion(id) {
       try {
-        const resp = await api.delete(`/Archivo/Secciones/${id}`)
-        if (resp.status == 200) {
-          let { success, data } = resp.data
-          if (success === true) {
-            this.loadSecciones()
-            return { success, data }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo" }
+        const resp = await api.delete(`/secciones/${id}`)
+        if (resp.status === 204 || resp.status === 200) {
+          this.loadSecciones()
+          return { success: true, data: "Sección eliminada con éxito" }
         }
+        return { success: false, data: "Ocurrio un error, intentelo de nuevo" }
       } catch (e) {
-        console.log(e)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        console.error(e)
+        return { success: false, data: mensajeError(e) }
       }
     },
 
