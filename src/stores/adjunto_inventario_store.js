@@ -21,46 +21,37 @@ export const useAdjuntoInventarioStore = defineStore('AdjuntoInventario', {
             this.no_Paginas = 0
         },
 
+        // MIGRADO al backend nuevo (corte de clientes): GET /api/adjuntos/por-expediente/{id}
+        // (aislado por el área del encabezado del expediente) devuelve un array de metadatos.
         async loadAdjuntos(inventarioId) {
             try {
                 this.loading = true
                 this.adjuntos = []
-                const resp = await api.get(`/Archivo/AdjuntosInventariosGeneral/ByInventario/${inventarioId}`)
-                if (resp.status == 200) {
-                    const { success, data } = resp.data
-                    if (success == true) {
-                        if (data) {
-                            data.forEach(element => {
-                                const {
-                                    id,
-                                    nombre,
-                                    no_Paginas
-                                } = element;
-                                const obj = {
-                                    id,
-                                    nombre,
-                                    no_Paginas
-                                }
-                                this.adjuntos.push(obj)
-                            });
-                        }
-                        this.loading = false
-                    } else {
-                        this.loading = false
-                        return { success, data }
-                    }
+                const resp = await api.get(`/adjuntos/por-expediente/${inventarioId}`)
+                this.loading = false
+                if (resp.status == 200 && Array.isArray(resp.data)) {
+                    this.adjuntos = resp.data.map((e) => ({
+                        id: e.id,
+                        nombre: e.nombre,
+                        no_Paginas: e.noPaginas
+                    }))
+                    return { success: true }
                 }
+                return { success: false, data: "Respuesta inesperada del servidor." }
             } catch (error) {
                 this.loading = false
-                console.error(e)
+                console.error(error)
                 return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
             }
         },
 
+        // MIGRADO: GET /api/adjuntos/{id}/contenido. El backend streamea el contenido tanto de las
+        // subidas locales nuevas como de los adjuntos migrados (de estos hace proxy desde el servidor
+        // de archivos anterior), así que este visor por blob funciona igual para ambos.
         async loadAdjunto(id) {
             try {
                 this.adjunto_url = "";
-                const resp = await api.get(`/Archivo/AdjuntosInventariosGeneral/${id}`, {
+                const resp = await api.get(`/adjuntos/${id}/contenido`, {
                     responseType: 'blob',
                 })
                 if (resp.status == 200) {
