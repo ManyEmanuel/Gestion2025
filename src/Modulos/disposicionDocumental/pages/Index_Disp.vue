@@ -14,6 +14,14 @@
       <div class="col">
         <div class="text-right q-pa-md items-start q-gutter-md">
           <q-btn
+            type="button"
+            class="q-ma-sm"
+            color="green-8"
+            icon-right="grid_on"
+            label="CADIDO"
+            @click="descargar_cadido"
+          />
+          <q-btn
             v-if="modulo == null ? false : modulo.registrar"
             type="button"
             class="q-ma-sm"
@@ -58,6 +66,7 @@ import { useAuthStore } from "../../../stores/auth_store";
 import Tabla from "../components/TablaComp.vue";
 import Modal from "../components/Modal_DispDoc.vue";
 import ModalEditar from "../components/Modal_DispDocEditar.vue";
+import { descargarReporte } from "../../../helpers/descargar_reporte";
 
 const $q = useQuasar();
 const disposicionDocStore = useDisposicionDocStore();
@@ -75,6 +84,18 @@ const leerPermisos = async () => {
   $q.loading.hide();
 };
 const tab = ref("C");
+
+// MIGRADO al backend nuevo: descarga el CADIDO (cuadro general de clasificación y disposición
+// documental) en Excel (.xlsx) generado por el servidor (GET /api/reportes/cadido).
+const descargar_cadido = async () => {
+  $q.loading.show();
+  const resp = await descargarReporte("/reportes/cadido", "CADIDO.xlsx");
+  $q.loading.hide();
+  if (!resp.success) {
+    $q.notify({ type: "negative", message: resp.data });
+  }
+};
+
 const actualizarModal = (valor) => {
   disposicionDocStore.initDisposicion();
   disposicionDocStore.actualizarModal(valor);

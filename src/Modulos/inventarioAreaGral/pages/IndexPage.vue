@@ -31,6 +31,14 @@
           <q-btn
             type="button"
             class="q-ma-sm"
+            color="green-8"
+            icon-right="grid_on"
+            label="Excel"
+            @click="descargar_excel"
+          />
+          <q-btn
+            type="button"
+            class="q-ma-sm"
             color="purple-ieen"
             icon-right="document_scanner"
             label="Anexo 5"
@@ -72,6 +80,7 @@ import {
   genera_anexo_4,
   genera_anexo_5,
 } from "../../../helpers/helper";
+import { descargarReporte } from "../../../helpers/descargar_reporte";
 
 const $q = useQuasar();
 const inventarioStore = useInventarioAreaStore();
@@ -118,6 +127,20 @@ const generar_anexo_4 = () => {
     ]);
   });
   genera_anexo_4(encabezado.value, rows);
+};
+
+// MIGRADO al backend nuevo: descarga el Inventario general por expediente en Excel (.xlsx)
+// generado por el servidor (GET /api/reportes/inventario/por-encabezado/{encabezadoId}).
+const descargar_excel = async () => {
+  $q.loading.show();
+  const resp = await descargarReporte(
+    `/reportes/inventario/por-encabezado/${props.encabezadoId}`,
+    "Inventario.xlsx"
+  );
+  $q.loading.hide();
+  if (!resp.success) {
+    $q.notify({ type: "negative", message: resp.data });
+  }
 };
 
 const generar_anexo_5 = () => {

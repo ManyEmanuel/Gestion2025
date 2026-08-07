@@ -34,6 +34,14 @@
             @click="generar_anexo_9"
           />
           <q-btn
+            type="button"
+            class="q-ma-sm"
+            color="red-8"
+            icon-right="picture_as_pdf"
+            label="Carátula"
+            @click="descargar_caratula"
+          />
+          <q-btn
             v-if="
               modulo == null
                 ? false
@@ -84,6 +92,7 @@ import { useDetalleCajaTransferenciaStore } from "../../../stores/detalle_caja_T
 import { onBeforeMount } from "vue";
 import { genera_anexo_9 } from "../../../helpers/helper";
 import { genera_anexo_10 } from "../../../helpers/anexo_10";
+import { descargarReporte } from "../../../helpers/descargar_reporte";
 
 import ModalComp from "../components/ModalComp.vue";
 import TablaComp from "../components/TablaComp.vue";
@@ -149,6 +158,20 @@ const generar_anexo_9 = async () => {
   );
 
   genera_anexo_9(encabezado.value, rows);
+};
+
+// MIGRADO al backend nuevo: descarga la Carátula de transferencia primaria en PDF generada por el
+// servidor (GET /api/reportes/transferencia/{transferenciaId}/caratula), aislada por área.
+const descargar_caratula = async () => {
+  $q.loading.show();
+  const resp = await descargarReporte(
+    `/reportes/transferencia/${props.transferenciaId}/caratula`,
+    "Caratula_Transferencia.pdf"
+  );
+  $q.loading.hide();
+  if (!resp.success) {
+    $q.notify({ type: "negative", message: resp.data });
+  }
 };
 
 const enviarTransferencia = async () => {
