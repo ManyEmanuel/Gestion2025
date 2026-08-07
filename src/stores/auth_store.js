@@ -12,6 +12,8 @@ const MAPA_SIGLAS_GRUPO = {
   'AI-CJS-TRANS': 'transferencia',
   'AI-BD': 'baja',
   'AI-CJS-BAJAS': 'baja',
+  'AI-CAT-ENLACE': 'enlace',
+  'AI-CAT-VOBO': 'visto-bueno',
 };
 
 function permisosDelToken() {

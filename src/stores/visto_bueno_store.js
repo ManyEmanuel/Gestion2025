@@ -26,36 +26,23 @@ export const useVistosBuenosStore = defineStore('VoBos', {
             this.visto.activo = null
         },
 
+        // MIGRADO al backend nuevo (corte de clientes): GET /api/vistosbuenos devuelve un array
+        // con el empleado resuelto. activo_String se deriva de activo.
         async loadVoBos() {
             try {
                 this.vistos_buenos = []
                 this.loading_table = true
-                const resp = await api.get('/Archivo/VistosBuenos')
-                if (resp.status == 200) {
-                    const { success, data } = resp.data
-                    if (success === true) {
-                        if (data) {
-                            const voBosArray = data.map((element) => {
-                                return {
-                                    id: element.id,
-                                    empleado: element.empleado,
-                                    activo_String: element.activo_String
-                                }
-                            })
-                            this.loading_table = false
-                            this.vistos_buenos = voBosArray
-                            return { success }
-                        } else {
-                            return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-                        }
-                    } else {
-                        this.loading_table = false
-                        return { success, data }
-                    }
-                } else {
-                    this.loading_table = false
-                    return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+                const resp = await api.get('/vistosbuenos')
+                this.loading_table = false
+                if (resp.status == 200 && Array.isArray(resp.data)) {
+                    this.vistos_buenos = resp.data.map((element) => ({
+                        id: element.id,
+                        empleado: element.empleado,
+                        activo_String: element.activo ? 'Activo' : 'Inactivo'
+                    }))
+                    return { success: true }
                 }
+                return { success: false, data: "Respuesta inesperada del servidor." }
             } catch (e) {
                 this.loading_table = false
                 console.error(e)
