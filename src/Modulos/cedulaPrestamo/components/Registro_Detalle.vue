@@ -132,10 +132,11 @@ watch(anioDetalle, (val) => {
   }
 });
 
-const leerInventario = async (id) => {
-  $q.loading.show();
-  await inventariosAreas.loadInventario(id);
-  $q.loading.hide();
+const leerInventario = (id) => {
+  // Corte al backend nuevo: el detalle del expediente se toma de la opción ya cargada por el picker
+  // (endpoint /expedientes/por-area), no de loadInventario (legado compartido). Aporta la fecha de
+  // término; la ubicación (signatura) la captura el usuario, ya que el expediente no la trae.
+  inventariosAreas.seleccionarInventarioLocal(id);
 };
 
 const cargarDetalle = async (anio) => {

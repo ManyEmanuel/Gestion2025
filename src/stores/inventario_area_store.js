@@ -393,38 +393,52 @@ export const useInventarioAreaStore = defineStore('InventarioArea', {
       }
     },
 
+    // MIGRADO al backend nuevo (corte): GET /api/expedientes/por-area/{areaId}?clasificado=false ->
+    // expedientes NO clasificados del área para el selector de préstamo. La opción lleva la fecha de
+    // término y la clave (para poblar el detalle sin llamar a loadInventario). El año se deriva de la clave.
     async loadInventariosArea(areaId) {
       try {
         this.inventariosArea = []
-        let listaAnio = []
-        const resp = await api.get(`/Archivo/InventariosGneralesAreas/ByArea/${areaId}`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success == true) {
-            if (data) {
-              const inventarioOpt = data.map((inventario) => {
-                const { label, value } = inventario
-                let filtroUno = label.split("-")
-                let filtroDos = filtroUno[0].split("/")
-                let anio = parseInt(filtroDos[filtroDos.length - 1])
-                listaAnio.push(anio)
-                return {
-                  label, value, anio
-                }
-              })
-              this.inventariosArea = inventarioOpt
-              this.listaAnios = [...new Set(listaAnio)];
-              this.listaAnios.sort((a, b) => a - b);
-            }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        const resp = await api.get(`/expedientes/por-area/${areaId}?clasificado=false`)
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          this.inventariosArea = resp.data.map((e) => this.__opcionExpediente(e))
+          const anios = this.inventariosArea.map(x => x.anio).filter(a => !isNaN(a))
+          this.listaAnios = [...new Set(anios)].sort((a, b) => a - b)
+          return { success: true }
         }
+        return { success: false, data: "Respuesta inesperada del servidor." }
       } catch (error) {
         console.error(error)
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+      }
+    },
+
+    // Arma la opción del picker de expediente desde el DTO nuevo (id, claveClasificacion,
+    // nombreExpediente, fechaTermino). El año sale del último segmento de la clave (…/AAAA).
+    __opcionExpediente(e) {
+      const clave = e.claveClasificacion || ''
+      const partes = clave.split('/')
+      const anio = parseInt(partes[partes.length - 1])
+      return {
+        label: `${clave}-${e.nombreExpediente}`,
+        value: e.id,
+        clave,
+        anio,
+        fechaTermino: e.fechaTermino
+      }
+    },
+
+    // Corte: pobla `inventario` (que la pantalla de préstamo liga) desde la opción ya cargada, en vez
+    // de llamar a loadInventario (endpoint legado compartido). El expediente no trae ubicación en el
+    // backend nuevo, así que la ubicación (signatura) queda vacía para que el usuario la capture.
+    seleccionarInventarioLocal(id) {
+      this.initInventario()
+      const opt = this.inventariosArea.find((x) => x.value == id)
+      if (opt) {
+        this.inventario.clave_Clasificacion = opt.clave
+        this.inventario.fecha_Termino = opt.fechaTermino
+        this.inventario.ubicacion = null
+        this.inventario.no_Expediente_Interno = null
       }
     },
 
@@ -438,28 +452,19 @@ export const useInventarioAreaStore = defineStore('InventarioArea', {
       }
     },
 
+    // MIGRADO al backend nuevo: GET /api/expedientes/por-area/{areaId}?clasificado=true (expedientes
+    // clasificados del área) para el selector del préstamo clasificado.
     async loadInventariosAreaClasificado(areaId) {
       try {
         this.inventariosArea = []
-        const resp = await api.get(`/Archivo/InventariosGneralesAreas/ByAreaClasificado/${areaId}`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success == true) {
-            if (data) {
-              const inventarioOpt = data.map((inventario) => {
-                const { label, value } = inventario
-                return {
-                  label, value
-                }
-              })
-              this.inventariosArea = inventarioOpt
-            }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        const resp = await api.get(`/expedientes/por-area/${areaId}?clasificado=true`)
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          this.inventariosArea = resp.data.map((e) => this.__opcionExpediente(e))
+          const anios = this.inventariosArea.map(x => x.anio).filter(a => !isNaN(a))
+          this.listaAnios = [...new Set(anios)].sort((a, b) => a - b)
+          return { success: true }
         }
+        return { success: false, data: "Respuesta inesperada del servidor." }
       } catch (error) {
         console.error(error)
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
