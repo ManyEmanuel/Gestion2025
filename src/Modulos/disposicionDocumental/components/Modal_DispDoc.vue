@@ -237,6 +237,10 @@ const onSubmit = async () => {
     disposicion.value.subSerie_Id = subSerieId.value.value;
   disposicion.value.valor_Documental_Id = valorDocumentalId.value.value;
   disposicion.value.nivel_Seguridad_Id = nivelSeguridadId.value.value;
+  // Reset de los flags de destino: el dropdown es la única fuente de verdad al guardar.
+  disposicion.value.eliminacion = null;
+  disposicion.value.archivo_Historico = null;
+  disposicion.value.muestreo = null;
   switch (disposicionDocumentalId.value) {
     case "Eliminación":
       disposicion.value.eliminacion = true;

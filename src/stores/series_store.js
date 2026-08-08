@@ -68,36 +68,20 @@ export const useSeriesStore = defineStore('SeriesStore', {
       }
     },
 
+    // MIGRADO al backend nuevo (corte): GET /api/series/por-seccion/{seccionId} -> array de
+    // { id, seccionId, clave, nombre }. Se arma { value, label } para el dropdown.
     async loadListaSeries(seccionId) {
       try {
         this.listaSeries = []
-        const resp = await api.get(`/Archivo/Series/BySeccion/${seccionId}`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            if (data) {
-              data.forEach(element => {
-                const {
-                  id,
-                  serie_Compuestsa,
-                  descripcion
-                } = element
-
-                const serieItem = { value: id, label: `${serie_Compuestsa}-${descripcion}` }
-                this.listaSeries.push(serieItem)
-              });
-
-              return { success }
-            } else {
-              return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-            }
-
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        const resp = await api.get(`/series/por-seccion/${seccionId}`)
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          this.listaSeries = resp.data.map((element) => ({
+            value: element.id,
+            label: `${element.clave}-${element.nombre}`
+          }))
+          return { success: true }
         }
+        return { success: false, data: "Respuesta inesperada del servidor." }
       } catch (e) {
         console.error(e)
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
