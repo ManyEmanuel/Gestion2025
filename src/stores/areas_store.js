@@ -23,30 +23,22 @@ export const useAreaStore = defineStore('Areas', {
       this.area.area = null
     },
 
+    // MIGRADO al backend nuevo (corte): GET /api/areas -> array de { id, siglas, nombre }.
+    // Selector reutilizable (préstamos, encabezados, transferencias, bajas, etc.).
     async loadListaAreas() {
       try {
         this.areas = []
-        const resp = await api.get('/Areas')
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            if (data) {
-              let areasArray = data.map((area) => {
-                return {
-                  label: `${area.siglas} - ${area.nombre}`,
-                  value: area.id
-                }
-              })
-              this.areas = areasArray;
-            }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        const resp = await api.get('/areas')
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          this.areas = resp.data.map((area) => ({
+            label: `${area.siglas} - ${area.nombre}`,
+            value: area.id
+          }))
+          return { success: true }
         }
+        return { success: false, data: "Respuesta inesperada del servidor." }
       } catch (error) {
-        console.log(error)
+        console.error(error)
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
       }
     },

@@ -3,6 +3,10 @@ import { api } from 'src/boot/axios';
 
 // Corte al backend nuevo: los endpoints REST devuelven fechas ISO y camelCase. Estos helpers
 // adaptan una fila de préstamo del backend nuevo a la forma que ya consume la UI del cliente.
+// Las escrituras responden 204 (o 201) y problem+json en error (axios lanza en no-2xx).
+const mensajeError = (e, defecto = "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte") =>
+  (e && e.response && e.response.data && (e.response.data.detail || e.response.data.title)) || defecto
+
 const soloFecha = (iso) => (iso ? String(iso).substring(0, 10) : null)
 
 const mapFilaPrestamo = (p) => ({
@@ -320,24 +324,18 @@ export const useCedulaPrestamoStore = defineStore('CedulaPrestamo', {
       }
     },
 
+    // MIGRADO al backend nuevo: POST /api/prestamos/{id}/rechazar { motivo } -> 204.
     async rechazar(id, motivo, clasificado) {
       try {
-        console.log(motivo)
-        const resp = await api.post(`/Archivo/CedulasPrestamosExpedientes/Rechazar/${id}`, { motivo })
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            this.loadSolicitudesAreas(clasificado);
-            return { success, data }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo" }
+        const resp = await api.post(`/prestamos/${id}/rechazar`, { motivo })
+        if (resp.status === 204 || resp.status === 200) {
+          this.loadSolicitudesAreas(clasificado);
+          return { success: true, data: "Solicitud rechazada" }
         }
+        return { success: false, data: "Ocurrio un error, intentelo de nuevo" }
       } catch (e) {
         console.error(e)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        return { success: false, data: mensajeError(e) }
       }
     },
 
