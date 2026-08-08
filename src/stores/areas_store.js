@@ -129,29 +129,21 @@ export const useAreaStore = defineStore('Areas', {
       }
     },
 
+    // MIGRADO al backend nuevo (corte): GET /api/empleados -> array de { id, nombreCompleto }.
+    // Selector reutilizable (vistos buenos, enlaces, préstamos, encabezados, etc.).
     async loadEmpleadosTodos() {
       try {
-        const resp = await api.get(`/Empleados/GetLista`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            if (data) {
-              let empleadosArray = data.map((empleado) => {
-                return {
-                  label: empleado.label,
-                  value: empleado.value
-                }
-              })
-              this.empleados = empleadosArray
-            }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        const resp = await api.get(`/empleados`)
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          this.empleados = resp.data.map((empleado) => ({
+            label: empleado.nombreCompleto,
+            value: empleado.id
+          }))
+          return { success: true }
         }
+        return { success: false, data: "Respuesta inesperada del servidor." }
       } catch (error) {
-        console.log(error)
+        console.error(error)
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
       }
     },
