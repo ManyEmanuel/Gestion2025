@@ -209,8 +209,9 @@ const actualizarModal = () => {
 const onSubmit = async () => {
   loading.value = true;
   const bodyFormData = new FormData();
-  bodyFormData.append("Archivo", file.value);
-  bodyFormData.append("No_Paginas", noPaginas.value);
+  // Nombres de campo del backend nuevo (multipart): archivo + noPaginas.
+  bodyFormData.append("archivo", file.value);
+  bodyFormData.append("noPaginas", noPaginas.value);
   const resp = await adjuntoStore.createAdjunto(
     inventario.value.id,
     bodyFormData

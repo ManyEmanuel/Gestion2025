@@ -1,6 +1,10 @@
 import { defineStore } from 'pinia';
 import { api } from 'src/boot/axios';
 
+// Corte al backend nuevo: las escrituras REST responden 201/204 y problem+json en error (axios lanza).
+const mensajeError = (e, defecto = "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte") =>
+  (e && e.response && e.response.data && (e.response.data.detail || e.response.data.title)) || defecto
+
 export const useAdjuntoInventarioStore = defineStore('AdjuntoInventario', {
     state: () => ({
         modal: false,
@@ -86,47 +90,34 @@ export const useAdjuntoInventarioStore = defineStore('AdjuntoInventario', {
             }
         },
 
+        // MIGRADO: POST /api/adjuntos/por-expediente/{inventarioId} (multipart: archivo + noPaginas).
+        // 201 Created. El adjunto se guarda local en el backend (IFileStorage).
         async createAdjunto(inventarioId, adjunto) {
             try {
-                const resp = await api.post(`/Archivo/AdjuntosInventariosGeneral/${inventarioId}`, adjunto, {
-                    headers: {
-                        'Conten-Type': 'multipart/form-data'
-                    }
-                })
-                if (resp.status == 200) {
-                    const { success, data } = resp.data
-                    if (success == true) {
-                        this.loadAdjuntos(inventarioId)
-                        return { success, data }
-                    } else {
-                        return { success, data }
-                    }
-                } else {
-                    return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+                const resp = await api.post(`/adjuntos/por-expediente/${inventarioId}`, adjunto)
+                if (resp.status === 201 || resp.status === 200) {
+                    this.loadAdjuntos(inventarioId)
+                    return { success: true, data: "Adjunto registrado con éxito" }
                 }
-            } catch (error) {
-                console.log(error)
                 return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+            } catch (error) {
+                console.error(error)
+                return { success: false, data: mensajeError(error) }
             }
         },
 
+        // MIGRADO: DELETE /api/adjuntos/{id} -> 204 (borrado lógico del metadato).
         async deleteAdjunto(inventarioId, id) {
             try {
-                const resp = await api.delete(`/Archivo/AdjuntosInventariosGeneral/${id}`)
-                if (resp.status == 200) {
-                    let { success, data } = resp.data
-                    if (success === true) {
-                        this.loadAdjuntos(inventarioId);
-                        return { success, data }
-                    } else {
-                        return { success, data }
-                    }
-                } else {
-                    return { success: false, data: "Ocurrio un error, intentelo de nuevo" }
+                const resp = await api.delete(`/adjuntos/${id}`)
+                if (resp.status === 204 || resp.status === 200) {
+                    this.loadAdjuntos(inventarioId);
+                    return { success: true, data: "Adjunto eliminado con éxito" }
                 }
+                return { success: false, data: "Ocurrio un error, intentelo de nuevo" }
             } catch (e) {
-                console.log(e)
-                return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+                console.error(e)
+                return { success: false, data: mensajeError(e) }
             }
         },
 
