@@ -27,36 +27,10 @@
         <template v-slot:body="props">
           <q-tr :props="props">
             <q-td v-for="col in props.cols" :key="col.name" :props="props">
-              <div v-if="col.name === 'id'">
-                <q-btn
-                  v-if="
-                    props.row.estatus != 'Aprobado' &&
-                    props.row.estatus != 'Rechazado' &&
-                    props.row.estatus != 'Afectado'
-                  "
-                  flat
-                  round
-                  color="purple-ieen"
-                  icon="check_circle"
-                  @click="aprobar(col.value)"
-                >
-                  <q-tooltip>Aprobar</q-tooltip>
-                </q-btn>
-                <q-btn
-                  v-if="
-                    props.row.estatus != 'Aprobado' &&
-                    props.row.estatus != 'Rechazado' &&
-                    props.row.estatus != 'Afectado'
-                  "
-                  flat
-                  round
-                  color="purple-ieen"
-                  icon="cancel"
-                  @click="rechazar(col.value)"
-                >
-                  <q-tooltip>Rechazar</q-tooltip>
-                </q-btn>
-              </div>
+              <!-- Corte: el backend nuevo no modela aprobación/rechazo por-expediente de
+                   transferencia; la vista AI se colapsó a solo-lectura + afectar toda la
+                   transferencia (el afectar está en la página, no por renglón). -->
+              <div v-if="col.name === 'id'"></div>
               <label v-else>{{ col.value }}</label>
             </q-td>
           </q-tr>
@@ -67,19 +41,13 @@
 </template>
 <script setup>
 import { storeToRefs } from "pinia";
-import { useQuasar } from "quasar";
-import { useAuthStore } from "../../../stores/auth_store";
 import { ref, onBeforeMount } from "vue";
 import { useDetalleCajaTransferenciaStore } from "../../../stores/detalle_caja_Transferencia";
-import { useTransferenciaPrimariaEncabezadoStore } from "../../../stores/transferencia_primaria_encabezado_store";
 
-const transferenciaPrimariaStore = useTransferenciaPrimariaEncabezadoStore();
-const $q = useQuasar();
+// Corte: la vista quedó de solo-lectura (sin aprobar/rechazar), así que ya no se usan $q,
+// authStore/modulo ni el store de encabezado aquí.
 const detalleCajaTransferencia = useDetalleCajaTransferenciaStore();
-const authStore = useAuthStore();
 const { detallesAI, isLoading } = storeToRefs(detalleCajaTransferencia);
-const { modulo } = storeToRefs(authStore);
-const { encabezado } = storeToRefs(transferenciaPrimariaStore);
 const props = defineProps({
   transferenciaId: Number,
 });
@@ -182,86 +150,9 @@ const columns = [
   },
 ];
 
-const rechazar = async (id) => {
-  $q.dialog({
-    title: "Rechazar registro",
-    message: "¿Esta seguro de rechazar el registro?, Describe el motivo",
-    icon: "Warning",
-    persistent: true,
-    transitionShow: "scale",
-    transitionHide: "scale",
-    ok: {
-      color: "positive",
-      label: "Sí! rechazar",
-    },
-    cancel: {
-      color: "negative",
-      label: "Cancelar",
-    },
-    prompt: {
-      model: "",
-      type: "text", // optional
-    },
-  }).onOk(async (motivo) => {
-    $q.loading.show();
-    const resp = await detalleCajaTransferencia.rechazar(id, 0, motivo);
-    if (resp.success) {
-      $q.loading.hide();
-      $q.notify({
-        type: "positive",
-        message: resp.data,
-      });
-      detalleCajaTransferencia.loadDetallesAI(props.transferenciaId);
-    } else {
-      $q.loading.hide();
-      $q.notify({
-        type: "negative",
-        message: resp.data,
-      });
-    }
-  });
-};
-
-const aprobar = async (id) => {
-  $q.dialog({
-    title: "Aprobar registro",
-    message:
-      "¿Esta seguro de aprobar el registro?, Indique signatura topografica",
-    icon: "Warning",
-    persistent: true,
-    transitionShow: "scale",
-    transitionHide: "scale",
-    ok: {
-      color: "positive",
-      label: "Sí! aprobar",
-    },
-    cancel: {
-      color: "negative",
-      label: "Cancelar",
-    },
-    prompt: {
-      model: "",
-      type: "text", // optional
-    },
-  }).onOk(async (ubicacion) => {
-    $q.loading.show();
-    const resp = await detalleCajaTransferencia.aprobarDetalle(id, 0);
-    if (resp.success) {
-      $q.loading.hide();
-      $q.notify({
-        type: "positive",
-        message: resp.data,
-      });
-      detalleCajaTransferencia.loadDetallesAI(props.transferenciaId);
-    } else {
-      $q.loading.hide();
-      $q.notify({
-        type: "negative",
-        message: resp.data,
-      });
-    }
-  });
-};
+// Corte: se retiraron aprobar()/rechazar() por-expediente — el backend nuevo no modela aprobación
+// por-expediente de transferencia; la vista quedó de solo-lectura. El afectar (toda la transferencia)
+// vive en la página del módulo.
 </script>
 <style lang="sass">
 .my-sticky-last-column-table

@@ -89,33 +89,29 @@ export const useCajaTransferenciaStore = defineStore('CajaTransferenciaStore', {
       }
     },
 
+    // MIGRADO al backend nuevo (corte de clientes): el backend nuevo NO expone GET-por-id de caja;
+    // se toma del listado ya cargado (this.cajas) buscando por id (patrón edit-from-list). Se usa al
+    // EDITAR una caja (solo para agregar expedientes en Borrador). Los campos que el dominio nuevo no
+    // modela por caja (sección, fechas extremas, total de hojas, ubicación) van en null.
     async loadCaja(transferenciaId, id) {
       try {
-        const resp = await api.get(`/Archivo/CajasTransferencias/${transferenciaId}/${id}`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            console.log("Esto es el de caja", data)
-            if (data) {
-              this.caja.id = data.id
-              this.caja.no_Caja = data.no_Caja
-              this.caja.secciones_Id = data.secciones_Id
-              this.caja.seccion = data.seccion
-              this.caja.peso = data.peso
-              this.caja.fecha_Antigua = data.fecha_Antigua
-              this.caja.fecha_Reciente = data.fecha_Reciente
-              this.caja.total_Expedientes = data.total_Expedientes
-              this.caja.total_Paginas = data.total_Paginas
-              this.caja.year = data.year
-              this.caja.estatus = data.estatus
-              this.caja.ubicacion = data.ubicacion
-            }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        const encontrada = (this.cajas || []).find((c) => c.id == id)
+        if (encontrada) {
+          this.caja.id = encontrada.id
+          this.caja.no_Caja = encontrada.no_Caja
+          this.caja.secciones_Id = []
+          this.caja.seccion = null
+          this.caja.peso = encontrada.peso
+          this.caja.fecha_Antigua = null
+          this.caja.fecha_Reciente = null
+          this.caja.total_Expedientes = encontrada.total_Expedientes
+          this.caja.total_Paginas = null
+          this.caja.year = null
+          this.caja.estatus = encontrada.estatus
+          this.caja.ubicacion = null
+          return { success: true }
         }
+        return { success: false, data: "No se encontró la caja en el listado." }
       } catch (error) {
         console.log(error)
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }

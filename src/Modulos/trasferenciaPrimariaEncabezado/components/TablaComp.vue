@@ -37,8 +37,10 @@
           <q-tr :props="props">
             <q-td v-for="col in props.cols" :key="col.name" :props="props">
               <div v-if="col.name === 'id'">
+                <!-- Corte: el backend nuevo trata la transferencia como inmutable (sin update);
+                     se deshabilita editar. Alta = crear (etapa 2), envío/afectar = transiciones. -->
                 <q-btn
-                  v-if="modulo == null ? false : modulo.actualizar"
+                  v-if="false"
                   flat
                   round
                   color="purple-ieen"
@@ -57,13 +59,13 @@
                 >
                   <q-tooltip>Cajas</q-tooltip>
                 </q-btn>
+                <!-- Corte: el backend nuevo usa estatus 'Borrador'/'Enviada'/'Afectada'; enviar
+                     solo aplica en Borrador. -->
                 <q-btn
                   v-if="
                     modulo == null
                       ? false
-                      : modulo.leer &&
-                        props.row['estatus'] != 'Afectado' &&
-                        props.row['estatus'] != 'Enviado'
+                      : modulo.leer && props.row['estatus'] == 'Borrador'
                   "
                   flat
                   round
@@ -73,14 +75,9 @@
                 >
                   <q-tooltip>Enviar transferencia</q-tooltip>
                 </q-btn>
+                <!-- Corte: transferencia inmutable en el backend nuevo (sin delete); se deshabilita. -->
                 <q-btn
-                  v-if="
-                    modulo == null
-                      ? false
-                      : modulo.eliminar &&
-                        props.row['estatus'] != 'Afectado' &&
-                        props.row['estatus'] != 'Enviado'
-                  "
+                  v-if="false"
                   flat
                   round
                   color="purple-ieen"

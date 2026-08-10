@@ -34,18 +34,18 @@
                   round
                   color="purple-ieen"
                   :icon="
-                    encabezado.estatus == 'Afectado' ||
-                    encabezado.estatus == 'Enviado'
+                    encabezado.estatus == 'Afectada' ||
+                    encabezado.estatus == 'Enviada'
                       ? 'visibility'
                       : 'edit'
                   "
                   @click="editar(col.value, props.row['estatus'])"
                 >
                   <q-tooltip>{{
-                    encabezado.estatus == "Afectado" ||
-                    encabezado.estatus == "Enviado"
+                    encabezado.estatus == "Afectada" ||
+                    encabezado.estatus == "Enviada"
                       ? "Ver información"
-                      : "Editar registro"
+                      : "Agregar expedientes"
                   }}</q-tooltip>
                 </q-btn>
                 <q-btn
@@ -58,12 +58,9 @@
                 >
                   <q-tooltip>Generar listado excel</q-tooltip>
                 </q-btn>
+                <!-- Corte: la caja es inmutable en el backend nuevo (sin delete); se deshabilita. -->
                 <q-btn
-                  v-if="
-                    modulo == null
-                      ? false
-                      : modulo.eliminar && encabezado.estatus == 'Pendiente'
-                  "
+                  v-if="false"
                   flat
                   round
                   color="purple-ieen"

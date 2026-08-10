@@ -88,41 +88,50 @@ export const useDetalleCajaTransferenciaStore = defineStore('DetalleCajaTransfer
       }
     },
 
+    // MIGRADO al backend nuevo (corte de clientes): el backend nuevo no expone un listado de
+    // expedientes por transferencia; se arma agregando el detalle de cada caja
+    // (GET /transferenciasprimarias/{id}/cajas -> por cada caja GET .../cajas/{cajaId}/detalle).
+    // El `estatus` es el del expediente (InventarioGeneral); el backend nuevo NO modela aprobación
+    // por-expediente de transferencia (la vista AI se colapsó a solo-lectura + afectar).
     async loadDetallesAI(transferenciaId) {
       try {
         this.isLoading = true;
-        const resp = await api.get(`/DetallesCajasTrasnferencias/0/ByTransferencia/${transferenciaId}`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            if (data) {
-              this.detallesAI = []
-              let detalleArray = data.map((detalle) => {
-                return {
-                  id: detalle.id,
-                  nombre_Expediente: detalle.nombre_Expediente,
-                  caja_Id: detalle.caja_Id,
-                  inventario_Area_Id: detalle.inventario_Area_Id,
-                  clave_Clasificacion: detalle.clave_Clasificacion,
-                  no_Expediente_Interno: detalle.no_Expediente_Interno,
-                  destino_Final: detalle.destino_Final,
-                  vigencia_Concentracion: detalle.vigencia_Concentracion,
-                  descripcion: detalle.descripcion,
-                  signatura_Topografica: detalle.signatura_Topografica,
-                  total_Paginas: detalle.total_Paginas,
-                  fecha_Inicio: detalle.fecha_Inicio,
-                  fecha_Termino: detalle.fecha_Termino,
-                  valor_Documental: detalle.valor_Documental,
-                  estatus: detalle.estatus
-                }
-              })
-              this.detallesAI = detalleArray;
-              this.isLoading = false;
-            }
-          }
-        } else {
+        this.detallesAI = []
+        const respCajas = await api.get(`/transferenciasprimarias/${transferenciaId}/cajas`)
+        if (!(respCajas.status == 200 && Array.isArray(respCajas.data))) {
           this.isLoading = false;
+          return { success: false, data: "Respuesta inesperada del servidor." }
         }
+        const agregados = []
+        for (const c of respCajas.data) {
+          const r = await api.get(`/transferenciasprimarias/cajas/${c.id}/detalle`)
+          if (r.status == 200 && Array.isArray(r.data)) {
+            r.data.forEach((d) => {
+              const partes = (d.claveClasificacion || '').split('/')
+              agregados.push({
+                id: d.id,
+                nombre_Expediente: d.nombreExpediente,
+                caja_Id: d.cajaId,
+                inventario_Area_Id: d.inventarioGeneralId,
+                clave_Clasificacion: d.claveClasificacion,
+                no_Expediente_Interno: partes.length > 3 ? partes[3] : null,
+                destino_Final: null,
+                vigencia_Concentracion: d.vigenciaConcentracion,
+                descripcion: d.descripcion,
+                signatura_Topografica: d.signaturaTopografica,
+                total_Paginas: d.totalPaginas,
+                fecha_Inicio: d.fechaInicio,
+                fecha_Termino: d.fechaTermino,
+                valor_Documental: null,
+                estatus: d.estatus,
+                motivo_Rechazo: d.motivoRechazo
+              })
+            })
+          }
+        }
+        this.detallesAI = agregados;
+        this.isLoading = false;
+        return { success: true }
       } catch (error) {
         this.isLoading = false;
         console.error(error)

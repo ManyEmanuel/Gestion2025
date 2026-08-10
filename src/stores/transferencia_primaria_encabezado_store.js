@@ -276,54 +276,50 @@ export const useTransferenciaPrimariaEncabezadoStore = defineStore('Transferenci
       }
     },
 
+    // MIGRADO al backend nuevo (corte de clientes): la vista AI (afectar) se COLAPSÓ — el backend
+    // gatea todo por área generadora, no hay recepción por área de concentración. La bandeja AI
+    // refleja las transferencias del usuario (GET /api/transferenciasprimarias, scoped), igual que
+    // loadEncabezados; el afectar solo aplica a las que están 'Enviada'. Roles legados
+    // (valida/coteja) y pesos/fechas extremas van en null.
     async loadEncabezadosAi() {
       try {
         this.isLoading = true
-        const resp = await api.get('Archivo/TransferenciasPrimariasEncabezadosAI')
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (data) {
-            this.encabezadosAi = []
-            let areas = []
-            const encabezadosArray = data.map((enc) => {
-              areas.push(enc.area_Generadora)
-              return {
-                id: enc.id,
-                area_Responsable_Id: enc.area_Responsable_Id,
-                area_Responsable: enc.area_Responsable,
-                fecha_Registro: enc.fecha_Registro,
-                area_Generadora_Id: enc.area_Generadora_Id,
-                area_Generadora: enc.area_Generadora,
-                enlace_Id: enc.enlace_Id,
-                enlace: enc.enlace,
-                valida_Area_Id: enc.valida_Area_Id,
-                valida_Area: enc.valida_Area,
-                coteja_Id: enc.coteja_Id,
-                coteja: enc.coteja,
-                valida_Id: enc.valida_Id,
-                valida: enc.valida,
-                nombre: enc.nombre,
-                numero_Transferencia: enc.numero_Transferencia,
-                total_Cajas: enc.total_Cajas,
-                total_Expedientes: enc.total_Expedientes,
-                peso_Total: enc.peso_Total,
-                fecha_Antigua: enc.fecha_Antigua,
-                fecha_Reciente: enc.fecha_Reciente,
-                estatus: enc.estatus,
-              }
-            })
-            this.encabezadosAi = encabezadosArray
-            this.encabezadosAiFiltro = encabezadosArray
-            this.isLoading = false
-            let areasUnicas = [...new Set(areas)].sort();
-            areasUnicas.unshift("Ver todos");
-            this.listaAreasGeneradoras = areasUnicas
-            return { success }
-          }
-        } else {
-          this.isLoading = false
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        const resp = await api.get('/transferenciasprimarias')
+        this.isLoading = false
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          let areas = []
+          const encabezadosArray = resp.data.map((enc) => {
+            areas.push(enc.areaGeneradora)
+            return {
+              id: enc.id,
+              area_Responsable_Id: enc.areaResponsableId,
+              area_Responsable: enc.areaResponsable,
+              fecha_Registro: null,
+              area_Generadora_Id: enc.areaGeneradoraId,
+              area_Generadora: enc.areaGeneradora,
+              enlace_Id: enc.enlaceId,
+              enlace: enc.enlace,
+              valida_Area_Id: null, valida_Area: null,
+              coteja_Id: null, coteja: null,
+              valida_Id: null, valida: null,
+              nombre: enc.nombre,
+              numero_Transferencia: enc.numeroTransferencia,
+              total_Cajas: enc.totalCajas,
+              total_Expedientes: enc.totalExpedientes,
+              peso_Total: null,
+              fecha_Antigua: null,
+              fecha_Reciente: null,
+              estatus: enc.estatus,
+            }
+          })
+          this.encabezadosAi = encabezadosArray
+          this.encabezadosAiFiltro = encabezadosArray
+          let areasUnicas = [...new Set(areas)].sort();
+          areasUnicas.unshift("Ver todos");
+          this.listaAreasGeneradoras = areasUnicas
+          return { success: true }
         }
+        return { success: false, data: "Respuesta inesperada del servidor." }
       } catch (error) {
         this.isLoading = false
         console.error(error)
@@ -363,48 +359,52 @@ export const useTransferenciaPrimariaEncabezadoStore = defineStore('Transferenci
       }
     },
 
+    // MIGRADO al backend nuevo (corte de clientes): el backend nuevo NO expone GET-por-id; el
+    // encabezado se toma del listado ya scoped (GET /api/transferenciasprimarias) buscando por id
+    // (patrón edit-from-list). Los roles legados de firma (valida/coteja/puestos) y pesos/fechas
+    // extremas, que el dominio nuevo no modela, van en null.
     async loadEncabezado(id) {
       try {
         this.isLoading = true
-        const resp = await api.get(`Archivo/TransferenciasPrimariasEncabezados/${id}`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (data) {
-            this.encabezado.id = data.id;
-            this.encabezado.area_Responsable_Id = data.area_Responsable_Id;
-            this.encabezado.area_Responsable = data.area_Responsable;
-            this.encabezado.fecha_Registro = data.fecha_Registro;
-            this.encabezado.area_Generadora_Id = data.area_Generadora_Id;
-            this.encabezado.area_Generadora = data.area_Generadora;
-            this.encabezado.enlace_Id = data.enlace_Id;
-            this.encabezado.enlace = data.enlace;
-            this.encabezado.puesto_Enlace = data.puesto_Enlace;
-            this.encabezado.valida_Id = data.valida_Id;
-            this.encabezado.valida = data.valida;
-            this.encabezado.puesto_Valida = data.puesto_Valida;
-            this.encabezado.valida_Area_Id = data.valida_Area_Id;
-            this.encabezado.valida_Area = data.valida_Area;
-            this.encabezado.puesto_Valida_Area = data.puesto_Valida_Area
-            this.encabezado.coteja = data.coteja;
-            this.encabezado.coteja_Id = data.coteja_Id
-            this.encabezado.puesto_Coteja = data.puesto_Coteja
-            this.encabezado.nombre = data.nombre;
-            this.encabezado.numero_Transferencia = data.numero_Transferencia;
-            this.encabezado.total_Cajas = data.total_Cajas;
-            this.encabezado.total_Expedientes = data.total_Expedientes;
-            this.encabezado.fecha_Antigua = data.fecha_Antigua;
-            this.encabezado.fecha_Reciente = data.fecha_Reciente;
-            this.encabezado.estatus = data.estatus;
-            this.encabezado.fecha_Transferencia = data.fecha_Transferencia
-            this.encabezado.secciones = data.secciones
-            this.encabezado.peso_Total = data.peso_Total
-            this.encabezado.conteo_Cajas = data.conteo_Cajas
-            this.encabezado.conteo_Hojas = data.conteo_Hojas
-            // this.encabezado.fecha_Transferencia = data.fecha_Transferencia;
+        const resp = await api.get('/transferenciasprimarias')
+        this.isLoading = false
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          const enc = resp.data.find((e) => e.id == id)
+          if (enc) {
+            this.encabezado.id = enc.id;
+            this.encabezado.area_Responsable_Id = enc.areaResponsableId;
+            this.encabezado.area_Responsable = enc.areaResponsable;
+            this.encabezado.fecha_Registro = null;
+            this.encabezado.area_Generadora_Id = enc.areaGeneradoraId;
+            this.encabezado.area_Generadora = enc.areaGeneradora;
+            this.encabezado.enlace_Id = enc.enlaceId;
+            this.encabezado.enlace = enc.enlace;
+            this.encabezado.puesto_Enlace = null;
+            this.encabezado.valida_Id = null;
+            this.encabezado.valida = null;
+            this.encabezado.puesto_Valida = null;
+            this.encabezado.valida_Area_Id = null;
+            this.encabezado.valida_Area = null;
+            this.encabezado.puesto_Valida_Area = null;
+            this.encabezado.coteja = null;
+            this.encabezado.coteja_Id = null;
+            this.encabezado.puesto_Coteja = null;
+            this.encabezado.nombre = enc.nombre;
+            this.encabezado.numero_Transferencia = enc.numeroTransferencia;
+            this.encabezado.total_Cajas = enc.totalCajas;
+            this.encabezado.total_Expedientes = enc.totalExpedientes;
+            this.encabezado.fecha_Antigua = null;
+            this.encabezado.fecha_Reciente = null;
+            this.encabezado.estatus = enc.estatus;
+            this.encabezado.fecha_Transferencia = null;
+            this.encabezado.secciones = null;
+            this.encabezado.peso_Total = null;
+            this.encabezado.conteo_Cajas = enc.totalCajas;
+            this.encabezado.conteo_Hojas = null;
           }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+          return { success: true }
         }
+        return { success: false, data: "Respuesta inesperada del servidor." }
       } catch (error) {
         console.error(error)
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }

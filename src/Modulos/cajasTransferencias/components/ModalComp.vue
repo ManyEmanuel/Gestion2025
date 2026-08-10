@@ -23,10 +23,7 @@
           <div class="col-12 col-xs-6 col-md-4">
             <q-input
               v-model="caja.no_Caja"
-              :readonly="
-                encabezado.estatus == 'Afectado' ||
-                encabezado.estatus == 'Enviado'
-              "
+              :readonly="isEditar || encabezado.estatus != 'Borrador'"
               label="No. Caja"
               hint="Ingrese número de caja"
               type="Number"
@@ -41,10 +38,7 @@
               label="Peso ( Kilogramos)"
               hint="Ingrese peso"
               type="Number"
-              :readonly="
-                encabezado.estatus == 'Afectado' ||
-                encabezado.estatus == 'Enviado'
-              "
+              :readonly="isEditar || encabezado.estatus != 'Borrador'"
             />
           </div>
           <div class="col-12 col-xs-6 col-md-4">
@@ -52,10 +46,7 @@
               v-model="caja.fecha_Antigua"
               label="Año mas antiguo"
               type="Number"
-              :readonly="
-                encabezado.estatus == 'Afectado' ||
-                encabezado.estatus == 'Enviado'
-              "
+              :readonly="isEditar || encabezado.estatus != 'Borrador'"
             />
           </div>
           <div class="col-12 col-xs-6 col-md-4">
@@ -63,10 +54,7 @@
               v-model="caja.fecha_Reciente"
               label="Año mas reciente"
               type="Number"
-              :readonly="
-                encabezado.estatus == 'Afectado' ||
-                encabezado.estatus == 'Enviado'
-              "
+              :readonly="isEditar || encabezado.estatus != 'Borrador'"
             />
           </div>
           <div class="col-12 col-xs-6 col-md-4">
@@ -95,10 +83,7 @@
               hint="Seleccione sección"
               lazy-rules
               :rules="[(val) => !!val || 'La sección es requerida']"
-              :readonly="
-                encabezado.estatus == 'Afectado' ||
-                encabezado.estatus == 'Enviado'
-              "
+              :readonly="isEditar || encabezado.estatus != 'Borrador'"
             />
           </div>
         </q-form>
@@ -107,9 +92,7 @@
       <br />
       <q-card-section>
         <RegistroDetalle
-          v-if="
-            encabezado.estatus != 'Afectado' && encabezado.estatus != 'Enviado'
-          "
+          v-if="encabezado.estatus == 'Borrador'"
           :transferenciaId="transferenciaId"
         />
       </q-card-section>
@@ -127,11 +110,11 @@
               @click="actualizarModal(false)"
               icon="highlight_off"
             />
+            <!-- Corte: la caja es inmutable en el backend nuevo (sin update de noCaja/peso). En
+                 edición el modal solo AGREGA expedientes (cada uno se persiste al vuelo vía
+                 RegistroDetalle); por eso Guardar solo aparece al crear una caja en Borrador. -->
             <q-btn
-              v-if="
-                encabezado.estatus != 'Afectado' &&
-                encabezado.estatus != 'Enviado'
-              "
+              v-if="!isEditar && encabezado.estatus == 'Borrador'"
               :loading="loading"
               type="button"
               color="secondary"
@@ -251,19 +234,13 @@ const onSubmit = async () => {
     caja.value.secciones = secciones_Id;
     let resp = null;
     loading.value = true;
-    if (isEditar.value == true) {
-      resp = await cajaTransferenciaStore.updateCaja(
-        props.transferenciaId,
-        caja.value.id,
-        caja.value
-      );
-    } else {
-      caja.value.detalle = arrayDetalles.value;
-      resp = await cajaTransferenciaStore.createCaja(
-        props.transferenciaId,
-        caja.value
-      );
-    }
+    // Corte: solo el alta (crear caja). El backend nuevo no actualiza la caja (inmutable); en
+    // edición el modal solo agrega expedientes (Guardar está oculto), así que aquí no hay updateCaja.
+    caja.value.detalle = arrayDetalles.value;
+    resp = await cajaTransferenciaStore.createCaja(
+      props.transferenciaId,
+      caja.value
+    );
     if (resp.success) {
       $q.notify({
         type: "positive",
