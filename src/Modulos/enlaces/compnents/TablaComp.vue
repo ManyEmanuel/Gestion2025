@@ -38,8 +38,10 @@
           <q-tr :props="props">
             <q-td v-for="col in props.cols" :key="col.name" :props="props">
               <div v-if="col.name === 'id'">
+                <!-- Corte: el backend nuevo no actualiza empleado/área de un enlace (solo el estado,
+                     vía activar/desactivar); se deshabilita editar. -->
                 <q-btn
-                  v-if="modulo.actualizar"
+                  v-if="false"
                   flat
                   round
                   color="purple-ieen"
@@ -58,7 +60,10 @@
                 >
                   <q-tooltip>Eliminar registro</q-tooltip>
                 </q-btn>
+                <!-- Corte: Anexo 12 (catálogo de firmas) diferido — depende del responsable de área,
+                     que el backend nuevo no modela. Rehacer como reporte de backend si se requiere. -->
                 <q-btn
+                  v-if="false"
                   flat
                   round
                   color="purple-ieen"
@@ -110,7 +115,7 @@ const $q = useQuasar();
 const enlaceArchivoStore = useEnlaceArchivoStore();
 const authStore = useAuthStore();
 const { modulo } = storeToRefs(authStore);
-const { enlaces, loading, enlace, enlacesFiltro } =
+const { enlaces, loading, enlacesFiltro } =
   storeToRefs(enlaceArchivoStore);
 
 const estatusEnlaces = ref(["Todos", "Inactivo", "Activo"]);
@@ -205,10 +210,8 @@ const activarEnlace = async (id) => {
     },
   }).onOk(async () => {
     $q.loading.show();
-    const resp = await enlaceArchivoStore.loadEnlace(id);
-    enlace.value.activo = true;
-    enlace.value.estatus = "Activo";
-    const resp2 = await enlaceArchivoStore.updateEnlace(id, enlace.value);
+    // Corte: PATCH /api/enlaces/{id}/estado { activo:true } (reemplaza al loadEnlace+updateEnlace legado).
+    const resp2 = await enlaceArchivoStore.cambiarEstadoEnlace(id, true);
     if (resp2.success) {
       $q.loading.hide();
       $q.notify({
@@ -244,10 +247,8 @@ const desactivarEnlace = async (id) => {
     },
   }).onOk(async () => {
     $q.loading.show();
-    const resp = await enlaceArchivoStore.loadEnlace(id);
-    enlace.value.activo = false;
-    enlace.value.estatus = "Inactivo";
-    const resp2 = await enlaceArchivoStore.updateEnlace(id, enlace.value);
+    // Corte: PATCH /api/enlaces/{id}/estado { activo:false } (reemplaza al loadEnlace+updateEnlace legado).
+    const resp2 = await enlaceArchivoStore.cambiarEstadoEnlace(id, false);
 
     if (resp2.success) {
       $q.loading.hide();

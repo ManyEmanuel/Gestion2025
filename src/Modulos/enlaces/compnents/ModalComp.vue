@@ -109,7 +109,7 @@ import { espera } from "../../../helpers/helper";
 const $q = useQuasar();
 const enlaceArchivoStore = useEnlaceArchivoStore();
 const areaStore = useAreaStore();
-const { enlace, modal, isEditar, myLocale } = storeToRefs(enlaceArchivoStore);
+const { enlace, modal, myLocale } = storeToRefs(enlaceArchivoStore);
 const { areas, empleados } = storeToRefs(areaStore);
 const loading = ref(false);
 const areaId = ref(null);
@@ -153,11 +153,9 @@ const onSubmit = async () => {
   loading.value = true;
   enlace.value.empleado_Id = empleadoId.value.value;
   enlace.value.area_Id = areaId.value.value;
-  if (isEditar.value == true) {
-    resp = await enlaceArchivoStore.updateEnlace(enlace.value.id, enlace.value);
-  } else {
-    resp = await enlaceArchivoStore.createEnlace(enlace.value);
-  }
+  // Corte: el backend nuevo no actualiza empleado/área de un enlace (solo el estado, vía
+  // activar/desactivar). La edición se deshabilitó, así que el modal solo crea.
+  resp = await enlaceArchivoStore.createEnlace(enlace.value);
   if (resp.success) {
     $q.notify({
       type: "positive",

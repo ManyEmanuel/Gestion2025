@@ -1,6 +1,10 @@
 import { defineStore } from 'pinia';
 import { api } from 'src/boot/axios';
 
+// Corte al backend nuevo: las escrituras REST responden 201/204 y problem+json en error (axios lanza).
+const mensajeError = (e, defecto = "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte") =>
+  (e && e.response && e.response.data && (e.response.data.detail || e.response.data.title)) || defecto
+
 export const useEnlaceArchivoStore = defineStore('enlaceArchivoStore', {
   state: () => ({
     myLocale: {
@@ -199,66 +203,53 @@ export const useEnlaceArchivoStore = defineStore('enlaceArchivoStore', {
       }
     },
 
+    // MIGRADO al backend nuevo: POST /api/enlaces { empleadoId, areaId } -> 201 { id } (nace activo).
     async createEnlace(enlace) {
       try {
-        const resp = await api.post("/Archivo/Enlace", enlace)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            this.loadEnlaces()
-            return { success, data }
-          } else {
-            return { success, data }
-          }
+        const resp = await api.post('/enlaces', {
+          empleadoId: enlace.empleado_Id,
+          areaId: enlace.area_Id
+        })
+        if (resp.status === 201 || resp.status === 200) {
+          this.loadEnlaces()
+          return { success: true, data: "Enlace registrado con éxito", id: resp.data && resp.data.id }
         }
-        else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-        }
+        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
       } catch (e) {
         console.error(e)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        return { success: false, data: mensajeError(e) }
       }
     },
 
-    async updateEnlace(id, enlace) {
+    // MIGRADO al backend nuevo: el dominio nuevo NO actualiza empleado/área de un enlace (solo el
+    // estado). PATCH /api/enlaces/{id}/estado { activo } -> 204 activa/desactiva. Reemplaza al PUT
+    // legado que usaban activar/desactivar; la edición de campos se deshabilitó (sin equivalente).
+    async cambiarEstadoEnlace(id, activo) {
       try {
-        const resp = await api.put(`/Archivo/Enlace/${id}`, enlace)
-        if (resp.status == 200) {
-          console.log(resp)
-          const { success, data } = resp.data
-          if (success === true) {
-            this.loadEnlaces()
-            return { success, data }
-          } else {
-            return { success, data }
-          }
+        const resp = await api.patch(`/enlaces/${id}/estado`, { activo })
+        if (resp.status === 204 || resp.status === 200) {
+          this.loadEnlaces()
+          return { success: true, data: activo ? "Enlace activado" : "Enlace desactivado" }
         }
-        else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-        }
+        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
       } catch (e) {
         console.error(e)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        return { success: false, data: mensajeError(e) }
       }
     },
 
+    // MIGRADO al backend nuevo: DELETE /api/enlaces/{id} -> 204.
     async deleteEnlace(id) {
       try {
-        const resp = await api.delete(`/Archivo/Enlace/${id}`)
-        if (resp.status == 200) {
-          let { success, data } = resp.data
-          if (success === true) {
-            this.loadEnlaces()
-            return { success, data }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo" }
+        const resp = await api.delete(`/enlaces/${id}`)
+        if (resp.status === 204 || resp.status === 200) {
+          this.loadEnlaces()
+          return { success: true, data: "Enlace eliminado con éxito" }
         }
+        return { success: false, data: "Ocurrio un error, intentelo de nuevo" }
       } catch (e) {
         console.log(e)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        return { success: false, data: mensajeError(e) }
       }
     },
 
