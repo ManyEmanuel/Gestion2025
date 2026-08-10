@@ -118,6 +118,12 @@ import { useInventarioAreaStore } from "../../../stores/inventario_area_store";
 import { useCajaTransferenciaStore } from "../../../stores/caja_trasnferencia_store";
 import { espera } from "src/helpers/helper";
 
+// Corte: transferenciaId lo pasa ModalComp por prop; createDetalle (agregar expediente al editar caja)
+// lo necesita para la ruta POST /transferenciasprimarias/{id}/expedientes del backend nuevo.
+const props = defineProps({
+  transferenciaId: { type: String, default: null },
+});
+
 const $q = useQuasar();
 const inventariosAreas = useInventarioAreaStore();
 const cajaStore = useCajaTransferenciaStore();
@@ -250,7 +256,7 @@ watch(inventariosOpt, (val) => {
 
 const leerInventario = async (id) => {
   $q.loading.show();
-  await inventariosAreas.loadInventario(id);
+  inventariosAreas.seleccionarInventarioOptLocal(id);
   detalle.value.total_Paginas = inventario.value.total_Paginas;
   detalle.value.descripcion = inventario.value.descripcion;
   $q.loading.hide();
@@ -269,7 +275,7 @@ const agregarDetalle = async () => {
         existe = detalles.value.some((x) => x.id == inv.value);
         if (existe == false) {
           detalle.value.inventario_Area_Id = inv.value;
-          await inventariosAreas.loadInventario(inv.value);
+          inventariosAreas.seleccionarInventarioOptLocal(inv.value);
           detalle.value.inventario_Area_Id = inv.value;
           detalle.value.nombre_Expediente = inventario.value.nombre_Expediente;
           detalle.value.clave_Clasificacion =
@@ -290,6 +296,7 @@ const agregarDetalle = async () => {
           await espera(100);
           total += 1;
           let resp = await detalleCajaStore.createDetalle(
+            props.transferenciaId,
             caja.value.id,
             detalle.value
           );
@@ -307,7 +314,7 @@ const agregarDetalle = async () => {
           (x) => x.clave_Clasificacion == inv.label
         );
         if (existe == false) {
-          await inventariosAreas.loadInventario(inv.value);
+          inventariosAreas.seleccionarInventarioOptLocal(inv.value);
           detalle.value.inventario_Area_Id = inv.value;
           detalle.value.nombre_Expediente = inventario.value.nombre_Expediente;
           detalle.value.clave_Clasificacion =
@@ -363,6 +370,7 @@ const agregarDetalle = async () => {
           return;
         }
         resp = await detalleCajaStore.createDetalle(
+          props.transferenciaId,
           caja.value.id,
           detalle.value
         );
@@ -424,6 +432,7 @@ const agregarDetalle = async () => {
           if (existe == false) {
             detalle.value.inventario_Area_Id = inv.value;
             let resp = await detalleCajaStore.createDetalle(
+              props.transferenciaId,
               caja.value.id,
               detalle.value
             );
@@ -448,7 +457,7 @@ const agregarDetalle = async () => {
             (x) => x.clave_Clasificacion == inv.label
           );
           if (existe == false) {
-            await inventariosAreas.loadInventario(inv.value);
+            inventariosAreas.seleccionarInventarioOptLocal(inv.value);
             detalle.value.inventario_Area_Id = inv.value;
             detalle.value.nombre_Expediente =
               inventario.value.nombre_Expediente;

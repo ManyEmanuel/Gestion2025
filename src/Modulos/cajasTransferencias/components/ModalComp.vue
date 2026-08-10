@@ -110,6 +110,7 @@
           v-if="
             encabezado.estatus != 'Afectado' && encabezado.estatus != 'Enviado'
           "
+          :transferenciaId="transferenciaId"
         />
       </q-card-section>
       <br />
@@ -180,7 +181,8 @@ const loading = ref(false);
 const myForm = ref(null);
 
 const props = defineProps({
-  transferenciaId: Number,
+  // Corte al backend nuevo: los ids de transferencia son Guids (string), no enteros.
+  transferenciaId: String,
 });
 
 onBeforeMount(() => {

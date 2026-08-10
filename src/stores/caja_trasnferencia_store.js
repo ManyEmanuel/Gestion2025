@@ -1,6 +1,10 @@
 import { defineStore } from 'pinia';
 import { api } from 'src/boot/axios';
 
+// Corte al backend nuevo: las escrituras REST responden 201/204 y problem+json en error (axios lanza).
+const mensajeError = (e, defecto = "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte") =>
+  (e && e.response && e.response.data && (e.response.data.detail || e.response.data.title)) || defecto
+
 export const useCajaTransferenciaStore = defineStore('CajaTransferenciaStore', {
   state: () => ({
     isLoading: false,
@@ -118,24 +122,33 @@ export const useCajaTransferenciaStore = defineStore('CajaTransferenciaStore', {
       }
     },
 
+    // MIGRADO al backend nuevo: el legado creaba la caja con sus expedientes EMBEBIDOS en un solo POST.
+    // El backend nuevo lo separa: AgregarCaja (POST /{tid}/cajas {noCaja, peso}) -> devuelve el id de la
+    // caja -> y luego un AgregarExpediente (POST /{tid}/expedientes) por cada expediente del detalle.
     async createCaja(transferenciaId, caja) {
       try {
-        const resp = await api.post(`/Archivo/CajasTransferencias/${transferenciaId}`, caja)
-        if (resp.status == 200) {
-          console.log(resp)
-          const { success, data } = resp.data
-          if (success == true) {
-            this.loadCajas(transferenciaId)
-            return { success, data }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        const respCaja = await api.post(`/transferenciasprimarias/${transferenciaId}/cajas`, {
+          noCaja: Number(caja.no_Caja),
+          peso: caja.peso != null && caja.peso !== '' ? Number(caja.peso) : null
+        })
+        const cajaId = respCaja && respCaja.data && respCaja.data.id
+        if (!cajaId) {
+          return { success: false, data: "No se pudo crear la caja." }
         }
+        for (const d of (caja.detalle || [])) {
+          await api.post(`/transferenciasprimarias/${transferenciaId}/expedientes`, {
+            cajaId,
+            inventarioGeneralId: d.inventario_Area_Id,
+            descripcion: d.descripcion || null,
+            signaturaTopografica: d.signatura_Topografica || null,
+            totalPaginas: d.total_Paginas != null ? Number(d.total_Paginas) : null
+          })
+        }
+        this.loadCajas(transferenciaId)
+        return { success: true, data: "Caja registrada con éxito" }
       } catch (error) {
         console.error(error)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        return { success: false, data: mensajeError(error) }
       }
     },
 

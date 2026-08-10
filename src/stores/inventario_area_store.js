@@ -1,6 +1,21 @@
 import { defineStore } from 'pinia';
 import { api } from 'src/boot/axios';
 
+// Corte al backend nuevo: área del usuario desde el claim `area` del JWT (para el selector de
+// expedientes de la caja de transferencia, que en el legado era por el área del usuario).
+function areaUsuarioToken() {
+  try {
+    const token = localStorage.getItem('key')
+    if (!token) return null
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+    const payload = JSON.parse(decodeURIComponent(escape(atob(base64))))
+    return payload.area || null
+  } catch (e) {
+    console.error(e)
+    return null
+  }
+}
+
 export const useInventarioAreaStore = defineStore('InventarioArea', {
   state: () => ({
     modal: false,
@@ -222,49 +237,64 @@ export const useInventarioAreaStore = defineStore('InventarioArea', {
 
     },
 
+    // MIGRADO al backend nuevo: selector de expedientes de la caja. GET /api/expedientes/por-area/
+    // {área del usuario} (el filtro server-side por sección/año del legado se relaja; el q-select tiene
+    // búsqueda). Se excluyen los expedientes ya capturados en las cajas existentes (vía el detalle
+    // migrado /transferenciasprimarias/cajas/{id}/detalle). Los params sección/año se conservan por
+    // compatibilidad de firma pero ya no filtran server-side.
     async loadInventariosAreaOpt(secciones, year_Inicio, year_Fin, cajas) {
       try {
         this.inventariosOpt = []
-        const secciones_id = secciones.map(element => {
-          return element.value
-        })
-
-        const resp = await api.post(`/Archivo/InventariosGneralesAreas/ByAreaOpt`, { "Secciones_Id": secciones_id, "year_Inicio": parseInt(year_Inicio), "year_Fin": parseInt(year_Fin) })
-        let clavesCapturadas = []
-        if (cajas.length > 0) {
-          for (let caja of cajas) {
-            const cajasResp = await api.get(`/DetallesCajasTrasnferencias/${caja.id}/GetAll`)
-            if (cajasResp.status == 200) {
-              let detallesCajas = cajasResp.data.data
-              detallesCajas.forEach(detalle => {
-                clavesCapturadas.push({ id: detalle.clave_Clasificacion })
-              })
-            }
-          }
+        const areaId = areaUsuarioToken()
+        if (!areaId) {
+          return { success: false, data: "Tu usuario no tiene área asociada." }
         }
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success == true) {
-            if (data) {
-              const inventarioOpt = data.map((inventario) => {
-                let filtro = cajas.length > 0 ? clavesCapturadas.find(detalle => detalle.id === inventario.label) : null
-                const { label, value } = inventario
-                return {
-                  label, value, filtro: filtro ? true : false
-                }
-              })
-
-              this.inventariosOpt = inventarioOpt.filter(x => x.filtro == false)
+        const clavesCapturadas = new Set()
+        for (const caja of (cajas || [])) {
+          if (!caja || !caja.id) continue
+          try {
+            const r = await api.get(`/transferenciasprimarias/cajas/${caja.id}/detalle`)
+            if (r.status == 200 && Array.isArray(r.data)) {
+              r.data.forEach((d) => clavesCapturadas.add(d.claveClasificacion))
             }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+          } catch (err) { console.warn('detalle caja', err && err.message) }
         }
+        const resp = await api.get(`/expedientes/por-area/${areaId}`)
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          this.inventariosOpt = resp.data
+            .filter((e) => !clavesCapturadas.has(e.claveClasificacion))
+            .map((e) => ({
+              label: `${e.claveClasificacion}-${e.nombreExpediente}`,
+              value: e.id,
+              clave: e.claveClasificacion,
+              nombre: e.nombreExpediente,
+              fechaInicio: e.fechaInicio,
+              fechaTermino: e.fechaTermino,
+              totalPaginas: e.totalPaginas
+            }))
+          return { success: true }
+        }
+        return { success: false, data: "Respuesta inesperada del servidor." }
       } catch (error) {
         console.error(error)
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+      }
+    },
+
+    // Corte: reemplaza a loadInventario (endpoint legado compartido) en el detalle de la caja de
+    // transferencia: pobla `inventario` desde la opción del picker ya cargada. Los campos que el DTO
+    // de expedientes-por-área no trae (valor documental, vigencia, disposición, nº interno) quedan en
+    // null (son solo de despliegue local; el backend solo recibe id/descripción/signatura/páginas).
+    seleccionarInventarioOptLocal(id) {
+      this.initInventario()
+      const opt = this.inventariosOpt.find((x) => x.value == id)
+      if (opt) {
+        this.inventario.id = opt.value
+        this.inventario.clave_Clasificacion = opt.clave
+        this.inventario.nombre_Expediente = opt.nombre
+        this.inventario.fecha_Inicio = opt.fechaInicio
+        this.inventario.fecha_Termino = opt.fechaTermino
+        this.inventario.total_Paginas = opt.totalPaginas
       }
     },
 
