@@ -16,6 +16,24 @@ function areaUsuarioToken() {
   }
 }
 
+// Corte: empleado del usuario (claim `empleado_id` del JWT) — quien aprueba/rechaza expedientes.
+function empleadoUsuarioToken() {
+  try {
+    const token = localStorage.getItem('key')
+    if (!token) return null
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+    const payload = JSON.parse(decodeURIComponent(escape(atob(base64))))
+    return payload.empleado_id || null
+  } catch (e) {
+    console.error(e)
+    return null
+  }
+}
+
+// Corte al backend nuevo: las escrituras REST responden 201/204 y problem+json en error (axios lanza).
+const mensajeError = (e, defecto = "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte") =>
+  (e && e.response && e.response.data && (e.response.data.detail || e.response.data.title)) || defecto
+
 export const useInventarioAreaStore = defineStore('InventarioArea', {
   state: () => ({
     modal: false,
@@ -628,24 +646,37 @@ export const useInventarioAreaStore = defineStore('InventarioArea', {
       }
     },
 
+    // MIGRADO al backend nuevo (corte de clientes): POST /api/expedientes (201 { id }, estado
+    // SinEnviar). Se mapea el objeto rico del form al comando; sub_Serie/disposición son opcionales;
+    // las vigencias vienen de la disposición seleccionada. Ubicación/valor documental/ampliaciones no
+    // los modela el alta del dominio nuevo (se omiten).
     async createInventario(inventario, encabezado_id) {
       try {
-
-        const resp = await api.post(`/Archivo/InventariosGneralesAreas/${encabezado_id}`, inventario)
-        if (resp.status == 200) {
-          const { success, data, id } = resp.data
-          if (success === true) {
-            this.loadInventarios(encabezado_id);
-            return { success, data, id }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        const num = (v) => (v != null && v !== '' ? Number(v) : null)
+        const resp = await api.post('/expedientes', {
+          encabezadoId: encabezado_id,
+          seccionId: inventario.seccion_Id,
+          serieId: inventario.serie_Id,
+          subSerieId: inventario.sub_Serie_Id || null,
+          disposicionDocumentalId: inventario.disposicion_Documental_Id || null,
+          consecutivo: num(inventario.consecutivo),
+          claveClasificacion: inventario.clave_Clasificacion || null,
+          nombreExpediente: inventario.nombre_Expediente || null,
+          descripcion: inventario.descripcion || null,
+          fechaInicio: inventario.fecha_Inicio || null,
+          fechaTermino: inventario.fecha_Termino || null,
+          vigenciaTramite: Number(inventario.vigencia_Tramite) || 0,
+          vigenciaConcentracion: Number(inventario.vigencia_Concentracion) || 0,
+          totalPaginas: num(inventario.total_Paginas)
+        })
+        if (resp.status === 201 || resp.status === 200) {
+          this.loadInventarios(encabezado_id)
+          return { success: true, data: "Expediente registrado con éxito", id: resp.data && resp.data.id }
         }
+        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
       } catch (e) {
         console.error(e)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        return { success: false, data: mensajeError(e) }
       }
     },
 
@@ -691,43 +722,49 @@ export const useInventarioAreaStore = defineStore('InventarioArea', {
       }
     },
 
+    // MIGRADO al backend nuevo: el expediente nace SinEnviar; aprobar exige Enviado. El legado no
+    // tenía paso "enviar", así que aprobar hace POST /expedientes/{id}/enviar y luego
+    // POST /expedientes/{id}/aprobar { empleadoAproboId } en secuencia. El aprobador es el usuario
+    // actual (claim empleado_id del JWT). Si ya estaba enviado, enviar falla silenciosamente y aprobar
+    // procede; si aprobar falla, se surface su error.
     async aprobarInventario(id, encabezadoId) {
+      const empleadoAproboId = empleadoUsuarioToken()
+      if (!empleadoAproboId) {
+        return { success: false, data: "Tu usuario no tiene un empleado asociado para aprobar." }
+      }
       try {
-        const resp = await api.get(`/Archivo/InventariosGneralesAreas/Aprobar/${id}`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success == true) {
-            this.loadInventarios(encabezadoId)
-            return { success, data }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-        }
+        await api.post(`/expedientes/${id}/enviar`)
       } catch (e) {
-        console.error(e)
+        console.warn('enviar (aprobar)', e && e.message)
+      }
+      try {
+        const resp = await api.post(`/expedientes/${id}/aprobar`, { empleadoAproboId })
+        if (resp.status === 204 || resp.status === 200) {
+          this.loadInventarios(encabezadoId)
+          return { success: true, data: "Expediente aprobado" }
+        }
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+      } catch (e) {
+        return { success: false, data: mensajeError(e) }
       }
     },
 
+    // MIGRADO al backend nuevo: igual que aprobar, rechazar exige Enviado -> enviar + rechazar.
     async rechazarInventario(id, encabezadoId, motivo) {
       try {
-        const resp = await api.post(`/Archivo/InventariosGneralesAreas/Rechazar/${id}`, { motivo })
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success == true) {
-            this.loadInventarios(encabezadoId)
-            return { success, data }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-        }
+        await api.post(`/expedientes/${id}/enviar`)
       } catch (e) {
-        console.error(e)
+        console.warn('enviar (rechazar)', e && e.message)
+      }
+      try {
+        const resp = await api.post(`/expedientes/${id}/rechazar`, { motivo })
+        if (resp.status === 204 || resp.status === 200) {
+          this.loadInventarios(encabezadoId)
+          return { success: true, data: "Expediente rechazado" }
+        }
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+      } catch (e) {
+        return { success: false, data: mensajeError(e) }
       }
     },
 

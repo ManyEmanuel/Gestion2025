@@ -1,6 +1,25 @@
 import { defineStore } from 'pinia';
 import { api } from 'src/boot/axios';
 
+// Corte al backend nuevo: las escrituras REST responden 201/204 y problem+json en error (axios lanza).
+const mensajeError = (e, defecto = "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte") =>
+  (e && e.response && e.response.data && (e.response.data.detail || e.response.data.title)) || defecto
+
+// Empleado y área del usuario autenticado, de los claims del JWT (para el área generadora y el enlace
+// del alta del encabezado de inventario).
+function datosUsuarioToken() {
+  try {
+    const token = localStorage.getItem('key')
+    if (!token) return {}
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+    const payload = JSON.parse(decodeURIComponent(escape(atob(base64))))
+    return { empleadoId: payload.empleado_id || null, areaId: payload.area || null }
+  } catch (e) {
+    console.error(e)
+    return {}
+  }
+}
+
 export const useEncabezadoInventarioStore = defineStore('encabezado', {
   state: () => ({
     modal: false,
@@ -145,217 +164,107 @@ export const useEncabezadoInventarioStore = defineStore('encabezado', {
       }
     },
 
+    // MIGRADO al backend nuevo (corte de clientes): el área generadora es el área del usuario (claim
+    // `area` del JWT); el nombre se resuelve desde /api/areas. El área RESPONSABLE ya no se deriva del
+    // área padre (jerarquía no poblada) — el usuario la elige con un selector en el modal.
     async loadArea() {
       try {
-        const resp = await api.get("/Areas/AreaByUsuario")
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            if (data) {
-              const { id, area_Id, area, area_Padre_Id, area_Padre } = data;
-              this.encabezado.id = id;
-              this.encabezado.area_Generadora_Id = area_Id;
-              this.encabezado.area_Generadora = area;
-              this.encabezado.area_Responsable_Id = area_Padre_Id;
-              this.encabezado.area_Responsable = area_Padre;
-              return { success }
-            } else {
-              return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-            }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        const usuario = datosUsuarioToken()
+        if (!usuario.areaId) {
+          return { success: false, data: "Tu usuario no tiene área asociada." }
         }
+        this.encabezado.area_Generadora_Id = usuario.areaId
+        const resp = await api.get("/areas")
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          const area = resp.data.find((a) => a.id == usuario.areaId)
+          this.encabezado.area_Generadora = area ? `${area.siglas} - ${area.nombre}` : null
+        }
+        return { success: true }
       } catch (e) {
         console.error(e)
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
       }
     },
 
+    // MIGRADO al backend nuevo (corte de clientes): el backend nuevo NO expone GET-por-id; el
+    // encabezado se toma del listado ya scoped (GET /api/encabezados) buscando por id (patrón
+    // edit-from-list). Los roles legados de firma (validó/VoBo/supervisa + puestos), que el dominio
+    // nuevo no modela, van en null.
     async loadEncabezado(id) {
       try {
-        this.initEncabezado()
-        const resp = await api.get(`/Archivo/InventariosGeneralesAreasEncabezado/${id}`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            if (data) {
-              this.encabezado.id = data.id
-              this.encabezado.area_Responsable_Id = data.area_Responsable_Id
-              this.encabezado.area_Responsable = data.area_Responsable
-              this.encabezado.area_Generadora_Id = data.area_Generadora_Id
-              this.encabezado.area_Generadora = data.area_Generadora
-              this.encabezado.enlace_Id = data.enlace_Id
-              this.encabezado.enlace = data.enlace
-              this.encabezado.puesto_Enlace = data.puesto_Enlace
-              this.encabezado.valido_Id = data.valido_Id
-              this.encabezado.valido = data.valido
-              this.encabezado.puesto_Valido = data.puesto_Valido
-              this.encabezado.visto_Bueno_Id = data.visto_Bueno_Id
-              this.encabezado.visto_Bueno = data.visto_Bueno
-              this.encabezado.puesto_Visto_Bueno = data.puesto_Visto_Bueno
-              this.encabezado.supervisa_Id = data.supervisa_Id
-              this.encabezado.supervisa = data.supervisa
-              this.encabezado.puesto_Supervisa = data.puesto_Supervisa
-              this.encabezado.nombre = data.nombre
-              this.encabezado.fecha_Registro = data.fecha_Registro
-              this.encabezado.ano = data.ano
-              return { success }
-            } else {
-              return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-            }
-          } else {
-            return { success, data }
+        const resp = await api.get('/encabezados')
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          const enc = resp.data.find((e) => e.id == id)
+          if (enc) {
+            this.encabezado.id = enc.id
+            this.encabezado.area_Responsable_Id = enc.areaResponsableId
+            this.encabezado.area_Responsable = enc.areaResponsable
+            this.encabezado.area_Generadora_Id = enc.areaGeneradoraId
+            this.encabezado.area_Generadora = enc.areaGeneradora
+            this.encabezado.enlace_Id = enc.enlaceId
+            this.encabezado.enlace = enc.enlace
+            this.encabezado.puesto_Enlace = null
+            this.encabezado.valido_Id = null; this.encabezado.valido = null; this.encabezado.puesto_Valido = null
+            this.encabezado.visto_Bueno_Id = null; this.encabezado.visto_Bueno = null; this.encabezado.puesto_Visto_Bueno = null
+            this.encabezado.supervisa_Id = null; this.encabezado.supervisa = null; this.encabezado.puesto_Supervisa = null
+            this.encabezado.nombre = enc.nombre
+            this.encabezado.fecha_Registro = null
+            this.encabezado.ano = enc.ano
           }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+          return { success: true }
         }
+        return { success: false, data: "Respuesta inesperada del servidor." }
       } catch (e) {
         console.error(e)
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
       }
     },
 
-    async loadResponsableArea() {
-      try {
-        const resp = await api.get("/ResponsablesAreas/ResposableByUsuario")
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            if (data) {
-              const { empleado_Id, empleado } = data;
-              this.encabezado.valido_Id = empleado_Id;
-              this.encabezado.valido = empleado;
-              return { success }
-            } else {
-              return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-            }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-        }
-      } catch (e) {
-        console.error(e)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-      }
-    },
-
-    async loadVoBo() {
-      try {
-        const resp = await api.get("/Archivo/InventariosGeneralesAreasEncabezado/GetVoBo")
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            if (data) {
-              const { empleado_Id, empleado } = data;
-              this.encabezado.visto_Bueno_Id = empleado_Id;
-              this.encabezado.visto_Bueno = empleado;
-              return { success }
-            } else {
-              return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-            }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-        }
-      } catch (e) {
-        console.error(e)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-      }
-    },
-
-    async loadSupervisa() {
-      try {
-        const resp = await api.get("/Archivo/InventariosGeneralesAreasEncabezado/GetSupervisa")
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            if (data) {
-              const { empleado_Id, empleado } = data;
-              this.encabezado.supervisa_Id = empleado_Id;
-              this.encabezado.supervisa = empleado;
-              return { success }
-            } else {
-              return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-            }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-        }
-      } catch (e) {
-        console.error(e)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-      }
-    },
-
+    // MIGRADO al backend nuevo: el enlace es el del empleado del usuario, buscado en /api/enlaces
+    // (scoped). Si el usuario no es enlace, queda vacío (el enlace es opcional al crear). Se retiraron
+    // las lecturas de rol legadas (loadResponsableArea/loadVoBo/loadSupervisa/loadRespArchivo): el
+    // dominio nuevo no modela validó/VoBo/supervisa.
     async loadEnlace() {
       try {
-        const resp = await api.get("/Archivo/Enlace/ByUsuario")
-        if (resp.status == 200) {
-          const { success, id, enlace } = resp.data
-          if (success === true) {
-            this.encabezado.enlace_Id = id
-            this.encabezado.enlace = enlace
-            return { success }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        const usuario = datosUsuarioToken()
+        if (!usuario.empleadoId) {
+          return { success: true }
         }
+        const resp = await api.get("/enlaces")
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          const enlace = resp.data.find((e) => e.empleadoId == usuario.empleadoId)
+          if (enlace) {
+            this.encabezado.enlace_Id = enlace.id
+            this.encabezado.enlace = enlace.empleado
+          }
+        }
+        return { success: true }
       } catch (e) {
         console.error(e)
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
       }
     },
 
-    async loadRespArchivo() {
-      try {
-        const resp = await api.get("/Archivo/InventariosGeneralesAreasEncabezado/GetRespArchivo")
-        if (resp.status == 200) {
-          const { success, id, empleado } = resp.data
-          if (success === true) {
-            this.encabezado.visto_Bueno_Id = id
-            this.encabezado.visto_Bueno = empleado
-            return { success }
-
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-        }
-      } catch (e) {
-        console.error(e)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-      }
-    },
-
+    // MIGRADO al backend nuevo: POST /api/encabezados (201 { id }, estado Borrador). Área generadora =
+    // área del usuario (JWT); enlace = enlace del empleado; área responsable = selector. Los roles
+    // legados (validó/VoBo/supervisa) no los modela el backend y se omiten.
     async createEncabezado(encabezado) {
       try {
-        const resp = await api.post("/Archivo/InventariosGeneralesAreasEncabezado", encabezado)
-        if (resp.status == 200) {
-          const { success, data, id } = resp.data
-          if (success === true) {
-            this.loadEncabezados();
-            return { success, data, id }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        const resp = await api.post('/encabezados', {
+          areaGeneradoraId: encabezado.area_Generadora_Id,
+          areaResponsableId: encabezado.area_Responsable_Id,
+          enlaceId: encabezado.enlace_Id || null,
+          nombre: encabezado.nombre,
+          ano: encabezado.ano != null && encabezado.ano !== '' ? Number(encabezado.ano) : null
+        })
+        if (resp.status === 201 || resp.status === 200) {
+          this.loadEncabezados();
+          return { success: true, data: "Encabezado registrado con éxito", id: resp.data && resp.data.id }
         }
+        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
       } catch (e) {
         console.error(e)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        return { success: false, data: mensajeError(e) }
       }
     },
 

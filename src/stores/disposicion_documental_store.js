@@ -181,88 +181,45 @@ export const useDisposicionDocStore = defineStore('DisposicionDocStore', {
       return { success: true }
     },
 
+    // MIGRADO al backend nuevo (corte de clientes): GET /api/disposiciones/por-serie/{serieId}
+    // devuelve las disposiciones de la serie; se elige la de la subserie indicada (o la de nivel serie
+    // si no hay subserie). Provee las vigencias y el DisposicionDocumentalId para el alta del
+    // expediente. (Antes había dos definiciones duplicadas de este método; se unifican en una.)
     async loadDisposicionBySerie(seccion, serie, subserie) {
       try {
         this.initDisposicion()
-        const resp = await api.get(`/Archivo/DisposicionesDocumentales/ConsultaDisposicion?Seccion_Id=${seccion}&Serie_Id=${serie}&SubSerie_Id=${subserie}`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            if (data) {
-              this.disposicion.id = data.id
-              this.disposicion.seccion_Id = data.seccion_Id
-              this.disposicion.seccion = data.seccion
-              this.disposicion.serie_Id = data.serie_Id
-              this.disposicion.serie = data.serie
-              this.disposicion.subSerie_Id = data.subSerie_Id
-              this.disposicion.subSerie = data.subSerie
-              this.disposicion.nivel_Seguridad_Id = data.nivel_Seguridad_Id
-              this.disposicion.nivel_Seguridad = data.nivel_Seguridad
-              this.disposicion.valor_Documental_Id = data.valor_Documental_Id
-              this.disposicion.valor_Documental = data.valor_Documental
-              this.disposicion.nombre = data.nombre
-              this.disposicion.vigencia_Archivo_Tramite = data.vigencia_Archivo_Tramite
-              this.disposicion.vigencia_Archivo_Concentracion = data.vigencia_Archivo_Concentracion
-              this.disposicion.eliminacion = data.eliminacion
-              this.disposicion.archivo_Historico = data.archivo_Historico
-              this.disposicion.muestreo = data.muestreo
-              this.disposicion.observaciones = data.observaciones
-              this.disposicion.sistema_Datos_Personales_Nombre = data.sistema_Datos_Personales_Nombre
-              this.disposicion.disposicion_Documental = data.disposicion_Documental
-              return { success }
-            } else {
-              return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-            }
-          } else {
-            return { success, data }
+        const resp = await api.get(`/disposiciones/por-serie/${serie}`)
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          let d = null
+          if (subserie) {
+            d = resp.data.find((x) => x.subSerieId == subserie)
           }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-        }
-      } catch (e) {
-        console.error(e)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-      }
-    },
-
-    async loadDisposicionBySerie(seccion, serie) {
-      try {
-        this.initDisposicion()
-        const resp = await api.get(`/Archivo/DisposicionesDocumentales/ConsultaDisposicion?Seccion_Id=${seccion}&Serie_Id=${serie}`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            if (data) {
-              this.disposicion.id = data.id
-              this.disposicion.seccion_Id = data.seccion_Id
-              this.disposicion.seccion = data.seccion
-              this.disposicion.serie_Id = data.serie_Id
-              this.disposicion.serie = data.serie
-              this.disposicion.subSerie_Id = data.subSerie_Id
-              this.disposicion.subSerie = data.subSerie
-              this.disposicion.nivel_Seguridad_Id = data.nivel_Seguridad_Id
-              this.disposicion.nivel_Seguridad = data.nivel_Seguridad
-              this.disposicion.valor_Documental_Id = data.valor_Documental_Id
-              this.disposicion.valor_Documental = data.valor_Documental
-              this.disposicion.nombre = data.nombre
-              this.disposicion.vigencia_Archivo_Tramite = data.vigencia_Archivo_Tramite
-              this.disposicion.vigencia_Archivo_Concentracion = data.vigencia_Archivo_Concentracion
-              this.disposicion.eliminacion = data.eliminacion
-              this.disposicion.archivo_Historico = data.archivo_Historico
-              this.disposicion.muestreo = data.muestreo
-              this.disposicion.observaciones = data.observaciones
-              this.disposicion.sistema_Datos_Personales_Nombre = data.sistema_Datos_Personales_Nombre
-              this.disposicion.disposicion_Documental = data.disposicion_Documental
-              return { success }
-            } else {
-              return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-            }
-          } else {
-            return { success, data }
+          if (!d) {
+            d = resp.data.find((x) => !x.subSerieId) || resp.data[0] || null
           }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+          if (d) {
+            this.disposicion.id = d.id
+            this.disposicion.seccion_Id = d.seccionId
+            this.disposicion.seccion = d.seccionClave
+            this.disposicion.serie_Id = d.serieId
+            this.disposicion.serie = d.serieClave
+            this.disposicion.subSerie_Id = d.subSerieId
+            this.disposicion.subSerie = d.subSerieClave
+            this.disposicion.nivel_Seguridad_Id = d.nivelSeguridadId
+            this.disposicion.nivel_Seguridad = d.nivelSeguridad
+            this.disposicion.valor_Documental_Id = d.valorDocumentalId
+            this.disposicion.valor_Documental = d.valorDocumental
+            this.disposicion.nombre = d.nombre
+            this.disposicion.vigencia_Archivo_Tramite = d.vigenciaTramite
+            this.disposicion.vigencia_Archivo_Concentracion = d.vigenciaConcentracion
+            this.disposicion.observaciones = d.observaciones
+            this.disposicion.sistema_Datos_Personales_Nombre = d.sistemaDatosPersonales
+            this.disposicion.disposicion_Documental = d.destinoFinal
+            this.disposicion.muestreo = d.muestreo
+          }
+          return { success: true }
         }
+        return { success: false, data: "Respuesta inesperada del servidor." }
       } catch (e) {
         console.error(e)
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }

@@ -84,8 +84,11 @@
                 >
                   <q-tooltip>Adjuntar archivo</q-tooltip>
                 </q-btn>
+                <!-- Corte: el expediente es inmutable en el backend nuevo (sin update/delete) y la
+                     ampliación de vigencia no la modela el dominio nuevo; se deshabilitan ampliar,
+                     ver-ampliación, editar y eliminar. La captura (crear) y los adjuntos siguen. -->
                 <q-btn
-                  v-if="props.row['fecha_Ampliacion'] == ''"
+                  v-if="false"
                   flat
                   round
                   color="purple-ieen"
@@ -95,7 +98,7 @@
                   <q-tooltip>Ampliar</q-tooltip>
                 </q-btn>
                 <q-btn
-                  v-else
+                  v-if="false"
                   flat
                   round
                   color="purple-ieen"
@@ -105,6 +108,7 @@
                   <q-tooltip>Ver ampliacion</q-tooltip>
                 </q-btn>
                 <q-btn
+                  v-if="false"
                   flat
                   round
                   color="purple-ieen"
@@ -114,6 +118,7 @@
                   <q-tooltip>Editar registro</q-tooltip>
                 </q-btn>
                 <q-btn
+                  v-if="false"
                   flat
                   round
                   color="purple-ieen"

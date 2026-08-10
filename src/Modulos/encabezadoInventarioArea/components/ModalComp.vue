@@ -19,13 +19,16 @@
         />
       </q-card-section>
       <q-card-section>
+        <!-- Corte al backend nuevo: se quitaron los roles legados (validó/visto bueno/supervisa) que
+             el dominio nuevo no modela. Área generadora = área del usuario (JWT, readonly); enlace =
+             su enlace (readonly); el área responsable se elige de /api/areas. -->
         <q-form class="row q-col-gutter-xs" @submit="onSubmit">
           <div class="col-12 col-xs-6 col-md-6">
-            <q-input
-              readonly
-              v-model="encabezado.area_Responsable"
+            <q-select
+              v-model="areaResponsableSel"
+              :options="areas"
               label="Área responsable"
-              hint="Ingrese área responsable"
+              hint="Seleccione el área responsable"
               lazy-rules
               :rules="[(val) => !!val || 'El área responsable es requerida']"
             />
@@ -35,17 +38,13 @@
               readonly
               v-model="encabezado.area_Generadora"
               label="Área generadora"
-              hint="Ingrese área generadora"
-              lazy-rules
-              :rules="[(val) => !!val || 'El área generadora es requerida']"
             />
           </div>
           <div class="col-12 col-xs-6 col-md-6">
             <q-input
-              readonly
               v-model="encabezado.nombre"
               label="Nombre"
-              hint="Ingrese nombre"
+              hint="Ingrese un nombre para identificar el inventario"
               lazy-rules
               :rules="[(val) => !!val || 'El nombre es requerido']"
             />
@@ -55,39 +54,7 @@
               readonly
               v-model="encabezado.enlace"
               label="Enlace"
-              hint="Enlace registrado previamente"
-              lazy-rules
-              :rules="[(val) => !!val || 'El enlace es requerido']"
-            />
-          </div>
-          <div class="col-12 col-xs-6 col-md-6">
-            <q-input
-              readonly
-              v-model="encabezado.valido"
-              label="Validó"
-              hint="Ingrese quien validó"
-              lazy-rules
-              :rules="[(val) => !!val || 'Quien validó bueno es requerido']"
-            />
-          </div>
-          <div class="col-12 col-xs-6 col-md-6">
-            <q-input
-              readonly
-              v-model="encabezado.visto_Bueno"
-              label="Visto bueno"
-              hint="Ingrese quien dió visto bueno"
-              lazy-rules
-              :rules="[(val) => !!val || 'Quien dió visto bueno es requerido']"
-            />
-          </div>
-          <div class="col-12 col-xs-6 col-md-6">
-            <q-input
-              readonly
-              v-model="encabezado.supervisa"
-              label="Supervisa"
-              hint="Ingrese quien supervisa"
-              lazy-rules
-              :rules="[(val) => !!val || 'Quien supervisa es requerido']"
+              hint="Enlace del archivo de trámite"
             />
           </div>
           <div class="col-12 col-xs-6 col-md-6">
@@ -95,6 +62,7 @@
               v-model="encabezado.ano"
               label="Año"
               hint="Ingrese el año del registro"
+              type="Number"
               lazy-rules
               :rules="[(val) => !!val || 'El año de captura es requerido']"
             />
@@ -128,77 +96,40 @@
 </template>
 
 <script setup>
-import { Loading, useQuasar } from "quasar";
+import { useQuasar } from "quasar";
 import { storeToRefs } from "pinia";
 import { useEncabezadoInventarioStore } from "../../../stores/encabezado_inventario_area";
-import { useVistosBuenosStore } from "../../../stores/visto_bueno_store";
-import { onBeforeMount, onMounted, ref, watch } from "vue";
+import { useAreaStore } from "../../../stores/areas_store";
+import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { espera } from "../../../helpers/helper";
 
 const $q = useQuasar();
 const router = useRouter();
 const encabezadoInventariosStore = useEncabezadoInventarioStore();
-const vistoBuenoStore = useVistosBuenosStore();
+const areaStore = useAreaStore();
 const { modal, isEditar, encabezado } = storeToRefs(encabezadoInventariosStore);
-const { vistos_buenos_opt } = storeToRefs(vistoBuenoStore);
-const enlaceId = ref(null);
-const empleadoId = ref(null);
+const { areas } = storeToRefs(areaStore);
+const areaResponsableSel = ref(null);
 const loading = ref(false);
-const actualizarModal = (valor) => {
+
+const actualizarModal = () => {
+  areaResponsableSel.value = null;
   encabezadoInventariosStore.initEncabezado();
-  encabezadoInventariosStore.actualizarModal(valor);
+  encabezadoInventariosStore.actualizarModal(false);
 };
-
-const cargarEnlace = async (val) => {
-  $q.loading.show();
-  await espera(150);
-  $q.loading.hide();
-  if (isEditar.value == true) {
-    const enlace_Id_Filtrado = listaEnlaces.value.find(
-      (x) => x.value == `${val.enlace_Id}`
-    );
-    enlaceId.value = enlace_Id_Filtrado;
-    const empleado_id_filtrado = vistos_buenos_opt.value.find(
-      (x) => x.value == `${val.visto_Bueno_Id}`
-    );
-    empleadoId.value = empleado_id_filtrado;
-  }
-};
-
-watch(encabezado.value, (val) => {
-  if (val.id != null) {
-    cargarEnlace(val);
-  }
-});
-
-watch(modal, (val) => {
-  if (val == true && isEditar.value == false) {
-    encabezado.value.nombre = encabezado.value.valido;
-  }
-});
-
-onBeforeMount(() => {
-  vistoBuenoStore.loadListaVoBos();
-});
 
 const onSubmit = async () => {
-  let resp = null;
   loading.value = true;
-  if (isEditar.value == true) {
-    resp = await encabezadoInventariosStore.updateEncabezado(
-      encabezado.value,
-      encabezado.value.id
-    );
-  } else {
-    resp = await encabezadoInventariosStore.createEncabezado(encabezado.value);
+  // Corte: el área responsable viene del selector; la generadora y el enlace ya están puestos por
+  // loadArea/loadEnlace (JWT).
+  if (areaResponsableSel.value) {
+    encabezado.value.area_Responsable_Id = areaResponsableSel.value.value;
+    encabezado.value.area_Responsable = areaResponsableSel.value.label;
   }
+  const resp = await encabezadoInventariosStore.createEncabezado(encabezado.value);
+  loading.value = false;
   if (resp.success) {
-    $q.notify({
-      type: "positive",
-      message: resp.data,
-    });
-    loading.value = false;
+    $q.notify({ type: "positive", message: resp.data });
     $q.dialog({
       title: "Registro generado con éxito",
       message: "¿Desea capturar el inventario?",
@@ -206,41 +137,22 @@ const onSubmit = async () => {
       persistent: true,
       transitionShow: "scale",
       transitionHide: "scale",
-      ok: {
-        color: "positive",
-        label: "Si, capturar inventario",
-      },
-      cancel: {
-        color: "negative",
-        label: "No, capturar despues",
-      },
+      ok: { color: "positive", label: "Si, capturar inventario" },
+      cancel: { color: "negative", label: "No, capturar despues" },
     })
       .onOk(() => {
-        actualizarModal(false);
-        if (isEditar.value == true) {
-          router.push({
-            name: "detalleInventario",
-            params: { encabezadoId: encabezado.value.id },
-          });
-        } else {
-          router.push({
-            name: "detalleInventario",
-            params: { encabezadoId: resp.id },
-          });
-        }
+        const destino = isEditar.value == true ? encabezado.value.id : resp.id;
+        areaResponsableSel.value = null;
+        router.push({
+          name: "detalleInventario",
+          params: { encabezadoId: destino },
+        });
       })
       .onCancel(() => {
         actualizarModal(false);
       });
   } else {
-    $q.notify({
-      type: "negative",
-      message: resp.data,
-    });
-    loading.value = false;
+    $q.notify({ type: "negative", message: resp.data });
   }
 };
 </script>
-
-<style>
-</style>

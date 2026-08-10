@@ -60,6 +60,7 @@
 <script setup>
 import { useQuasar } from "quasar";
 import { useEncabezadoInventarioStore } from "../../../stores/encabezado_inventario_area";
+import { useAreaStore } from "../../../stores/areas_store";
 import { useAuthStore } from "../../../stores/auth_store";
 import { onBeforeMount, ref } from "vue";
 import { storeToRefs } from "pinia";
@@ -74,6 +75,7 @@ import TablaDetalle from "../components/TablaDetalle.vue";
 
 const $q = useQuasar();
 const encabezadoInventariosStore = useEncabezadoInventarioStore();
+const areaStore = useAreaStore();
 const authStore = useAuthStore();
 const { modulo } = storeToRefs(authStore);
 const siglas = "AI-INV-AREA";
@@ -86,11 +88,12 @@ const leerPermisos = async () => {
   await authStore.loadModulo(siglas);
   $q.loading.hide();
 };
+// Corte al backend nuevo: se cargan el área generadora (del usuario) y su enlace; el área responsable
+// se elige con un selector (loadListaAreas). Los roles legados (validó/VoBo/supervisa) no los modela
+// el backend, así que ya no se cargan.
 encabezadoInventariosStore.loadArea();
-encabezadoInventariosStore.loadResponsableArea();
-encabezadoInventariosStore.loadSupervisa();
 encabezadoInventariosStore.loadEnlace();
-encabezadoInventariosStore.loadRespArchivo();
+areaStore.loadListaAreas();
 
 const actualizarModal = async (valor) => {
   $q.loading.show();

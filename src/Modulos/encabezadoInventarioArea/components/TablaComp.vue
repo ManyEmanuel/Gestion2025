@@ -28,8 +28,10 @@
           <q-tr :props="props">
             <q-td v-for="col in props.cols" :key="col.name" :props="props">
               <div v-if="col.name === 'id'">
+                <!-- Corte: el encabezado es inmutable en el backend nuevo (sin update/delete); se
+                     deshabilitan editar y eliminar. Alta = crear; el detalle sigue disponible. -->
                 <q-btn
-                  v-if="modulo == null ? false : modulo.actualizar"
+                  v-if="false"
                   flat
                   round
                   color="purple-ieen"
@@ -49,7 +51,7 @@
                   <q-tooltip>Detalle</q-tooltip>
                 </q-btn>
                 <q-btn
-                  v-if="modulo == null ? false : modulo.eliminar"
+                  v-if="false"
                   flat
                   round
                   color="purple-ieen"
