@@ -69,8 +69,11 @@
                 >
                   <q-tooltip>Ver documentos</q-tooltip>
                 </q-btn>
+                <!-- Corte al backend nuevo: editar y eliminar préstamo se deshabilitan (v-if="false").
+                     El backend trata los préstamos como inmutables (se rechazan/devuelven, no se
+                     editan ni borran); no expone update ni delete de préstamo. -->
                 <q-btn
-                  v-if="tipo == 0"
+                  v-if="false"
                   flat
                   round
                   color="purple-ieen"
@@ -80,7 +83,7 @@
                   <q-tooltip>Editar registro</q-tooltip>
                 </q-btn>
                 <q-btn
-                  v-if="tipo == 0"
+                  v-if="false"
                   flat
                   round
                   color="purple-ieen"
@@ -107,12 +110,14 @@ import { useAuthStore } from "../../../stores/auth_store";
 import { useRouter } from "vue-router";
 import { useCedulaPrestamoStore } from "../../../stores/cedula_prestamo_store";
 import { useDetalleCedulaPrestamoStore } from "../../../stores/detalle_cedula_prestamo";
+import { useVistosBuenosStore } from "../../../stores/visto_bueno_store";
 import { espera } from "../../../helpers/helper";
 
 const $q = useQuasar();
 const router = useRouter();
 const cedulaPrestamoStore = useCedulaPrestamoStore();
 const detallePrestamoStore = useDetalleCedulaPrestamoStore();
+const vistoBuenoStore = useVistosBuenosStore();
 const authStore = useAuthStore();
 const { modulo } = storeToRefs(authStore);
 const { misSolicitudes, solicitudesArea, isLoading } =
@@ -294,37 +299,34 @@ const eliminar = async (id) => {
 };
 
 const aprobar = async (id) => {
+  // Corte al backend nuevo: autorizar exige un autorizador que sea visto bueno vigente. Se ofrece un
+  // selector (radio) con los vistos buenos activos; el valor es el EmpleadoId del visto bueno.
+  $q.loading.show();
+  await vistoBuenoStore.loadVoBos();
+  $q.loading.hide();
+  const opciones = vistoBuenoStore.vistos_buenos
+    .filter((v) => v.activo)
+    .map((v) => ({ label: v.empleado, value: v.empleado_Id }));
+  if (opciones.length === 0) {
+    $q.notify({ type: "warning", message: "No hay vistos buenos vigentes para autorizar." });
+    return;
+  }
   $q.dialog({
     title: "Aprobar registro",
-    message: "¿Esta seguro de aprobar el registro?",
-    icon: "Warning",
+    message: "Seleccione el visto bueno que autoriza la solicitud:",
+    options: {
+      type: "radio",
+      model: opciones[0].value,
+      items: opciones,
+    },
     persistent: true,
-    transitionShow: "scale",
-    transitionHide: "scale",
-    ok: {
-      color: "positive",
-      label: "Sí! aprobar",
-    },
-    cancel: {
-      color: "negative",
-      label: "Cancelar",
-    },
-  }).onOk(async () => {
+    ok: { color: "positive", label: "Aprobar" },
+    cancel: { color: "negative", label: "Cancelar" },
+  }).onOk(async (autorizaId) => {
     $q.loading.show();
-    const resp = await cedulaPrestamoStore.aprobar(id, props.clasificado);
-    if (resp.success) {
-      $q.loading.hide();
-      $q.notify({
-        type: "positive",
-        message: resp.data,
-      });
-    } else {
-      $q.loading.hide();
-      $q.notify({
-        type: "negative",
-        message: resp.data,
-      });
-    }
+    const resp = await cedulaPrestamoStore.aprobar(id, autorizaId, props.clasificado);
+    $q.loading.hide();
+    $q.notify({ type: resp.success ? "positive" : "negative", message: resp.data });
   });
 };
 

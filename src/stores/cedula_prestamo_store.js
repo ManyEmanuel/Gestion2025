@@ -343,23 +343,20 @@ export const useCedulaPrestamoStore = defineStore('CedulaPrestamo', {
       }
     },
 
-    async aprobar(id, clasificado) {
+    // MIGRADO al backend nuevo: POST /api/prestamos/{id}/autorizar { autorizaId } -> 204. El backend
+    // exige que el autorizador sea un visto bueno vigente (autorizaId = EmpleadoId del visto bueno) y
+    // que el préstamo tenga ≥1 expediente. El autorizador lo elige el usuario en el diálogo de aprobar.
+    async aprobar(id, autorizaId, clasificado) {
       try {
-        const resp = await api.get(`/Archivo/CedulasPrestamosExpedientes/Aprobar/${id}`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            this.loadSolicitudesAreas(clasificado);
-            return { success, data }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo" }
+        const resp = await api.post(`/prestamos/${id}/autorizar`, { autorizaId })
+        if (resp.status === 204 || resp.status === 200) {
+          this.loadSolicitudesAreas(clasificado);
+          return { success: true, data: "Solicitud aprobada" }
         }
+        return { success: false, data: "Ocurrio un error, intentelo de nuevo" }
       } catch (e) {
         console.error(e)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        return { success: false, data: mensajeError(e) }
       }
     },
 
