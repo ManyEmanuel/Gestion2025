@@ -222,7 +222,7 @@ export const useInventarioAreaStore = defineStore('InventarioArea', {
 
     },
 
-    async loadInventariosAreaOpt(secciones, year_Inicio, year_Fin) {
+    async loadInventariosAreaOpt(secciones, year_Inicio, year_Fin, cajas) {
       try {
         this.inventariosOpt = []
         const secciones_id = secciones.map(element => {
@@ -230,17 +230,31 @@ export const useInventarioAreaStore = defineStore('InventarioArea', {
         })
 
         const resp = await api.post(`/Archivo/InventariosGneralesAreas/ByAreaOpt`, { "Secciones_Id": secciones_id, "year_Inicio": parseInt(year_Inicio), "year_Fin": parseInt(year_Fin) })
+        let clavesCapturadas = []
+        if (cajas.length > 0) {
+          for (let caja of cajas) {
+            const cajasResp = await api.get(`/DetallesCajasTrasnferencias/${caja.id}/GetAll`)
+            if (cajasResp.status == 200) {
+              let detallesCajas = cajasResp.data.data
+              detallesCajas.forEach(detalle => {
+                clavesCapturadas.push({ id: detalle.clave_Clasificacion })
+              })
+            }
+          }
+        }
         if (resp.status == 200) {
           const { success, data } = resp.data
           if (success == true) {
             if (data) {
               const inventarioOpt = data.map((inventario) => {
+                let filtro = cajas.length > 0 ? clavesCapturadas.find(detalle => detalle.id === inventario.label) : null
                 const { label, value } = inventario
                 return {
-                  label, value
+                  label, value, filtro: filtro ? true : false
                 }
               })
-              this.inventariosOpt = inventarioOpt
+
+              this.inventariosOpt = inventarioOpt.filter(x => x.filtro == false)
             }
           } else {
             return { success, data }
@@ -261,17 +275,19 @@ export const useInventarioAreaStore = defineStore('InventarioArea', {
           return element.value
         })
         const resp = await api.post(`/Archivo/InventariosGneralesAreas/ByAreaOptAI/${areaId}`, { "Secciones_Id": secciones_id, "Year_Inicio": year_Inicio, "Year_Fin": year_Fin })
+
         if (resp.status == 200) {
           const { success, data } = resp.data
           if (success == true) {
             if (data) {
-              const inventarioOpt = data.map((inventario) => {
+              let inventarioOpt = data.map((inventario) => {
                 const { label, value } = inventario
                 return {
                   label, value
                 }
               })
               this.inventariosOpt = inventarioOpt
+
             }
           } else {
             return { success, data }
@@ -358,7 +374,6 @@ export const useInventarioAreaStore = defineStore('InventarioArea', {
 
     async loadFiltroAnio(anio) {
       try {
-        console.log("esto es anio", anio)
         this.inventariosOptFiltro = this.inventariosOpt.filter(x => x.anio == anio)
       } catch (error) {
         console.log(error)
@@ -479,7 +494,7 @@ export const useInventarioAreaStore = defineStore('InventarioArea', {
           const { success, data } = resp.data
           if (success === true) {
             if (data) {
-              console.log(data)
+
               this.inventario.id = data.id
               this.inventario.seccion_Id = data.seccion_Id
               this.inventario.seccion = data.seccion

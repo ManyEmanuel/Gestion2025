@@ -171,7 +171,7 @@ const detalleCaja = useDetalleCajaTransferenciaStore();
 const inventariosAreas = useInventarioAreaStore();
 const transferenciaPrimariaStore = useTransferenciaPrimariaEncabezadoStore();
 const { listaSecciones } = storeToRefs(seccionStore);
-const { caja, modal, isEditar } = storeToRefs(cajaTransferenciaStore);
+const { caja, modal, isEditar, cajas } = storeToRefs(cajaTransferenciaStore);
 const { arrayDetalles } = storeToRefs(detalleCaja);
 const { encabezado } = storeToRefs(transferenciaPrimariaStore);
 const siglas = "AI-CJS-TRANS";
@@ -219,7 +219,8 @@ const cargarInventariosopt = async (val) => {
   await inventariosAreas.loadInventariosAreaOpt(
     val,
     caja.value.fecha_Antigua,
-    caja.value.fecha_Reciente
+    caja.value.fecha_Reciente,
+    cajas.value
   );
   $q.loading.hide();
 };

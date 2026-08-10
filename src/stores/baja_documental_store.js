@@ -126,8 +126,18 @@ export const useBajaDocumentalStore = defineStore('BajaDocumental', {
       try {
         this.isLoading = true
         const resp = await api.get(`Archivo/BajaDocumental/${id}`)
+        const respEmpleados = await api.get('/Empleados')
+        let empleados = respEmpleados.data.data
         if (resp.status == 200) {
           const { success, data } = resp.data
+          let puestoAprobo = empleados.find(emp => emp.id == data.aprobo_Id)?.puesto || ""
+          let puestoElaboro = empleados.find(emp => emp.id == data.elaboro_Id)?.puesto || ""
+          let puestoValida = empleados.find(emp => emp.id == data.valida_Id)?.puesto || ""
+          let puestoVistoBueno = empleados.find(emp => emp.id == data.visto_Bueno_Id)?.puesto || ""
+          data.puesto_Aprobo = puestoAprobo
+          data.puesto_Elaboro = puestoElaboro
+          data.puesto_Valida = puestoValida
+          data.puesto_Visto_Bueno = puestoVistoBueno
           if (success == true) {
             this.encabezado.id = data.id
             this.encabezado.aprobo = data.aprobo

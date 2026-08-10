@@ -124,11 +124,12 @@ const genera_anexo_4 = (encabezado, inventarios) => {
 
     // Recorrer cada elemento del arreglo y extraer el año de la fecha de inicio
     inventarios.forEach(elemento => {
-      console.log(elemento)
+
       const fechaInicio = new Date(elemento[6]);
       const anio = fechaInicio.getFullYear();
       anios.push(anio)
     });
+
     const inicio = Math.min(...anios)
     const fin = Math.max(...anios)
     doc.text(

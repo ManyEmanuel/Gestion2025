@@ -59,8 +59,6 @@ const detalleCajaBaja = useDetalleCajaBajaStore();
 const { caja, isEditar } = storeToRefs(cajaBajaStore);
 const { arrayDetalles, detalles } = storeToRefs(detalleCajaBaja);
 
-console.log(cajaBajaStore);
-
 onBeforeMount(() => {
   if (isEditar.value == true) {
     detalleCajaBaja.load_detalles(caja.value.id);

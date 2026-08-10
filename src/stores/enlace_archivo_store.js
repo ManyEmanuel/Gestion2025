@@ -22,6 +22,7 @@ export const useEnlaceArchivoStore = defineStore('enlaceArchivoStore', {
     listaEnlaces: [],
     listaEnlacesArea: [],
     enlaces: [],
+    enlacesFiltro: [],
     enlace: {
       id: null,
       empleado_Id: null,
@@ -47,39 +48,26 @@ export const useEnlaceArchivoStore = defineStore('enlaceArchivoStore', {
     },
 
     async loadEnlaces() {
+      // MIGRADO al backend nuevo (corte de clientes): GET /api/enlaces devuelve un array scoped
+      // por el usuario, con empleado/área/puesto resueltos. estatus se deriva de activo.
       try {
-        const resp = await api.get('/Archivo/Enlace')
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          console.log("esto es fecha de registro", data)
-          if (success === true) {
-            if (data) {
-              let enlacesArray = data.map((empleado) => {
-                let fechaRegistro = ""
-                if (empleado.fecha_Registro != null) {
-                  let separacionFecha = (empleado.fecha_Registro.split(" ")[0]).split("/")
-                  fechaRegistro = separacionFecha[2] + "/" + separacionFecha[1] + "/" + separacionFecha[0]
-                }
-
-                return {
-                  id: empleado.id,
-                  empleado_Id: empleado.empleado_Id,
-                  empleado: empleado.empleado,
-                  area_Id: empleado.area_Id,
-                  area: empleado.area,
-                  puesto: empleado.puesto,
-                  fecha_Registro: fechaRegistro,
-                  estatus: empleado.estatus
-                }
-              })
-              this.enlaces = enlacesArray
-            }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        const resp = await api.get('/enlaces')
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          let enlacesArray = resp.data.map((e) => ({
+            id: e.id,
+            empleado_Id: e.empleadoId,
+            empleado: e.empleado,
+            area_Id: e.areaId,
+            area: e.area,
+            puesto: e.puesto,
+            fecha_Registro: "",
+            estatus: e.activo ? "Activo" : "Inactivo"
+          }))
+          this.enlaces = enlacesArray
+          this.enlacesFiltro = enlacesArray
+          return { success: true }
         }
+        return { success: false, data: "Respuesta inesperada del servidor." }
       } catch (error) {
         console.log(error)
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
@@ -236,6 +224,7 @@ export const useEnlaceArchivoStore = defineStore('enlaceArchivoStore', {
       try {
         const resp = await api.put(`/Archivo/Enlace/${id}`, enlace)
         if (resp.status == 200) {
+          console.log(resp)
           const { success, data } = resp.data
           if (success === true) {
             this.loadEnlaces()

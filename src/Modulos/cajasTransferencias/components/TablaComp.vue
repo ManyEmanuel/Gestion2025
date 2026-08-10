@@ -221,7 +221,9 @@ const ListadoExcel = async (id) => {
     },
   }).onOk(async () => {
     $q.loading.show();
+    console.log("Esto es id", id);
     await detalleCajaTransferencia.loadDetalles(id);
+    console.log("Esto es detalles", detalles.value);
     if (detalles.value.length > 0) {
       await generarExcel1();
     } else {

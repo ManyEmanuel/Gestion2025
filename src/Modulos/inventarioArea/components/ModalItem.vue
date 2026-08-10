@@ -246,7 +246,6 @@ const loadSubSeries = async (serieId) => {
   $q.loading.show();
   await subSerieStore.loadListaSubSeries(serieId);
   if (listaSubSeries.value.length == 0) {
-    console.log("Debe entrar aqui");
     await loadDispDocumental();
   }
   $q.loading.hide();

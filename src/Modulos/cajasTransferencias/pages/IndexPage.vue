@@ -134,7 +134,6 @@ const generar_anexo_9 = async () => {
   const rows = [];
   let cajas = [];
   await transferenciaPrimariaStore.loadInventarios(encabezado.value.id);
-  console.log("Esto es inventarios", inventarios);
   inventarios.value.forEach((element) => {
     rows.push([
       element.serie_Sub_Serie,

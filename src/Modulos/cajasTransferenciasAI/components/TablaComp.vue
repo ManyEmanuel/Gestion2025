@@ -257,6 +257,7 @@ const cargarDatos = async (id) => {
   textoIgual.value = false;
   await cajaTransferenciaStore.loadCaja(props.transferenciaId, id);
   await detalleCajaTransferencia.loadDetalles(id, caja.value.ubicacion);
+
   await cargarUbicacion(detalles.value);
   fixed.value = true;
   cajaId = id;
@@ -267,7 +268,8 @@ const cargarUbicacion = async (detalle) => {
   $q.loading.show();
   if (detalle.length > 0) {
     let ubicacionRegistrada = detalle[0].ubicacion;
-    if (ubicacionRegistrada != "") {
+
+    if (ubicacionRegistrada != "" && ubicacionRegistrada != null) {
       let filtroUbicacion = ubicacionRegistrada.split("|");
       if (filtroUbicacion.length == 4) {
         ubicacion.value.inmueble = filtroUbicacion[0];

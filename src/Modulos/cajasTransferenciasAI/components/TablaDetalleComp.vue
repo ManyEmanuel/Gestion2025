@@ -92,7 +92,7 @@ const columns = [
   {
     name: "nombre_Expediente",
     align: "center",
-    label: "Nombre del expediente",
+    label: "Nombre del expedientess",
     field: "nombre_Expediente",
     sortable: true,
   },

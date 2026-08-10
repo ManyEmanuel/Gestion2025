@@ -18,7 +18,7 @@ const genera_anexo_15 = async (encabezado, inventarios) => {
   try {
 
     let img = new Image();
-
+    console.log("Esto es encabezado", encabezado);
     img.src = require("../assets/IEEN300.png");
     let totalPagesExp = "{total_pages_count_string}";
     const doc = new jsPDF({ orientation: "landscape", format: "legal" });

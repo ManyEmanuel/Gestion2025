@@ -2,15 +2,25 @@
   <div class="row">
     <div class="col">
       <q-table
-        :rows="enlaces"
+        :rows="enlacesFiltro"
         :columns="columns"
         :filter="filter"
         :loading="loading"
         row-key="id"
+        :rows-per-page-options="[10]"
         rows-per-page-label="Filas por pagina"
         no-data-label="No hay registros"
         class="my-sticky-last-column-table"
       >
+        <template v-slot:top-left>
+          <q-select
+            v-model="estatusVista"
+            :options="estatusEnlaces"
+            label="Estatus del enlace"
+            class="q-mr-sm"
+            style="width: 300px"
+          ></q-select>
+        </template>
         <template v-slot:top-right>
           <q-input
             borderless
@@ -49,7 +59,6 @@
                   <q-tooltip>Eliminar registro</q-tooltip>
                 </q-btn>
                 <q-btn
-                  v-if="modulo.eliminar"
                   flat
                   round
                   color="purple-ieen"
@@ -57,6 +66,26 @@
                   @click="generar(col.value)"
                 >
                   <q-tooltip>Catálogo de firmas(Anexo 12)</q-tooltip>
+                </q-btn>
+                <q-btn
+                  v-if="props.row.estatus == 'Inactivo'"
+                  flat
+                  round
+                  color="purple-ieen"
+                  icon="person_add"
+                  @click="activarEnlace(col.value)"
+                >
+                  <q-tooltip>Activar Enlace </q-tooltip>
+                </q-btn>
+                <q-btn
+                  v-if="props.row.estatus == 'Activo'"
+                  flat
+                  round
+                  color="purple-ieen"
+                  icon="person_remove"
+                  @click="desactivarEnlace(col.value)"
+                >
+                  <q-tooltip>Desactivar Enlace</q-tooltip>
                 </q-btn>
               </div>
               <label v-else>{{ col.value }}</label>
@@ -71,7 +100,7 @@
 <script setup>
 import { storeToRefs } from "pinia";
 import { useQuasar } from "quasar";
-import { onMounted, ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { useEnlaceArchivoStore } from "../../../stores/enlace_archivo_store";
 import { genera_anexo_12 } from "../../../helpers/anexo_12";
 import { useAuthStore } from "../../../stores/auth_store";
@@ -81,7 +110,11 @@ const $q = useQuasar();
 const enlaceArchivoStore = useEnlaceArchivoStore();
 const authStore = useAuthStore();
 const { modulo } = storeToRefs(authStore);
-const { enlaces, loading } = storeToRefs(enlaceArchivoStore);
+const { enlaces, loading, enlace, enlacesFiltro } =
+  storeToRefs(enlaceArchivoStore);
+
+const estatusEnlaces = ref(["Todos", "Inactivo", "Activo"]);
+const estatusVista = ref("Todos");
 
 onMounted(() => {
   enlaceArchivoStore.loadEnlaces();
@@ -154,6 +187,93 @@ const generar = async (id) => {
   $q.loading.hide();
 };
 
+const activarEnlace = async (id) => {
+  $q.dialog({
+    title: "Activar enlace",
+    message: "¿Esta seguro de activar al enlace?",
+    icon: "Warning",
+    persistent: true,
+    transitionShow: "scale",
+    transitionHide: "scale",
+    ok: {
+      color: "positive",
+      label: "Sí! activar",
+    },
+    cancel: {
+      color: "negative",
+      label: "Cancelar",
+    },
+  }).onOk(async () => {
+    $q.loading.show();
+    const resp = await enlaceArchivoStore.loadEnlace(id);
+    enlace.value.activo = true;
+    enlace.value.estatus = "Activo";
+    const resp2 = await enlaceArchivoStore.updateEnlace(id, enlace.value);
+    if (resp2.success) {
+      $q.loading.hide();
+      $q.notify({
+        type: "positive",
+        message: resp2.data,
+      });
+      await enlaceArchivoStore.loadEnlaces();
+    } else {
+      $q.loading.hide();
+      $q.notify({
+        type: "negative",
+        message: resp2.data,
+      });
+    }
+  });
+};
+
+const desactivarEnlace = async (id) => {
+  $q.dialog({
+    title: "Desactivar enlace",
+    message: "¿Esta seguro de desactivar al enlace?",
+    icon: "Warning",
+    persistent: true,
+    transitionShow: "scale",
+    transitionHide: "scale",
+    ok: {
+      color: "positive",
+      label: "Sí! desactivar",
+    },
+    cancel: {
+      color: "negative",
+      label: "Cancelar",
+    },
+  }).onOk(async () => {
+    $q.loading.show();
+    const resp = await enlaceArchivoStore.loadEnlace(id);
+    enlace.value.activo = false;
+    enlace.value.estatus = "Inactivo";
+    const resp2 = await enlaceArchivoStore.updateEnlace(id, enlace.value);
+
+    if (resp2.success) {
+      $q.loading.hide();
+      $q.notify({
+        type: "positive",
+        message: resp2.data,
+      });
+      await enlaceArchivoStore.loadEnlaces();
+    } else {
+      $q.loading.hide();
+      $q.notify({
+        type: "negative",
+        message: resp2.data,
+      });
+    }
+  });
+};
+
+watch(estatusVista, (val) => {
+  if (val == "Todos") {
+    enlacesFiltro.value = enlaces.value;
+  } else {
+    enlacesFiltro.value = enlaces.value.filter((x) => x.estatus == val);
+  }
+});
+
 const eliminar = async (id) => {
   $q.dialog({
     title: "Eliminación de registro",
@@ -179,6 +299,7 @@ const eliminar = async (id) => {
         type: "positive",
         message: resp.data,
       });
+      await enlaceArchivoStore.loadEnlaces();
     } else {
       $q.loading.hide();
       $q.notify({

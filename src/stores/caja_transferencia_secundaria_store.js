@@ -202,6 +202,7 @@ export const useCajaTransferenciaSecundariaterStore = defineStore('useCajaTransf
 
     async loadAnexo15(comunes, sustantivas, cajas, transferencia) {
       try {
+
         let SeriesEncabezado = []
         let cuerpo = []
         let encabezado = []

@@ -22,6 +22,15 @@
               <q-icon name="search" />
             </template>
           </q-input>
+          <q-btn
+            class="q-ml-sm"
+            label="Aprobar todo"
+            color="purple-ieen"
+            icon="check_circle"
+            @click="aprobarTodo()"
+          >
+            <q-tooltip>Refrescar tabla</q-tooltip>
+          </q-btn>
         </template>
         <template v-slot:body="props">
           <q-tr :props="props">
@@ -88,7 +97,7 @@ const columns = [
   {
     name: "nombre_Expediente",
     align: "center",
-    label: "Nombre del expediente",
+    label: "Nombre del expedientes",
     field: "nombre_Expediente",
     sortable: true,
   },
@@ -251,6 +260,51 @@ const aprobar = async (id) => {
         message: resp.data,
       });
     }
+  });
+};
+
+const aprobarTodo = async () => {
+  let total = 0;
+  $q.dialog({
+    title: "Aprobar todos los documentos",
+    message: "¿Esta seguro de aprobar todos los documentos?",
+    icon: "Warning",
+    persistent: true,
+    transitionShow: "scale",
+    transitionHide: "scale",
+    ok: {
+      color: "positive",
+      label: "Sí! aprobar",
+    },
+    cancel: {
+      color: "negative",
+      label: "Cancelar",
+    },
+  }).onOk(async () => {
+    $q.loading.show();
+    let detallesPendientes = detalles.value.filter(
+      (detalle) =>
+        detalle.estatus != "Aprobado" &&
+        detalle.estatus != "Rechazado" &&
+        detalle.estatus != "Afectado"
+    );
+
+    for (let detalle of detallesPendientes) {
+      const resp = await detalleCajaTransferencia.aprobarDetalle(
+        detalle.id,
+        caja.value.id
+      );
+      if (resp.success) {
+        total += 1;
+      }
+      $q.loading.hide();
+    }
+    await detalleCajaTransferencia.loadDetalles(caja.value.id);
+    $q.loading.hide();
+    $q.notify({
+      type: "positive",
+      message: `Se han aprobado ${total} documentos.`,
+    });
   });
 };
 </script>
