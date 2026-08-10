@@ -5,6 +5,21 @@ import { api } from 'src/boot/axios';
 const mensajeError = (e, defecto = "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte") =>
   (e && e.response && e.response.data && (e.response.data.detail || e.response.data.title)) || defecto
 
+// Empleado y área del usuario autenticado, de los claims del JWT (para el área generadora y el enlace
+// del alta de transferencia).
+function datosUsuarioToken() {
+  try {
+    const token = localStorage.getItem('key')
+    if (!token) return {}
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+    const payload = JSON.parse(decodeURIComponent(escape(atob(base64))))
+    return { empleadoId: payload.empleado_id || null, areaId: payload.area || null }
+  } catch (e) {
+    console.error(e)
+    return {}
+  }
+}
+
 export const useTransferenciaPrimariaEncabezadoStore = defineStore('TransferenciaPrimariaEncabezado', {
   state: () => ({
     isLoading: false,
@@ -80,47 +95,43 @@ export const useTransferenciaPrimariaEncabezadoStore = defineStore('Transferenci
 
     async loadArea() {
       try {
-        const resp = await api.get("/Areas/AreaByUsuario")
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            if (data) {
-              const { area_Id, area, area_Padre_Id, area_Padre } = data;
-              this.encabezado.area_Generadora_Id = area_Id;
-              this.encabezado.area_Generadora = area;
-              this.encabezado.area_Responsable_Id = area_Padre_Id;
-              this.encabezado.area_Responsable = area_Padre;
-              return { success }
-            } else {
-              return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-            }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        // MIGRADO al backend nuevo: el área generadora es el área del usuario (claim `area` del JWT);
+        // el nombre se resuelve desde /api/areas. El área RESPONSABLE ya no se deriva del área padre
+        // (la jerarquía no está poblada) — el usuario la elige con un selector en el modal.
+        const usuario = datosUsuarioToken()
+        if (!usuario.areaId) {
+          return { success: false, data: "Tu usuario no tiene área asociada." }
         }
+        this.encabezado.area_Generadora_Id = usuario.areaId
+        const resp = await api.get("/areas")
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          const area = resp.data.find((a) => a.id == usuario.areaId)
+          this.encabezado.area_Generadora = area ? `${area.siglas} - ${area.nombre}` : null
+        }
+        return { success: true }
       } catch (e) {
         console.error(e)
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
       }
     },
 
+    // MIGRADO al backend nuevo: el enlace ("Elaboró") es el del empleado del usuario, buscado en
+    // /api/enlaces (scoped). Si el usuario no es enlace, queda vacío (el enlace es opcional al crear).
     async loadEnlace() {
       try {
-        const resp = await api.get("/Archivo/Enlace/ByUsuario")
-        if (resp.status == 200) {
-          const { success, id, enlace } = resp.data
-          if (success === true) {
-            this.encabezado.enlace_Id = id
-            this.encabezado.enlace = enlace
-            return { success }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        const usuario = datosUsuarioToken()
+        if (!usuario.empleadoId) {
+          return { success: true }
         }
+        const resp = await api.get("/enlaces")
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          const enlace = resp.data.find((e) => e.empleadoId == usuario.empleadoId)
+          if (enlace) {
+            this.encabezado.enlace_Id = enlace.id
+            this.encabezado.enlace = enlace.empleado
+          }
+        }
+        return { success: true }
       } catch (e) {
         console.error(e)
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
@@ -400,23 +411,25 @@ export const useTransferenciaPrimariaEncabezadoStore = defineStore('Transferenci
       }
     },
 
+    // MIGRADO al backend nuevo: POST /api/transferenciasprimarias (201 { id }, estado Borrador). Los
+    // roles legados (valida/coteja/valida_Area) no los modela el backend y se omiten.
     async createTransferenciaPrimariaEncabezado(encabezado) {
       try {
-        const resp = await api.post('Archivo/TransferenciasPrimariasEncabezados', encabezado)
-        if (resp.status == 200) {
-          const { success, data, id } = resp.data
-          if (success == true) {
-            this.loadEncabezados();
-            return { success, data, id }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        const resp = await api.post('/transferenciasprimarias', {
+          areaGeneradoraId: encabezado.area_Generadora_Id,
+          areaResponsableId: encabezado.area_Responsable_Id,
+          enlaceId: encabezado.enlace_Id || null,
+          nombre: encabezado.nombre,
+          numeroTransferencia: encabezado.numero_Transferencia
+        })
+        if (resp.status === 201 || resp.status === 200) {
+          this.loadEncabezados();
+          return { success: true, data: "Transferencia registrada con éxito", id: resp.data && resp.data.id }
         }
+        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
       } catch (error) {
         console.error(error)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        return { success: false, data: mensajeError(error) }
       }
     },
 

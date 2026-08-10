@@ -33,6 +33,7 @@
 import { useQuasar } from "quasar";
 import { useAuthStore } from "../../../stores/auth_store";
 import { useTransferenciaPrimariaEncabezadoStore } from "../../../stores/transferencia_primaria_encabezado_store";
+import { useAreaStore } from "../../../stores/areas_store";
 import { onBeforeMount } from "vue";
 import { storeToRefs } from "pinia";
 import TablaComp from "../components/TablaComp.vue";
@@ -42,6 +43,7 @@ import { espera } from "../../../helpers/helper";
 const $q = useQuasar();
 const authStore = useAuthStore();
 const transferenciaPrimariaStore = useTransferenciaPrimariaEncabezadoStore();
+const areaStore = useAreaStore();
 const { modulo } = storeToRefs(authStore);
 const siglas = "AI-TP";
 
@@ -49,11 +51,12 @@ onBeforeMount(() => {
   leerPermisos();
 });
 
+// Corte al backend nuevo: se cargan el área generadora (del usuario) y su enlace; el área responsable
+// se elige con un selector (loadListaAreas). Los roles legados (valida/coteja/responsable de área) no
+// los modela el backend nuevo, así que ya no se cargan.
 transferenciaPrimariaStore.loadArea();
 transferenciaPrimariaStore.loadEnlace();
-transferenciaPrimariaStore.loadValida();
-transferenciaPrimariaStore.loadRespArchivo();
-transferenciaPrimariaStore.loadResponsableArea();
+areaStore.loadListaAreas();
 
 const leerPermisos = async () => {
   $q.loading.show();

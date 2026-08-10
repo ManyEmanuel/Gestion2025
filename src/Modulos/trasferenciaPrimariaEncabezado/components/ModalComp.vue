@@ -47,10 +47,11 @@
             />
           </div>
           <div class="col-12 col-xs-6 col-md-6">
-            <q-input
-              v-model="encabezado.area_Responsable"
+            <q-select
+              v-model="areaResponsableSel"
+              :options="areas"
               label="Área responsable"
-              hint="Ingrese área responsable"
+              hint="Seleccione el área responsable"
               lazy-rules
               :rules="[(val) => !!val || 'El área responsable es requerida']"
             />
@@ -59,45 +60,15 @@
             <q-input
               v-model="encabezado.area_Generadora"
               label="Área generadora"
-              hint="Ingrese área generadora"
-              lazy-rules
-              :rules="[(val) => !!val || 'El área generadora es requerida']"
+              readonly
             />
           </div>
           <div class="col-12 col-xs-6 col-md-6">
             <q-input
               v-model="encabezado.enlace"
               label="Elaboró"
-              hint="Enlace del archivo de tramite"
-              lazy-rules
-              :rules="[(val) => !!val || 'El enlace de area es requerido']"
-            />
-          </div>
-          <div class="col-12 col-xs-6 col-md-6">
-            <q-input
-              v-model="encabezado.valida_Area"
-              label="Valida"
-              lazy-rules
+              hint="Enlace del archivo de trámite"
               readonly
-              :rules="[(val) => !!val || 'Quien dió visto bueno es requerido']"
-            />
-          </div>
-          <div class="col-12 col-xs-6 col-md-6">
-            <q-input
-              v-model="encabezado.coteja"
-              label="Coteja"
-              readonly
-              lazy-rules
-              :rules="[(val) => !!val || 'Quien dió visto bueno es requerido']"
-            />
-          </div>
-          <div class="col-12 col-xs-6 col-md-6">
-            <q-input
-              v-model="encabezado.valida"
-              label="Valida"
-              readonly
-              lazy-rules
-              :rules="[(val) => !!val || 'Quien supervisa es requerido']"
             />
           </div>
           <div class="col-12 justify-end">
@@ -132,51 +103,34 @@
 import { useQuasar } from "quasar";
 import { storeToRefs } from "pinia";
 import { useTransferenciaPrimariaEncabezadoStore } from "../../../stores/transferencia_primaria_encabezado_store";
-import { useEnlaceArchivoStore } from "../../../stores/enlace_archivo_store";
-import { ref, watch, onBeforeMount } from "vue";
+import { useAreaStore } from "../../../stores/areas_store";
+import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { espera } from "../../../helpers/helper";
 
 const $q = useQuasar();
 const router = useRouter();
 const transferenciaStore = useTransferenciaPrimariaEncabezadoStore();
-const enlaceArchivoStore = useEnlaceArchivoStore();
+const areaStore = useAreaStore();
 const { modal, isEditar, encabezado } = storeToRefs(transferenciaStore);
-const { listaEnlaces } = storeToRefs(enlaceArchivoStore);
-// const { listaSecciones } = storeToRefs(seccionStore);
-const enlaceId = ref(null);
-const seccionId = ref(null);
+// Corte al backend nuevo: el área responsable se elige de /api/areas (loadListaAreas en la página).
+const { areas } = storeToRefs(areaStore);
+const areaResponsableSel = ref(null);
 const loading = ref(false);
-
-// onBeforeMount(() => {
-//   transferenciaStore.loadArea();
-//   transferenciaStore.loadValidaAreaGeneradora();
-//   transferenciaStore.loadCoteja();
-//   transferenciaStore.loadValida();
-// });
 
 const actualizarModal = (valor) => {
   transferenciaStore.initEncabezado();
+  areaResponsableSel.value = null;
   transferenciaStore.actualizarModal(valor);
-};
-
-watch(encabezado.value, (val) => {
-  cargarEnlace(val);
-});
-
-const cargarEnlace = async (val) => {
-  await espera();
-  if (isEditar.value == true) {
-    const enlace_Id_Filtrado = listaEnlaces.value.find(
-      (x) => x.value == `${val.enlace_Id}`
-    );
-    enlaceId.value = enlace_Id_Filtrado;
-  }
 };
 
 const onSubmit = async () => {
   let resp = null;
   loading.value = true;
+  // Corte: el área responsable viene del selector (no del legado).
+  if (areaResponsableSel.value) {
+    encabezado.value.area_Responsable_Id = areaResponsableSel.value.value;
+    encabezado.value.area_Responsable = areaResponsableSel.value.label;
+  }
   if (isEditar.value == true) {
     resp = await transferenciaStore.updateTransferenciaPrimariaEncabezado(
       encabezado.value.id,
