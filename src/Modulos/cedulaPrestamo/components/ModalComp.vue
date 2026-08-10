@@ -129,7 +129,9 @@ const detalleCedulaPrestamoStore = useDetalleCedulaPrestamoStore();
 const areasStore = useAreaStore();
 
 onMounted(() => {
-  areasStore.loadEmpleados();
+  // Corte al backend nuevo: el selector de solicitante usa /api/empleados (loadEmpleadosTodos, ya
+  // migrado) en vez del /Empleados/ByArea legado.
+  areasStore.loadEmpleadosTodos();
 });
 
 const props = defineProps({

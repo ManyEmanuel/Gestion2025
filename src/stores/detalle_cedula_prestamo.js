@@ -1,6 +1,10 @@
 import { defineStore } from 'pinia';
 import { api } from 'src/boot/axios';
 
+// Corte al backend nuevo: agregar expediente responde 204 y problem+json en error (axios lanza).
+const mensajeError = (e, defecto = "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte") =>
+  (e && e.response && e.response.data && (e.response.data.detail || e.response.data.title)) || defecto
+
 export const useDetalleCedulaPrestamoStore = defineStore('detalleCedulaPrestamo', {
   state: () => ({
     isLoading: false,
@@ -89,23 +93,24 @@ export const useDetalleCedulaPrestamoStore = defineStore('detalleCedulaPrestamo'
       }
     },
 
+    // MIGRADO al backend nuevo: POST /api/prestamos/{cedulaId}/expedientes -> 204. Se usa al EDITAR
+    // un préstamo (agregar un expediente extra); en el ALTA los expedientes van embebidos (ver
+    // createSolicitudPrestamo). Solo mientras el préstamo está en estado Solicitado.
     async createDetalle(cedulaId, detalle) {
       try {
-        const resp = await api.post(`/Archivo/DetalleCedulaPrestamoExpedientes/${cedulaId}`, detalle)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            return { success, data }
-          } else {
-            return { success, data }
-          }
+        const resp = await api.post(`/prestamos/${cedulaId}/expedientes`, {
+          inventarioGeneralId: detalle.inventario_Id,
+          ubicacion: detalle.ubicacion || null,
+          descripcion: detalle.descripcion || null,
+          observaciones: detalle.observaciones || null
+        })
+        if (resp.status === 204 || resp.status === 200) {
+          return { success: true, data: "Expediente agregado" }
         }
-        else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-        }
+        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
       } catch (error) {
         console.error(error)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        return { success: false, data: mensajeError(error) }
       }
     },
 

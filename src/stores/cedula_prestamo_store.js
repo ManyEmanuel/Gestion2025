@@ -7,6 +7,21 @@ import { api } from 'src/boot/axios';
 const mensajeError = (e, defecto = "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte") =>
   (e && e.response && e.response.data && (e.response.data.detail || e.response.data.title)) || defecto
 
+// Empleado y área del usuario autenticado, leídos de los claims del JWT (el backend nuevo los exige
+// al crear un préstamo: empleadoRegistroId = quien registra; areaSolicitanteId = su área).
+function datosUsuarioToken() {
+  try {
+    const token = localStorage.getItem('key')
+    if (!token) return {}
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+    const payload = JSON.parse(decodeURIComponent(escape(atob(base64))))
+    return { empleadoId: payload.empleado_id || null, areaId: payload.area || null }
+  } catch (e) {
+    console.error(e)
+    return {}
+  }
+}
+
 const soloFecha = (iso) => (iso ? String(iso).substring(0, 10) : null)
 
 const mapFilaPrestamo = (p) => ({
@@ -226,22 +241,46 @@ export const useCedulaPrestamoStore = defineStore('CedulaPrestamo', {
       }
     },
 
+    // MIGRADO al backend nuevo: el alta que el legado hacía en UN POST (cabecera + expedientes
+    // embebidos) se DESCOMPONE en Crear préstamo (POST /api/prestamos, estado Solicitado) + un
+    // AgregarExpediente (POST /api/prestamos/{id}/expedientes) por cada expediente del detalle.
+    // empleadoRegistro y áreaSolicitante salen del JWT del usuario autenticado.
     async createSolicitudPrestamo(solicitud) {
       try {
-        const resp = await api.post('/Archivo/CedulasPrestamosExpedientes/GenerarSolicitudPrestamo', solicitud)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success == true) {
-            return { success, data }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        const usuario = datosUsuarioToken()
+        if (!usuario.empleadoId || !usuario.areaId) {
+          return { success: false, data: "Tu usuario no tiene empleado/área asociada para registrar la solicitud." }
         }
+        // 1) Crear la cabecera del préstamo.
+        const respCrear = await api.post('/prestamos', {
+          areaResponsableId: solicitud.area_Responsable_Id,
+          areaSolicitanteId: usuario.areaId,
+          solicitanteId: solicitud.solicitante_Id,
+          empleadoRegistroId: usuario.empleadoId,
+          fechaDevolucionCompromiso: solicitud.fecha_Devolucion,
+          fisico: solicitud.fisico === true,
+          digital: solicitud.digital === true,
+          folio: solicitud.folio || null,
+          observaciones: solicitud.observaciones || null,
+          clasificado: solicitud.clasificado === true
+        })
+        const prestamoId = respCrear && respCrear.data && respCrear.data.id
+        if (!prestamoId) {
+          return { success: false, data: "No se pudo crear la solicitud." }
+        }
+        // 2) Agregar cada expediente del detalle embebido.
+        for (const d of (solicitud.detalle || [])) {
+          await api.post(`/prestamos/${prestamoId}/expedientes`, {
+            inventarioGeneralId: d.inventario_Id,
+            ubicacion: d.ubicacion || null,
+            descripcion: d.descripcion || null,
+            observaciones: d.observaciones || null
+          })
+        }
+        return { success: true, data: "Solicitud registrada con éxito" }
       } catch (error) {
         console.error(error)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        return { success: false, data: mensajeError(error) }
       }
     },
 
