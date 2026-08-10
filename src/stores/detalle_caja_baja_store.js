@@ -1,6 +1,10 @@
 import { defineStore } from 'pinia';
 import { api } from 'src/boot/axios';
 
+// Corte al backend nuevo: agregar expediente responde 204 y problem+json en error (axios lanza).
+const mensajeError = (e, defecto = "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte") =>
+  (e && e.response && e.response.data && (e.response.data.detail || e.response.data.title)) || defecto
+
 export const useDetalleCajaBajaStore = defineStore('detalleCajaBaja', {
   state: () => ({
     isLoading: false,
@@ -60,24 +64,26 @@ export const useDetalleCajaBajaStore = defineStore('detalleCajaBaja', {
       }
     },
 
-    async create(caja_id, detalle) {
+    // MIGRADO al backend nuevo: POST /api/bajasdocumentales/{bajaId}/expedientes { cajaId, ... } -> 204.
+    // Se usa al EDITAR una caja (agregar un expediente extra); solo mientras la baja está en Borrador.
+    // Recibe bajaId (lo pasa el componente por prop).
+    async create(bajaId, caja_id, detalle) {
       try {
-        const resp = await api.post(`/Archivo/DetalleCajasBajas/${caja_id}`, detalle)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            this.load_detalles(caja_id)
-            return { success, data }
-          } else {
-            return { success, data }
-          }
+        const resp = await api.post(`/bajasdocumentales/${bajaId}/expedientes`, {
+          cajaId: caja_id,
+          inventarioGeneralId: detalle.inventario_Area_Id,
+          descripcion: detalle.descripcion || null,
+          observaciones: detalle.observaciones || null,
+          totalPaginas: detalle.total_Paginas != null ? Number(detalle.total_Paginas) : null
+        })
+        if (resp.status === 204 || resp.status === 200) {
+          this.load_detalles(caja_id)
+          return { success: true, data: "Expediente agregado" }
         }
-        else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-        }
+        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
       } catch (e) {
         console.error(e)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        return { success: false, data: mensajeError(e) }
       }
     },
 

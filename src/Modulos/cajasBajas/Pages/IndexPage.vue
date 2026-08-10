@@ -19,13 +19,17 @@
         <div class="text-left">
           <h5>
             Cajas de baja documental
-            {{ baja != null ? baja.numero_Transferencia : "" }}
+            {{ encabezado ? encabezado.no_Transferencia : "" }}
           </h5>
         </div>
       </div>
       <div class="col">
         <div class="text-right q-pa-md items-start q-gutter-md">
+          <!-- Corte: Anexo 14 (formato de baja completo) diferido — depende de roles legados
+               (elaboró/valida/visto bueno/aprobó) que el backend nuevo no modela y de un endpoint
+               legado por caja. Rehacer como reporte de backend si se requiere. -->
           <q-btn
+            v-if="false"
             type="button"
             class="q-ma-sm"
             color="purple-ieen"
@@ -87,7 +91,7 @@ const disposicionDocStore = useDisposicionDocStore();
 const detalleCajaBajaStore = useDetalleCajaBajaStore();
 
 const { modulo } = storeToRefs(authStore);
-const { baja, encabezado } = storeToRefs(bajaDocumentalStore);
+const { encabezado } = storeToRefs(bajaDocumentalStore);
 const { disposiciones } = storeToRefs(disposicionDocStore);
 const { cajas, isCompleto } = storeToRefs(cajaBajaDocumentalStore);
 const siglas = "AI-CJS-BAJAS";
@@ -99,7 +103,8 @@ const leerPermisos = async () => {
 };
 
 const props = defineProps({
-  bajaId: Number,
+  // Corte al backend nuevo: los ids de baja son Guids (string), no enteros.
+  bajaId: String,
 });
 
 onBeforeMount(() => {
@@ -143,7 +148,7 @@ const afectarBaja = async () => {
         type: "positive",
         message: resp.data,
       });
-      bajaDocumentalStore.loadBaja(props.bajaId);
+      bajaDocumentalStore.loadEncabezado(props.bajaId);
       cajaBajaDocumentalStore.loadCajas(props.bajaId);
     } else {
       $q.loading.hide();

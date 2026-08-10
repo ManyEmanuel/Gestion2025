@@ -28,11 +28,12 @@
           <q-tr :props="props">
             <q-td v-for="col in props.cols" :key="col.name" :props="props">
               <div v-if="col.name === 'id'">
+                <!-- Corte: editar la caja = agregar expedientes (en Borrador); ver si Afectada. -->
                 <q-btn
                   v-if="
                     modulo == null
                       ? false
-                      : modulo.actualizar && props.row.estatus != 'Afectado'
+                      : modulo.actualizar && props.row.estatus != 'Afectada'
                   "
                   flat
                   round
@@ -40,7 +41,7 @@
                   icon="edit"
                   @click="editar(col.value)"
                 >
-                  <q-tooltip>Editar registro</q-tooltip>
+                  <q-tooltip>Agregar expedientes</q-tooltip>
                 </q-btn>
                 <q-btn
                   v-if="modulo == null ? false : modulo.actualizar"
@@ -52,12 +53,9 @@
                 >
                   <q-tooltip>Anexo 13</q-tooltip>
                 </q-btn>
+                <!-- Corte: la caja es inmutable en el backend nuevo (sin delete); se deshabilita. -->
                 <q-btn
-                  v-if="
-                    modulo == null
-                      ? false
-                      : modulo.eliminar && props.row.estatus != 'Afectado'
-                  "
+                  v-if="false"
                   flat
                   round
                   color="purple-ieen"

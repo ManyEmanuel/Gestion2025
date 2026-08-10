@@ -298,6 +298,55 @@ export const useInventarioAreaStore = defineStore('InventarioArea', {
       }
     },
 
+    // Corte al backend nuevo (corte de clientes): opciones del picker para armar cajas de BAJA
+    // documental. Igual que loadInventariosAreaOpt (transferencias) pero excluye las claves ya
+    // capturadas en las cajas de la BAJA (/bajasdocumentales/cajas/{id}/detalle). Enriquece cada
+    // opción (clave/nombre/fechas/totalPaginas + anio derivado de la clave) para que
+    // seleccionarInventarioOptLocal pueble `inventario` y el filtro por año del RegistroDetalle
+    // funcione (el label termina en el nombre, no en el año). Área generadora = área del JWT.
+    async loadInventariosBajaOpt(cajas) {
+      try {
+        this.inventariosOpt = []
+        const areaId = areaUsuarioToken()
+        if (!areaId) {
+          return { success: false, data: "Tu usuario no tiene área asociada." }
+        }
+        const clavesCapturadas = new Set()
+        for (const caja of (cajas || [])) {
+          if (!caja || !caja.id) continue
+          try {
+            const r = await api.get(`/bajasdocumentales/cajas/${caja.id}/detalle`)
+            if (r.status == 200 && Array.isArray(r.data)) {
+              r.data.forEach((d) => clavesCapturadas.add(d.claveClasificacion))
+            }
+          } catch (err) { console.warn('detalle caja baja', err && err.message) }
+        }
+        const resp = await api.get(`/expedientes/por-area/${areaId}`)
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          this.inventariosOpt = resp.data
+            .filter((e) => !clavesCapturadas.has(e.claveClasificacion))
+            .map((e) => {
+              const partes = (e.claveClasificacion || '').split('/')
+              return {
+                label: `${e.claveClasificacion}-${e.nombreExpediente}`,
+                value: e.id,
+                clave: e.claveClasificacion,
+                nombre: e.nombreExpediente,
+                fechaInicio: e.fechaInicio,
+                fechaTermino: e.fechaTermino,
+                totalPaginas: e.totalPaginas,
+                anio: partes.length ? partes[partes.length - 1] : null
+              }
+            })
+          return { success: true }
+        }
+        return { success: false, data: "Respuesta inesperada del servidor." }
+      } catch (error) {
+        console.error(error)
+        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+      }
+    },
+
     async loadInventariosByAreaOptAI(secciones, areaId, year_Inicio, year_Fin) {
       try {
         this.inventariosOpt = []

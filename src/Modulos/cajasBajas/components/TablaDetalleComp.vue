@@ -27,7 +27,11 @@
           <q-tr :props="props">
             <q-td v-for="col in props.cols" :key="col.name" :props="props">
               <div v-if="col.name === 'id'">
+                <!-- Corte: en el backend nuevo el expediente agregado es inmutable (sin delete).
+                     El eliminar solo aplica al armar el alta (array local, aún sin persistir);
+                     al editar una caja ya guardada no se muestra. -->
                 <q-btn
+                  v-if="isEditar == false"
                   flat
                   round
                   color="purple-ieen"

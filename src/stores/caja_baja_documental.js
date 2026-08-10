@@ -1,6 +1,10 @@
 import { defineStore } from 'pinia';
 import { api } from 'src/boot/axios';
 
+// Corte al backend nuevo: las escrituras REST responden 201/204 y problem+json en error (axios lanza).
+const mensajeError = (e, defecto = "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte") =>
+  (e && e.response && e.response.data && (e.response.data.detail || e.response.data.title)) || defecto
+
 export const useCajaBajaDocumentalStore = defineStore('CajaBajaDocumental', {
   state: () => ({
     isLoading: false,
@@ -41,6 +45,8 @@ export const useCajaBajaDocumentalStore = defineStore('CajaBajaDocumental', {
             no_Caja: caja.noCaja,
             seccion: null,
             peso: caja.peso,
+            fecha_Antigua: caja.anoAntiguo,
+            fecha_Reciente: caja.anoReciente,
             total_Expedientes: caja.totalExpedientes,
             total_Paginas: null,
             estatus: caja.estatus
@@ -56,49 +62,62 @@ export const useCajaBajaDocumentalStore = defineStore('CajaBajaDocumental', {
       }
     },
 
+    // MIGRADO al backend nuevo (corte de clientes): el backend nuevo NO expone GET-por-id de caja;
+    // se toma del listado ya cargado (this.cajas) buscando por id (patrón edit-from-list). Se usa al
+    // EDITAR una caja (solo para agregar expedientes en Borrador). Sección/total de hojas van en null.
     async loadCaja(id) {
       try {
-        const resp = await api.get(`/Arhivo/CajasBajas/${id}`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            this.caja.id = data.id
-            this.caja.no_Caja = data.no_Caja
-            this.caja.seccion_Id = data.secciones_Id
-            this.caja.peso = data.peso
-            this.caja.total_Expedientes = data.total_Expedientes
-            this.caja.total_Paginas = data.total_Paginas
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        const encontrada = (this.cajas || []).find((c) => c.id == id)
+        if (encontrada) {
+          this.caja.id = encontrada.id
+          this.caja.no_Caja = encontrada.no_Caja
+          this.caja.seccion_Id = []
+          this.caja.peso = encontrada.peso
+          this.caja.fecha_Antigua = encontrada.fecha_Antigua
+          this.caja.fecha_Reciente = encontrada.fecha_Reciente
+          this.caja.total_Expedientes = encontrada.total_Expedientes
+          this.caja.total_Paginas = null
+          this.caja.estatus = encontrada.estatus
+          return { success: true }
         }
+        return { success: false, data: "No se encontró la caja en el listado." }
       } catch (error) {
         console.log(error)
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-
       }
     },
 
+    // MIGRADO al backend nuevo: el legado creaba la caja con sus expedientes EMBEBIDOS en un solo POST.
+    // El backend nuevo lo separa: AgregarCaja (POST /{bajaId}/cajas {noCaja, peso, anoAntiguo,
+    // anoReciente}) -> devuelve el id de la caja -> y luego un AgregarExpediente (POST
+    // /{bajaId}/expedientes) por cada expediente del detalle.
     async createCaja(bajaId, caja) {
       try {
-        const resp = await api.post(`/Arhivo/CajasBajas/${bajaId}`, caja)
-        if (resp.status == 200) {
-          console.log(resp)
-          const { success, data } = resp.data
-          if (success == true) {
-            this.loadCajas(bajaId)
-            return { success, data }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        const anio = (v) => (v != null && v !== '' ? Number(v) : null)
+        const respCaja = await api.post(`/bajasdocumentales/${bajaId}/cajas`, {
+          noCaja: Number(caja.no_Caja),
+          peso: caja.peso != null && caja.peso !== '' ? Number(caja.peso) : null,
+          anoAntiguo: anio(caja.fecha_Antigua),
+          anoReciente: anio(caja.fecha_Reciente)
+        })
+        const cajaId = respCaja && respCaja.data && respCaja.data.id
+        if (!cajaId) {
+          return { success: false, data: "No se pudo crear la caja." }
         }
+        for (const d of (caja.detalle || [])) {
+          await api.post(`/bajasdocumentales/${bajaId}/expedientes`, {
+            cajaId,
+            inventarioGeneralId: d.inventario_Area_Id,
+            descripcion: d.descripcion || null,
+            observaciones: d.observaciones || null,
+            totalPaginas: d.total_Paginas != null ? Number(d.total_Paginas) : null
+          })
+        }
+        this.loadCajas(bajaId)
+        return { success: true, data: "Caja registrada con éxito" }
       } catch (error) {
         console.error(error)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        return { success: false, data: mensajeError(error) }
       }
     },
 

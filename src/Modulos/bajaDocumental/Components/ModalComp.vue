@@ -19,119 +19,52 @@
         />
       </q-card-section>
       <q-card-section>
+        <!-- Corte al backend nuevo: se quitaron los roles legados (valida/visto bueno/aprobó) que el
+             dominio nuevo no modela. Área generadora = área del usuario (JWT, readonly); 'Elaboró' =
+             su enlace (readonly); el área responsable se elige de /api/areas (la jerarquía de áreas
+             no está poblada, así que ya no se deriva del área padre). -->
         <q-form class="row q-col-gutter-xs" @submit="onSubmit">
-          <div class="col-12 col-xs-6 col-md-6" v-if="isEditar">
-            <q-input
-              v-model="encabezado.fecha_Registro"
-              label="Fecha registro"
-              readonly
-            />
-          </div>
-          <div class="col-12 col-xs-12 col-md-12">
-            <q-input
-              v-model="encabezado.area_Responsable"
+          <div class="col-12 col-xs-12 col-md-6">
+            <q-select
+              v-model="areaResponsableSel"
+              :options="areas"
               label="Area responsable"
-              readonly
+              hint="Seleccione el área responsable"
               lazy-rules
               :rules="[(val) => !!val || 'El area responsable es requerida']"
             />
           </div>
           <div class="col-12 col-xs-12 col-md-6">
-            <q-select
-              v-model="area_id"
-              use-input
-              input-debounce="0"
-              @filter="filtro_areas"
-              :options="options_areas"
-              autofocus
+            <q-input
+              v-model="encabezado.area_Generadora"
               label="Area generadora"
-              hint="Seleccione area generadora"
-              lazy-rules
-              :rules="[(val) => !!val || 'El area generadora es requerida']"
+              readonly
             />
           </div>
           <div class="col-12 col-xs-12 col-md-6">
             <q-input
               v-model="encabezado.nombre"
-              label="Nombre de la Trasferencia"
+              label="Nombre de la Baja"
               lazy-rules
-              :rules="[
-                (val) => !!val || 'El nombre de transferencia es requerido',
-              ]"
+              :rules="[(val) => !!val || 'El nombre de la baja es requerido']"
             />
           </div>
           <div class="col-12 col-xs-12 col-md-6">
             <q-input
               v-model="encabezado.no_Transferencia"
-              label="No. Trasferencia"
+              label="No. Baja"
               lazy-rules
-              :rules="[
-                (val) => !!val || 'El no. de transferencia es requerido',
-              ]"
+              :rules="[(val) => !!val || 'El no. de baja es requerido']"
             />
           </div>
           <div class="col-12 col-xs-12 col-md-6">
-            <q-input
-              stack-label
-              v-model="encabezado.fecha_Elaboracion"
-              type="date"
-              label="Fecha elaboración"
-              lazy-rules
-              :rules="[
-                (val) => !!val || 'La fecha de elaboración es requerida',
-              ]"
-            />
+            <q-input v-model="encabezado.elaboro" label="Elaboró" readonly />
           </div>
           <div class="col-12 col-xs-12 col-md-6">
             <q-input
-              v-model="encabezado.elaboro"
-              label="Elaboró"
-              readonly
-              lazy-rules
-              :rules="[
-                (val) =>
-                  !!val ||
-                  'El empleado(a) que elaboró la transferencia es requerido(a)',
-              ]"
-            />
-          </div>
-          <div class="col-12 col-xs-12 col-md-6">
-            <q-input
-              v-model="encabezado.valida"
-              label="Valida"
-              readonly
-              lazy-rules
-              :rules="[
-                (val) =>
-                  !!val ||
-                  'El empleado(a) que valida la transferencia es requerido(a)',
-              ]"
-            />
-          </div>
-          <div class="col-12 col-xs-12 col-md-6">
-            <q-input
-              v-model="encabezado.visto_Bueno"
-              label="Visto bueno"
-              readonly
-              lazy-rules
-              :rules="[
-                (val) =>
-                  !!val ||
-                  'El empleado(a) dió visto bueno a la transferencia es requerido(a)',
-              ]"
-            />
-          </div>
-          <div class="col-12 col-xs-12 col-md-6">
-            <q-input
-              v-model="encabezado.aprobo"
-              label="Aprobó"
-              readonly
-              lazy-rules
-              :rules="[
-                (val) =>
-                  !!val ||
-                  'El empleado(a) aprobó a la transferencia es requerido(a)',
-              ]"
+              v-model="encabezado.observaciones"
+              label="Observaciones"
+              hint="Opcional"
             />
           </div>
           <div class="col-12 justify-end">
@@ -167,66 +100,30 @@ import { useQuasar } from "quasar";
 import { storeToRefs } from "pinia";
 import { useBajaDocumentalStore } from "../../../stores/baja_documental_store";
 import { useAreaStore } from "../../../stores/areas_store";
-import { ref, watch, onBeforeMount } from "vue";
+import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { espera } from "../../../helpers/helper";
 
 const $q = useQuasar();
 const router = useRouter();
 const bajaStore = useBajaDocumentalStore();
 const areaStore = useAreaStore();
-const { areas, area } = storeToRefs(areaStore);
+const { areas } = storeToRefs(areaStore);
 const { modal, encabezado, isEditar } = storeToRefs(bajaStore);
-const options_areas = ref(areas.value);
-const area_id = ref(null);
-let captura = false;
-const filtro_areas = (val, update) => {
-  if (val === "") {
-    update(() => {
-      options_areas.value = areas.value;
-    });
-    return;
-  }
-  update(() => {
-    const needle = val.toLowerCase();
-    options_areas.value = areas.value.filter(
-      (v) => v.label.toLowerCase().indexOf(needle) > -1
-    );
-  });
-};
-
-watch(area_id, (val) => {
-  if (val != null) {
-    load_padre(val.value);
-  } else {
-    areaStore.initArea();
-  }
-});
-
-const load_padre = async (id) => {
-  $q.loading.show();
-  await areaStore.loadPadreByHija(id);
-  await bajaStore.loadEnlace(id);
-  await bajaStore.loadResponsableArea(id);
-  await bajaStore.loadAprueba();
-  await espera();
-  encabezado.value.area_Responsable = area.value.area;
-  encabezado.value.area_Responsable_Id = area.value.id;
-  $q.loading.hide();
-};
+const areaResponsableSel = ref(null);
+const loading = ref(false);
 
 const onSubmit = async () => {
-  $q.loading.show();
-  encabezado.value.area_Generadora_Id = area_id.value.value;
-  encabezado.value.area_Responsable_Id = area.value.id;
+  loading.value = true;
+  // Corte: el área responsable viene del selector (no del legado); la generadora y el enlace ya
+  // están puestos por loadArea/loadEnlace (JWT) al abrir el modal.
+  if (areaResponsableSel.value) {
+    encabezado.value.area_Responsable_Id = areaResponsableSel.value.value;
+    encabezado.value.area_Responsable = areaResponsableSel.value.label;
+  }
   const resp = await bajaStore.createTransferencia(encabezado.value);
-  $q.loading.hide();
+  loading.value = false;
   if (resp.success) {
-    await bajaStore.loadEncabezados();
-    $q.notify({
-      type: "positive",
-      message: resp.data,
-    });
+    $q.notify({ type: "positive", message: resp.data });
     $q.dialog({
       title: "Registro generado con éxito",
       message: "¿Desea capturar el inventario a dar de Baja?",
@@ -234,41 +131,23 @@ const onSubmit = async () => {
       persistent: true,
       transitionShow: "scale",
       transitionHide: "scale",
-      ok: {
-        color: "positive",
-        label: "Si, capturar inventario",
-      },
-      cancel: {
-        color: "negative",
-        label: "No, capturar despues",
-      },
+      ok: { color: "positive", label: "Si, capturar inventario" },
+      cancel: { color: "negative", label: "No, capturar despues" },
     })
       .onOk(() => {
-        if (isEditar.value == true) {
-          router.push({
-            name: "cajasBajas",
-            params: { bajaId: encabezado.value.id },
-          });
-        } else {
-          router.push({
-            name: "cajasBajas",
-            params: { bajaId: resp.id },
-          });
-        }
+        const destino = isEditar.value == true ? encabezado.value.id : resp.id;
+        router.push({ name: "cajasBajas", params: { bajaId: destino } });
       })
       .onCancel(() => {
         actualizarModal(false);
       });
   } else {
-    $q.notify({
-      type: "negative",
-      message: resp.data,
-    });
+    $q.notify({ type: "negative", message: resp.data });
   }
 };
 
 const actualizarModal = () => {
-  area_id.value = null;
+  areaResponsableSel.value = null;
   bajaStore.actualizarModal(false);
 };
 </script>

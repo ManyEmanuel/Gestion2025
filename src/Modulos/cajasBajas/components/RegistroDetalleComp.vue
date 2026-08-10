@@ -92,6 +92,12 @@ import { useInventarioAreaStore } from "../../../stores/inventario_area_store";
 import { useCajaBajaDocumentalStore } from "../../../stores/caja_baja_documental";
 import { espera } from "src/helpers/helper";
 
+// Corte: bajaId lo pasa ModalComp por prop; create (agregar expediente) lo necesita para la ruta
+// POST /bajasdocumentales/{bajaId}/expedientes del backend nuevo.
+const props = defineProps({
+  bajaId: { type: String, default: null },
+});
+
 const $q = useQuasar();
 const detalleStore = useDetalleCajaBajaStore();
 const inventarioStore = useInventarioAreaStore();
@@ -108,7 +114,7 @@ const years = ref([]);
 
 const leerInventario = async (id) => {
   $q.loading.show();
-  await inventarioStore.loadInventario(id);
+  inventarioStore.seleccionarInventarioOptLocal(id);
   detalle.value.total_Paginas = inventario.value.total_Paginas;
   detalle.value.descripcion = inventario.value.descripcion;
   $q.loading.hide();
@@ -205,7 +211,7 @@ const agregarDetalle = async () => {
         });
         return;
       }
-      resp = await detalleStore.create(caja.value.id, detalle.value);
+      resp = await detalleStore.create(props.bajaId, caja.value.id, detalle.value);
       if (resp.success) {
         limpiar();
         $q.notify({
@@ -251,12 +257,15 @@ const agregarDetalle = async () => {
         existe = detalles.value.some((x) => x.id == inv.value);
         if (existe == false) {
           detalle.value.inventario_Area_Id = inv.value;
-          let resp = await detalleCajaStore.createDetalle(
+          // Corte: se corrige el bug legado (detalleCajaStore/createDetalle no existían aquí) y se
+          // pasa bajaId a create; load_detalles recarga el detalle de la caja.
+          let resp = await detalleStore.create(
+            props.bajaId,
             caja.value.id,
             detalle.value
           );
           if (resp.success == true) {
-            detalleCajaStore.loadDetalles(caja.value.id);
+            detalleStore.load_detalles(caja.value.id);
             $q.notify({
               type: "positive",
               message: `Se agregó la clave ${inv.label}`,
@@ -274,7 +283,7 @@ const agregarDetalle = async () => {
           (x) => x.clave_Clasificacion == inv.label
         );
         if (existe == false) {
-          await inventarioStore.loadInventario(inv.value);
+          inventarioStore.seleccionarInventarioOptLocal(inv.value);
           detalle.value.inventario_Area_Id = inv.value;
           detalle.value.nombre_Expediente = inventario.value.nombre_Expediente;
           detalle.value.clave_Clasificacion =

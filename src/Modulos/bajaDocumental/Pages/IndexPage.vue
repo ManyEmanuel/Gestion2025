@@ -66,8 +66,11 @@ const actualizarModal = async (valor) => {
   await espera();
   bajaStore.initEncabezado();
   await areaStore.loadListaAreas();
-  await bajaStore.loadAprueba();
-  await bajaStore.loadRespArchivo();
+  // Corte al backend nuevo: área generadora = área del usuario (JWT); 'Elaboró' = su enlace; el área
+  // responsable se elige con un selector (areas). Los roles legados (valida/visto bueno/aprobó) no los
+  // modela el backend, así que ya no se cargan.
+  await bajaStore.loadArea();
+  await bajaStore.loadEnlace();
   bajaStore.updateEditar(false);
   bajaStore.actualizarModal(valor);
   $q.loading.hide();
