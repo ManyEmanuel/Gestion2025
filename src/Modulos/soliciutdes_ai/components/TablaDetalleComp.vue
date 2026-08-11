@@ -27,7 +27,10 @@
           <q-tr :props="props">
             <q-td v-for="col in props.cols" :key="col.name" :props="props">
               <div v-if="col.name === 'id'">
+                <!-- Corte: el backend nuevo no modela el borrado de un expediente del préstamo; se
+                     deshabilita. (El alta/edición del detalle está diferida con inventarioAreaAI.) -->
                 <q-btn
+                  v-if="false"
                   flat
                   round
                   color="purple-ieen"

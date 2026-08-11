@@ -7,6 +7,9 @@ import { api } from 'src/boot/axios';
 // (lo que el usuario solicitó) y /{id} + /{id}/detalle. Muchos campos legados (responsable del área
 // solicitante, puestos, correo/teléfono, tipología, nº de legajos, folio de solicitud aparte) NO los
 // modela el dominio nuevo -> van en null. El folio unificado se muestra en la columna folio_Solicitud.
+// Corte al backend nuevo: las escrituras REST responden 201/204 y problem+json en error (axios lanza).
+const mensajeError = (e, defecto = "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte") =>
+  (e && e.response && e.response.data && (e.response.data.detail || e.response.data.title)) || defecto
 const soloFecha = (iso) => (iso ? String(iso).substring(0, 10) : null)
 const formatoTexto = (fisico, digital) =>
   fisico && digital ? "Físico y Digital" : fisico ? "Físico" : digital ? "Digital" : ""
@@ -394,43 +397,33 @@ export const useSolicitudPrestamoAiStore = defineStore('useSolicitudPrestamoAi',
       }
     },
 
-    async aprobar(id) {
+    // MIGRADO al backend nuevo: POST /api/prestamos/{id}/autorizar { autorizaId } -> 204. El backend
+    // exige que el autorizador sea un visto bueno vigente (autorizaId = EmpleadoId del visto bueno) y
+    // que el préstamo tenga ≥1 expediente. El autorizador lo elige el usuario en el diálogo de aprobar.
+    async aprobar(id, autorizaId) {
       try {
-        const resp = await api.get(`/Archivo/SolicitudesPrestamosAI/Aprobar/${id}`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          let mensaje = ""
-          if (success) {
-            this.loadSolicitudes()
-            mensaje = "Solicitud aprobada con éxito"
-          }
-          return { success, mensaje }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        const resp = await api.post(`/prestamos/${id}/autorizar`, { autorizaId })
+        if (resp.status === 204 || resp.status === 200) {
+          return { success: true, mensaje: "Solicitud aprobada con éxito" }
         }
+        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
       } catch (error) {
         console.error(error)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        return { success: false, data: mensajeError(error) }
       }
     },
 
+    // MIGRADO al backend nuevo: POST /api/prestamos/{id}/rechazar { motivo } -> 204.
     async cancelar(id, motivo) {
       try {
-        const resp = await api.get(`/Archivo/SolicitudesPrestamosAI/Rechazar/${id}/${motivo}`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          let mensaje = ""
-          if (success) {
-            this.loadSolicitudes()
-            mensaje = "Solicitud rechazada con éxito"
-          }
-          return { success, mensaje }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        const resp = await api.post(`/prestamos/${id}/rechazar`, { motivo })
+        if (resp.status === 204 || resp.status === 200) {
+          return { success: true, mensaje: "Solicitud rechazada con éxito" }
         }
+        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
       } catch (error) {
         console.error(error)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        return { success: false, data: mensajeError(error) }
       }
     },
 

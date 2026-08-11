@@ -29,8 +29,11 @@
           <q-tr :props="props">
             <q-td v-for="col in props.cols" :key="col.name" :props="props">
               <div v-if="col.name === 'id'">
+                <!-- Corte: el préstamo es inmutable en el backend nuevo (sin update) y su edición usa
+                     el picker de concentración/histórico diferido; se deshabilita editar. La revisión
+                     (aprobar/rechazar) sigue disponible. -->
                 <q-btn
-                  v-if="modulo == null ? false : modulo.actualizar && tipo == 0"
+                  v-if="false"
                   flat
                   round
                   color="purple-ieen"
@@ -97,6 +100,7 @@ import { useAuthStore } from "../../../stores/auth_store";
 import { useRouter } from "vue-router";
 import { useSolicitudPrestamoAiStore } from "../../../stores/solicitud_prestamo_ai_store";
 import { useDetalleSolicitudAISotre } from "../../../stores/detalle_solicitud_prestamo_ai_store";
+import { useVistosBuenosStore } from "../../../stores/visto_bueno_store";
 import { espera } from "src/helpers/anexo_08";
 
 const $q = useQuasar();
@@ -104,6 +108,7 @@ const router = useRouter();
 const authStore = useAuthStore();
 const solicitudPrestamoStore = useSolicitudPrestamoAiStore();
 const detalleStore = useDetalleSolicitudAISotre();
+const vistoBuenoStore = useVistosBuenosStore();
 const { isLoading, solicitudes } = storeToRefs(solicitudPrestamoStore);
 const { modulo } = storeToRefs(authStore);
 
@@ -222,37 +227,40 @@ const verRechazado = async (id) => {
 };
 
 const aceptarcion = async (id, folio) => {
+  // Corte al backend nuevo: autorizar exige un autorizador que sea visto bueno vigente. Se ofrece un
+  // selector (radio) con los vistos buenos activos; el valor es el EmpleadoId del visto bueno.
+  $q.loading.show();
+  await vistoBuenoStore.loadVoBos();
+  $q.loading.hide();
+  const opciones = vistoBuenoStore.vistos_buenos
+    .filter((v) => v.activo)
+    .map((v) => ({ label: v.empleado, value: v.empleado_Id }));
+  if (opciones.length === 0) {
+    $q.notify({ type: "warning", message: "No hay vistos buenos vigentes para autorizar." });
+    return;
+  }
   $q.dialog({
     title: "Aceptar solicitud",
-    message: "¿Está seguro de aceptar la solicitud con folio " + folio + " ?",
-    icon: "Warning",
+    message:
+      "Solicitud con folio " + folio + ". Seleccione el visto bueno que autoriza:",
+    options: {
+      type: "radio",
+      model: opciones[0].value,
+      items: opciones,
+    },
     persistent: true,
-    transitionShow: "scale",
-    transitionHide: "scale",
-    ok: {
-      color: "positive",
-      label: "¡Sí!, aceptar",
-    },
-    cancel: {
-      color: "negative",
-      label: " No, regresar",
-    },
-  }).onOk(async () => {
+    ok: { color: "positive", label: "¡Sí!, aceptar" },
+    cancel: { color: "negative", label: " No, regresar" },
+  }).onOk(async (autorizaId) => {
     $q.loading.show();
-    let resp = await solicitudPrestamoStore.aprobar(id);
+    let resp = await solicitudPrestamoStore.aprobar(id, autorizaId);
     if (resp.success) {
       $q.loading.hide();
-      $q.notify({
-        type: "positive",
-        message: resp.mensaje,
-      });
-      await solicitudPrestamoStore.loadSolicitudes();
+      $q.notify({ type: "positive", message: resp.mensaje });
+      await solicitudPrestamoStore.loadPendientes();
     } else {
       $q.loading.hide();
-      $q.notify({
-        type: "negative",
-        message: resp.data,
-      });
+      $q.notify({ type: "negative", message: resp.data });
     }
   });
 };
@@ -294,7 +302,7 @@ const cancelacion = async (id, folio) => {
             type: "positive",
             message: resp.mensaje,
           });
-          await solicitudPrestamoStore.loadSolicitudes();
+          await solicitudPrestamoStore.loadPendientes();
         } else {
           $q.loading.hide();
           $q.notify({

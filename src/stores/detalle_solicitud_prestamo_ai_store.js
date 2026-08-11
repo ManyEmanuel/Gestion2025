@@ -1,6 +1,10 @@
 import { defineStore } from 'pinia';
 import { api } from 'src/boot/axios';
 
+// Corte al backend nuevo: agregar expediente responde 204 y problem+json en error (axios lanza).
+const mensajeError = (e, defecto = "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte") =>
+  (e && e.response && e.response.data && (e.response.data.detail || e.response.data.title)) || defecto
+
 export const useDetalleSolicitudAISotre = defineStore('detalleSolicitudAI', {
   state: () => ({
     isLoading: false,
@@ -66,19 +70,25 @@ export const useDetalleSolicitudAISotre = defineStore('detalleSolicitudAI', {
       }
     },
 
+    // MIGRADO al backend nuevo (corte de clientes): POST /api/prestamos/{solicitudId}/expedientes
+    // { inventarioGeneralId, ubicacion, descripcion, observaciones } -> 204. Agrega un expediente a un
+    // préstamo (mientras está Solicitado). El delete de expediente no lo modela el dominio nuevo.
     async create(solicitudId, detalle) {
       try {
-        const resp = await api.post(`/Archivo/DetalleSolicitudesPrestamosAI/${solicitudId}`, detalle)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success) {
-            this.load_detalles(solicitudId)
-          }
-          return { success, data }
+        const resp = await api.post(`/prestamos/${solicitudId}/expedientes`, {
+          inventarioGeneralId: detalle.inventario_Id,
+          ubicacion: detalle.ubicacion || null,
+          descripcion: detalle.descripcion || null,
+          observaciones: detalle.observaciones || null
+        })
+        if (resp.status === 204 || resp.status === 200) {
+          this.load_detalles(solicitudId)
+          return { success: true, data: "Expediente agregado" }
         }
+        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
       } catch (error) {
         console.error(error)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        return { success: false, data: mensajeError(error) }
       }
     },
 

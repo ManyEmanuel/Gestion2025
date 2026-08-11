@@ -29,8 +29,10 @@
           <q-tr :props="props">
             <q-td v-for="col in props.cols" :key="col.name" :props="props">
               <div v-if="col.name === 'id'">
+                <!-- Corte: el préstamo es inmutable en el backend nuevo (sin update) y su edición/alta
+                     usa el picker de concentración/histórico diferido; se deshabilita editar. -->
                 <q-btn
-                  v-if="modulo == null ? false : modulo.actualizar"
+                  v-if="false"
                   flat
                   round
                   color="purple-ieen"
