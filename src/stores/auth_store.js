@@ -4,18 +4,35 @@ import { api } from 'src/boot/axios';
 // Corte al backend nuevo: los permisos por módulo se derivan de los claims del JWT
 // (no del endpoint legado /PermisosModulosUsuarios). Mapa siglas del cliente -> grupo
 // de permiso archivo.<grupo>.*. Se extiende a medida que se migra cada módulo.
+// Mapa siglas del cliente -> grupo de permiso archivo.<grupo>.*. Incluye tanto las páginas
+// (loadModulo por-página) como los ítems de menú (loadModulos, construido desde el JWT). Solo se
+// listan los módulos MIGRADOS y verificados; los diferidos (inventarioAI, transferencias secundarias,
+// inv. gral. por áreas) se omiten a propósito para que no aparezcan en el menú.
 const MAPA_SIGLAS_GRUPO = {
   'AI-CAT-SECCIONES': 'clasificacion',
   'AI-CAT-DISP-DOC': 'disposicion',
   'AI-INV-AREA': 'inventario',
   'AI-TP': 'transferencia',
+  'AI-TP-AI': 'transferencia',
   'AI-CJS-TRANS': 'transferencia',
+  'AI-CJS-TRANS-AI': 'transferencia',
   'AI-BD': 'baja',
   'AI-CJS-BAJAS': 'baja',
   'AI-CAT-ENLACE': 'enlace',
   'AI-CAT-VOBO': 'visto-bueno',
   'AI-PRESTAMOS': 'prestamo',
+  'AI-PRESTAMOS-CLASI': 'prestamo',
+  'AI-PRESTAMOS-AI': 'prestamo',
+  'AI-PRESTAMOS-AI-AI': 'prestamo',
 };
+
+// Siglas que son ítems de MENÚ (top-level). Un subconjunto de MAPA_SIGLAS_GRUPO: las páginas de
+// cajas (AI-CJS-*) se navegan desde dentro de su encabezado, no van en el menú.
+const SIGLAS_MENU = [
+  'AI-CAT-SECCIONES', 'AI-CAT-DISP-DOC', 'AI-CAT-ENLACE', 'AI-CAT-VOBO',
+  'AI-INV-AREA', 'AI-TP', 'AI-TP-AI', 'AI-BD',
+  'AI-PRESTAMOS', 'AI-PRESTAMOS-CLASI', 'AI-PRESTAMOS-AI', 'AI-PRESTAMOS-AI-AI',
+];
 
 function permisosDelToken() {
   try {
@@ -35,6 +52,7 @@ export const useAuthStore = defineStore('AuthStore', {
   state: () => ({
     modulos: [],
     apps: [],
+    sistemas: [],
     modulo: null
   }),
 
@@ -66,90 +84,39 @@ export const useAuthStore = defineStore('AuthStore', {
       }
     },
 
+    // MIGRADO al backend nuevo (corte de clientes): el MENÚ se construye desde los permisos del JWT
+    // (claims `permiso` = archivo.<grupo>.<acción>), NO del endpoint legado del portal
+    // /PermisosModulosUsuarios. Cada ítem de menú (SIGLAS_MENU) se incluye si el usuario tiene
+    // `archivo.<grupo>.ver`; los flags registrar/actualizar/eliminar se derivan igual.
     async loadModulos() {
-      try {
-        const sistema = localStorage.getItem('sistema')
-        const resp = await api.get(`/PermisosModulosUsuarios/Bysuario/${sistema}`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            if (data) {
-              const modulosArray = data.map((modulo) => {
-                return {
-                  siglas_Modulo: modulo.siglas_Modulo,
-                  registrar: modulo.registrar,
-                  actualizar: modulo.actualizar,
-                  eliminar: modulo.eliminar,
-                  leer: modulo.leer
-                }
-              })
-              this.modulos = modulosArray;
-            }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrió un error, inténtelo de nuevo. Si el error persiste, contacte a soporte" }
+      const permisos = permisosDelToken()
+      const modulos = []
+      for (const sigla of SIGLAS_MENU) {
+        const grupo = MAPA_SIGLAS_GRUPO[sigla]
+        if (grupo && permisos.includes(`archivo.${grupo}.ver`)) {
+          modulos.push({
+            siglas_Modulo: sigla,
+            leer: true,
+            registrar: permisos.includes(`archivo.${grupo}.registrar`),
+            actualizar: permisos.includes(`archivo.${grupo}.actualizar`),
+            eliminar: permisos.includes(`archivo.${grupo}.eliminar`),
+          })
         }
-      } catch (error) {
-        console.log(error)
-        return { success: false, data: "Ocurrió un error, inténtelo de nuevo. Si el error persiste, contacte a soporte" }
       }
+      this.modulos = modulos
+      return { success: true }
     },
 
 
+    // MIGRADO al backend nuevo (corte de clientes): el cliente ya es autónomo (login propio); se retiró
+    // la integración con el portal SSO (/SistemasUsuarios/ByUSuario) y sus avatares en :9270. El lanzador
+    // de apps queda con una sola acción: Cerrar sesión (la maneja el layout limpiando el token -> /login).
     async loadSistemas() {
-      try {
-        const resp = await api.get(`/SistemasUsuarios/ByUSuario`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            if (data) {
-              const sistemasArray = data.map((sistema) => {
-                return {
-                  sistema_Id: sistema.sistema_Id,
-                  sistema: sistema.sistema,
-                  url: sistema.url
-                }
-              })
-              this.sistemas = sistemasArray;
-
-              const appsArray = data.map((app) => {
-                return {
-                  id: app.sistema_Id,
-                  label: app.sistema,
-                  avatar: app.logo_Url,
-                  url: app.url,
-                }
-              })
-
-              const logOut = {
-                id: 0,
-                label: "Cerrar sesión",
-                avatar: "http://sistema.ieenayarit.org:9270/Imagenes/Sistemas/dbb9640f-dd18-4fc3-b530-7041d8594240.png",
-                url: "",
-              }
-              const universoIEEN = {
-                id: 0,
-                label: "Ir a universo",
-                avatar: "http://sistema.ieenayarit.org:9270/Imagenes/Sistemas/67cfdabe-0538-4324-b711-93bcb6cb9a60.png",
-                url: "",
-              }
-
-              appsArray.push(universoIEEN);
-              appsArray.push(logOut);
-              this.apps = appsArray;
-            }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrió un error, inténtelo de nuevo. Si el error persiste, contacte a soporte" }
-        }
-      } catch (error) {
-        console.log(error)
-        return { success: false, data: "Ocurrió un error, inténtelo de nuevo. Si el error persiste, contacte a soporte" }
-      }
+      this.sistemas = []
+      this.apps = [
+        { id: 0, label: "Cerrar sesión", icon: "logout", url: "" },
+      ]
+      return { success: true }
     },
 
 

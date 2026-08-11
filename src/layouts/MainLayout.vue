@@ -11,7 +11,6 @@
           @click="toggleLeftDrawer"
         />
         <q-toolbar-title> Gestión documental </q-toolbar-title>
-        <q-badge rounded :color="onLine == true ? 'green' : 'red'" />
         <q-btn flat round dense icon="notifications">
           <q-badge v-if="no_notificaciones > 0" color="red" floating>{{
             no_notificaciones > 5 ? "5+" : no_notificaciones
@@ -188,7 +187,6 @@ import { useRoute, useRouter } from "vue-router";
 import { onBeforeMount } from "vue";
 import { useAuthStore } from "../stores/auth_store";
 import { useNotificacionStore } from "../stores/notificaciones_store";
-import { useNotifications } from "../helpers/signalRService";
 import { storeToRefs } from "pinia";
 import EssentialLink from "components/EssentialLink.vue";
 
@@ -209,8 +207,7 @@ export default defineComponent({
     const linkListPrestamos = ref([]);
     const linkListArchivoConcentracion = ref([]);
     const notificacionStore = useNotificacionStore();
-    const { startConnection, onReceiveNotification, onLine } =
-      useNotifications();
+    // Corte: SignalR (hub :9270) retirado. Notificaciones en tiempo real deshabilitadas.
 
     const { notificaciones, no_notificaciones, notificaciones_all } =
       storeToRefs(notificacionStore);
@@ -244,13 +241,7 @@ export default defineComponent({
       Empleado.value = localStorage.getItem("empleado");
       Perfil.value = localStorage.getItem("perfil");
       await loadMenu();
-      await conectar_signalr();
     });
-
-    const conectar_signalr = async () => {
-      await startConnection();
-      onReceiveNotification();
-    };
 
     const toNotificaciones = () => {
       router.push({
@@ -457,6 +448,8 @@ export default defineComponent({
     };
 
     const show = () => {
+      // Corte: cliente autónomo (login propio). Cerrar sesión limpia el token y vuelve al /login
+      // propio; se retiró la navegación al portal SSO (:9271) y a otros sistemas.
       $q.bottomSheet({
         message: "Aplicaciones",
         grid: true,
@@ -464,15 +457,7 @@ export default defineComponent({
       }).onOk((action) => {
         if (action.label == "Cerrar sesión") {
           localStorage.clear();
-          window.location = "http://sistema.ieenayarit.org:9271?return=false";
-        } else if (action.label == "Ir a universo") {
-          window.location = "http://sistema.ieenayarit.org:9271?return=true";
-        } else {
-          window.location =
-            action.url +
-            `/#/?key=${localStorage.getItem("key")}&sistema=${
-              action.id
-            }&usr=${localStorage.getItem("usuario")}`;
+          router.push({ name: "login" });
         }
       });
     };
@@ -483,10 +468,6 @@ export default defineComponent({
       notificaciones,
       toNotificaciones,
       marcarLeido,
-      conectar_signalr,
-      onLine,
-      startConnection,
-      onReceiveNotification,
       notificaciones_all,
 
       linksList,

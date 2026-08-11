@@ -53,11 +53,11 @@ module.exports = configure(function (ctx) {
     build: {
       vueRouterMode: 'hash', // available values: 'hash', 'history'
 
-      // URL base de la API. Por defecto el backend legado (:9270); para el corte al backend
-      // nuevo (UniversoArchivo) se define la variable de entorno API_URL al construir:
-      //   API_URL=http://localhost:5120/api  quasar build
+      // URL base de la API. Corte COMPLETO al backend nuevo (UniversoArchivo): por defecto el backend
+      // nuevo local (:5120). Para build/producción se define API_URL con su URL real:
+      //   API_URL=https://<backend-nuevo>/api  quasar build
       env: {
-        API_URL: process.env.API_URL || 'http://sistema.ieenayarit.org:9270/api'
+        API_URL: process.env.API_URL || 'http://localhost:5120/api'
       },
 
       // transpile: false,
