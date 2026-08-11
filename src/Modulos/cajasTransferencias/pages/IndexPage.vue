@@ -41,13 +41,14 @@
             label="Carátula"
             @click="descargar_caratula"
           />
+          <!-- Corte: el backend nuevo usa estatus 'Borrador'/'Enviada'/'Afectada'; enviar y agregar
+               cajas solo aplican en Borrador (antes se comparaba con 'Pendiente' legado -> los botones
+               no aparecían). -->
           <q-btn
             v-if="
               modulo == null
                 ? false
-                : modulo.registrar &&
-                  (encabezado.estatus == 'Pendiente' ||
-                    encabezado.estatus == 'Con observaciones')
+                : modulo.registrar && encabezado.estatus == 'Borrador'
             "
             type="button"
             class="q-ma-sm"
@@ -60,7 +61,7 @@
             v-if="
               modulo == null
                 ? false
-                : modulo.registrar && encabezado.estatus == 'Pendiente'
+                : modulo.registrar && encabezado.estatus == 'Borrador'
             "
             type="button"
             class="q-ma-sm"
