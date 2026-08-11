@@ -31,50 +31,38 @@ export const useDetalleSolicitudAISotre = defineStore('detalleSolicitudAI', {
       this.array_detalle = []
     },
 
+    // MIGRADO al backend nuevo (corte de clientes): GET /api/prestamos/{id}/detalle (renglones con el
+    // expediente resuelto). El nº interno se deriva de la clave; el nº de transferencia y el flag
+    // histórico no los modela el dominio nuevo del préstamo unificado -> null/false.
     async load_detalles(solicitudId) {
       try {
         this.isLoading = true
         this.isHistrico = false
-        const resp = await api.get(`/Archivo/DetalleSolicitudesPrestamosAI/BySolicitud/${solicitudId}`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success == true) {
-            if (data) {
-              this.detalles = data.map((element) => {
-                return {
-                  id: element.id,
-                  inventario_Id: element.inventario_Id,
-                  Inventario_Clave_Clasificacion: element.inventario_Clave_Clasificacion,
-                  descripcion: element.descripcion,
-                  observaciones: element.observaciones,
-                  ubicacion: element.ubicacion,
-                  fecha_Inicio: element.fecha_Inicio,
-                  no_transferencia: element.numero_Transferencia.split('/')[3],
-                  no_interno: element.inventario_Clave_Clasificacion.split('/')[3],
-                  historico: element.historico
-                }
-              })
+        const resp = await api.get(`/prestamos/${solicitudId}/detalle`)
+        this.isLoading = false
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          this.detalles = resp.data.map((d) => {
+            const partes = (d.claveClasificacion || '').split('/')
+            return {
+              id: d.id,
+              inventario_Id: d.inventarioGeneralId,
+              Inventario_Clave_Clasificacion: d.claveClasificacion,
+              descripcion: d.descripcion,
+              observaciones: d.observaciones,
+              ubicacion: d.ubicacion,
+              fecha_Inicio: d.fechaInicio,
+              no_transferencia: null,
+              no_interno: partes.length > 3 ? partes[3] : null,
+              historico: false
             }
-            if (this.detalles.length > 0) {
-              if (this.detalles[0].historico == "True") {
-                this.isHistrico = true
-              } else {
-                this.isHistrico = false
-              }
-            }
-            return { success }
-          } else {
-            return { success, data }
-          }
-
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+          })
+          return { success: true }
         }
+        return { success: false, data: "Respuesta inesperada del servidor." }
       } catch (error) {
+        this.isLoading = false
         console.error(error)
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-      } finally {
-        this.isLoading = false;
       }
     },
 
