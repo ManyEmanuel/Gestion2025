@@ -256,9 +256,12 @@ export const useInventarioAreaStore = defineStore('InventarioArea', {
     },
 
     // MIGRADO al backend nuevo: selector de expedientes de la caja. GET /api/expedientes/por-area/
-    // {área del usuario} (el filtro server-side por sección/año del legado se relaja; el q-select tiene
-    // búsqueda). Se excluyen los expedientes ya capturados en las cajas existentes (vía el detalle
-    // migrado /transferenciasprimarias/cajas/{id}/detalle). Los params sección/año se conservan por
+    // {área del usuario}?fase=Tramite (el filtro server-side por sección/año del legado se relaja; el
+    // q-select tiene búsqueda). El filtro ?fase=Tramite es clave: la transferencia primaria solo puede
+    // afectar expedientes en trámite; sin él, el picker ofrecería expedientes ya en concentración
+    // (ya transferidos) y "afectar" devolvería 409 "El expediente no está en trámite". Se excluyen
+    // además los expedientes ya capturados en las cajas existentes (vía el detalle migrado
+    // /transferenciasprimarias/cajas/{id}/detalle). Los params sección/año se conservan por
     // compatibilidad de firma pero ya no filtran server-side.
     async loadInventariosAreaOpt(secciones, year_Inicio, year_Fin, cajas) {
       try {
@@ -277,7 +280,7 @@ export const useInventarioAreaStore = defineStore('InventarioArea', {
             }
           } catch (err) { console.warn('detalle caja', err && err.message) }
         }
-        const resp = await api.get(`/expedientes/por-area/${areaId}`)
+        const resp = await api.get(`/expedientes/por-area/${areaId}?fase=Tramite`)
         if (resp.status == 200 && Array.isArray(resp.data)) {
           this.inventariosOpt = resp.data
             .filter((e) => !clavesCapturadas.has(e.claveClasificacion))
@@ -318,10 +321,12 @@ export const useInventarioAreaStore = defineStore('InventarioArea', {
 
     // Corte al backend nuevo (corte de clientes): opciones del picker para armar cajas de BAJA
     // documental. Igual que loadInventariosAreaOpt (transferencias) pero excluye las claves ya
-    // capturadas en las cajas de la BAJA (/bajasdocumentales/cajas/{id}/detalle). Enriquece cada
-    // opción (clave/nombre/fechas/totalPaginas + anio derivado de la clave) para que
-    // seleccionarInventarioOptLocal pueble `inventario` y el filtro por año del RegistroDetalle
-    // funcione (el label termina en el nombre, no en el año). Área generadora = área del JWT.
+    // capturadas en las cajas de la BAJA (/bajasdocumentales/cajas/{id}/detalle). Pide
+    // ?fase=Concentracion&fase=Historico: la baja (DarDeBaja) solo procede desde esas fases, así que sin
+    // el filtro el picker ofrecería expedientes en trámite y "afectar" devolvería 409 "Solo se da de baja
+    // desde concentración o histórico". Enriquece cada opción (clave/nombre/fechas/totalPaginas + anio
+    // derivado de la clave) para que seleccionarInventarioOptLocal pueble `inventario` y el filtro por año
+    // del RegistroDetalle funcione (el label termina en el nombre, no en el año). Área generadora = área del JWT.
     async loadInventariosBajaOpt(cajas) {
       try {
         this.inventariosOpt = []
@@ -339,7 +344,7 @@ export const useInventarioAreaStore = defineStore('InventarioArea', {
             }
           } catch (err) { console.warn('detalle caja baja', err && err.message) }
         }
-        const resp = await api.get(`/expedientes/por-area/${areaId}`)
+        const resp = await api.get(`/expedientes/por-area/${areaId}?fase=Concentracion&fase=Historico`)
         if (resp.status == 200 && Array.isArray(resp.data)) {
           this.inventariosOpt = resp.data
             .filter((e) => !clavesCapturadas.has(e.claveClasificacion))
