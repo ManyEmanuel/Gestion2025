@@ -25,18 +25,9 @@
       </div>
       <div class="col">
         <div class="text-right q-pa-md items-start q-gutter-md">
-          <!-- Corte al backend nuevo: el Anexo 15 (cédula por caja de transferencia secundaria) es un PDF
-               de cliente que dependía de endpoints y roles legados; se OCULTA y queda diferido para
-               rehacerse como reporte de backend (análogo a Anexo 10/14). -->
-          <q-btn
-            v-if="false"
-            type="button"
-            class="q-ma-sm"
-            color="purple-ieen"
-            icon-right="document_scanner"
-            label="Anexo 15"
-            @click="anexo_15()"
-          />
+          <!-- Corte al backend nuevo: el Anexo 15 (cédula por caja de transferencia secundaria) queda
+               pendiente de rehacerse como reporte de backend (análogo a Anexo 10/14); su botón/función
+               de cliente legados se retiraron. -->
           <q-btn
             v-if="isCompleto == false"
             type="button"

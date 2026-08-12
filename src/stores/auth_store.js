@@ -12,6 +12,7 @@ const MAPA_SIGLAS_GRUPO = {
   'AI-CAT-DISP-DOC': 'disposicion',
   'AI-INV-AREA': 'inventario',
   'AI-INV-AREA-AI': 'inventario',
+  'AI-INV-AREA-GRAL': 'inventario',
   'AI-TP': 'transferencia',
   'AI-TP-AI': 'transferencia',
   'AI-CJS-TRANS': 'transferencia',
@@ -126,9 +127,12 @@ export const useAuthStore = defineStore('AuthStore', {
       // Backend nuevo: deriva los permisos del módulo desde los claims del JWT.
       const grupo = MAPA_SIGLAS_GRUPO[siglas];
       if (!grupo) {
-        // Módulo aún no mapeado (migración por fases): permisivo en UI; el backend
-        // aplica 401/403 en cada llamada real.
-        this.modulo = { siglas_Modulo: siglas, leer: true, registrar: true, actualizar: true, eliminar: true };
+        // Corte cerrado: todas las siglas de página en uso están mapeadas, así que una sigla no mapeada
+        // es un error/uso no previsto → default RESTRICTIVO (sin permisos en UI). El backend igual aplica
+        // 401/403; esto solo evita mostrar controles para módulos desconocidos. Para habilitar un módulo
+        // nuevo, agregar su sigla a MAPA_SIGLAS_GRUPO.
+        console.warn('loadModulo: sigla no mapeada en MAPA_SIGLAS_GRUPO ->', siglas);
+        this.modulo = { siglas_Modulo: siglas, leer: false, registrar: false, actualizar: false, eliminar: false };
         return;
       }
       const permisos = permisosDelToken();

@@ -166,43 +166,6 @@ export const useEnlaceArchivoStore = defineStore('enlaceArchivoStore', {
       }
     },
 
-    async loadInformacionAnexo(id) {
-      try {
-        let encabezados = []
-        const resp = await api.get(`/Archivo/Enlace/${id}`)
-        const { success, data } = resp.data
-        const respResponsable = await api.get(`/ResponsablesAreas/ResposableByArea/${data.area_Id}`)
-        const responsableInfo = respResponsable.data.data
-        const respArea = await api.get(`/Areas/${data.area_Id}`)
-        const areaInfo = respArea.data.data
-        const meses = [
-          "enero", "febrero", "marzo", "abril", "mayo", "junio",
-          "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
-        ];
-
-        let fechaRegistro = "Sin registro"
-        let registro = false
-        if (data.fecha_Registro != null) {
-          let separacionFecha = (data.fecha_Registro.split(" ")[0]).split("/")
-          fechaRegistro = separacionFecha[0] + " de " + meses[(parseInt(separacionFecha[1])) - 1] + " del " + separacionFecha[2]
-          registro = true
-        }
-        encabezados.push({
-          area: areaInfo.nombre,
-          responsable: responsableInfo.empleado,
-          responsablePuesto: responsableInfo.puesto,
-          enlace: data.empleado,
-          fecha: fechaRegistro,
-          registro: registro
-        })
-
-        return encabezados
-      } catch (error) {
-        console.log(error)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-      }
-    },
-
     // MIGRADO al backend nuevo: POST /api/enlaces { empleadoId, areaId } -> 201 { id } (nace activo).
     async createEnlace(enlace) {
       try {

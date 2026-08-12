@@ -6,9 +6,10 @@ const mensajeError = (e, defecto = "Ocurrio un error, intentelo de nuevo. Si el 
   (e && e.response && e.response.data && (e.response.data.detail || e.response.data.title)) || defecto
 
 // Corte al backend nuevo: mapea el DTO enriquecido (GET /api/expedientes/inventario-ai) a la forma que
-// esperan las tablas del módulo. El valor documental, el destino final (disposición) y las fechas de
-// recepción/término de concentración NO los resuelve el dominio nuevo hoy (el expediente no queda ligado
-// a su disposición — id null, backfill pendiente) → van en null. El año sale del último segmento de la clave.
+// esperan las tablas del módulo. El valor documental y el destino final (disposición) ya se resuelven en
+// el backend tras el backfill expediente→disposición (por clave sección/serie/subserie). Las fechas de
+// recepción/término de concentración el dominio nuevo no las modela → null. El año sale del último
+// segmento de la clave.
 function mapFilaInventarioAi(e) {
   const partes = (e.claveClasificacion || '').split('/')
   return {
@@ -26,11 +27,11 @@ function mapFilaInventarioAi(e) {
     area_Generadora: e.areaGeneradora,
     area_Generadora_Id: e.areaGeneradoraId,
     ubicacion_AI: e.ubicacion,
-    valor_Documental: null,
+    valor_Documental: e.valorDocumental,
     vigencia_Concentracion: e.vigenciaConcentracion,
     vigencia_Tramite: null,
     vigencia_Completa: null,
-    disposicion_Documental: null,
+    disposicion_Documental: e.destinoFinal,
     fecha_Inicio: e.fechaInicio,
     fecha_Termino: e.fechaTermino,
     fecha_Recepcion_Transferencia_Primaria: null,

@@ -67,10 +67,6 @@
         </q-card>
       </div>
     </div>
-    <ModalComp
-      v-if="modulo == null ? false : modulo.registrar"
-      :transferenciaId="transferenciaId"
-    />
   </q-page>
 </template>
 <script setup>
@@ -81,7 +77,6 @@ import { useTransferenciaPrimariaEncabezadoStore } from "../../../stores/transfe
 import { useCajaTransferenciaStore } from "../../../stores/caja_trasnferencia_store";
 import { useDetalleCajaTransferenciaStore } from "../../../stores/detalle_caja_Transferencia";
 import { onBeforeMount, ref } from "vue";
-import ModalComp from "../components/ModalComp.vue";
 import TablaComp from "../components/TablaComp.vue";
 import TablaDetalleComp from "../components/TablaDetalleComp.vue";
 

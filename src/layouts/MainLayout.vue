@@ -11,75 +11,9 @@
           @click="toggleLeftDrawer"
         />
         <q-toolbar-title> Gestión documental </q-toolbar-title>
-        <q-btn flat round dense icon="notifications">
-          <q-badge v-if="no_notificaciones > 0" color="red" floating>{{
-            no_notificaciones > 5 ? "5+" : no_notificaciones
-          }}</q-badge>
-          <q-menu>
-            <q-list style="min-width: 100px">
-              <div
-                class="q-pl-md q-pt-sm q-pb-sm q-pr-md text-bold text-h6 text-grey-9"
-              >
-                Notificaciones
-              </div>
-              <div>
-                <q-item
-                  style="max-width: 420px"
-                  v-for="notificacion in notificaciones"
-                  :key="notificacion.id"
-                  clickable
-                  v-ripple
-                  @click="detalle(notificacion)"
-                >
-                  <q-item-section>
-                    <q-item-label>{{ notificacion.titulo }}</q-item-label>
-                    <q-item-label caption lines="3"
-                      >{{ notificacion.mensaje }}
-                    </q-item-label>
-                  </q-item-section>
-
-                  <q-item-section side>
-                    {{ notificacion.fecha_Registro }}
-                    <q-badge
-                      v-if="notificacion.leido == false"
-                      color="blue"
-                      rounded
-                      class="q-mr-sm"
-                    />
-                  </q-item-section>
-                </q-item>
-              </div>
-              <q-card
-                class="text-center no-shadow no-border q-pa-sm"
-                v-if="notificaciones.length == 0"
-              >
-                <div class="text-indigo-8 text-purple-ieen">
-                  Sin notificaciones
-                </div>
-              </q-card>
-              <q-separator />
-              <q-card class="text-center no-shadow no-border q-pa-sm">
-                <q-btn
-                  label="Marcar todo como leido"
-                  color="purple-ieen"
-                  flat
-                  class="text-indigo-8"
-                  @click="marcarLeido"
-                ></q-btn>
-                <q-btn
-                  flat
-                  label="Ver todos"
-                  color="purple-ieen"
-                  class="text-indigo-8"
-                  @click="toNotificaciones"
-                ></q-btn>
-              </q-card>
-            </q-list>
-          </q-menu>
-        </q-btn>
-        <!-- <div>Quasar v{{ $q.version }}</div> -->
-        <!-- <q-btn flat round dense icon="settings" @click="showM" /> -->
-
+        <!-- Corte al backend nuevo: la campana de notificaciones se retiró (dependía de SignalR :9270 +
+             endpoints legados /NotificacionesUniverso, dormantes). Reimplementar sobre el backend nuevo
+             si se requiere. -->
         <q-btn flat round dense icon="apps" @click="show" />
       </q-toolbar>
     </q-header>
@@ -186,7 +120,6 @@ import { useQuasar } from "quasar";
 import { useRoute, useRouter } from "vue-router";
 import { onBeforeMount } from "vue";
 import { useAuthStore } from "../stores/auth_store";
-import { useNotificacionStore } from "../stores/notificaciones_store";
 import { storeToRefs } from "pinia";
 import EssentialLink from "components/EssentialLink.vue";
 
@@ -206,11 +139,8 @@ export default defineComponent({
     const linksArchivoTramite = ref([]);
     const linkListPrestamos = ref([]);
     const linkListArchivoConcentracion = ref([]);
-    const notificacionStore = useNotificacionStore();
-    // Corte: SignalR (hub :9270) retirado. Notificaciones en tiempo real deshabilitadas.
-
-    const { notificaciones, no_notificaciones, notificaciones_all } =
-      storeToRefs(notificacionStore);
+    // Corte: SignalR (hub :9270) + campana de notificaciones retirados (notificaciones en tiempo real
+    // deshabilitadas; el store legado /NotificacionesUniverso ya no se usa).
     const Empleado = ref(null);
     const Perfil = ref(null);
     const usuario = ref(null);
@@ -242,75 +172,6 @@ export default defineComponent({
       Perfil.value = localStorage.getItem("perfil");
       await loadMenu();
     });
-
-    const toNotificaciones = () => {
-      router.push({
-        name: "notificaciones",
-      });
-    };
-
-    const marcarLeido = async () => {
-      let resp = await notificacionStore.leerTodas();
-      if (resp.success) {
-        $q.notify({
-          position: "top-right",
-          type: "positive",
-          message: resp.data,
-          actions: [
-            {
-              icon: "close",
-              color: "white",
-              round: true,
-              handler: () => {},
-            },
-          ],
-        });
-        await notificacionStore.loadNotificaciones();
-        await notificacionStore.loadNotificacionesAll();
-      } else {
-        $q.notify({
-          position: "top-right",
-          type: "negative",
-          message: resp.data,
-          actions: [
-            {
-              icon: "close",
-              color: "white",
-              round: true,
-              handler: () => {},
-            },
-          ],
-        });
-      }
-    };
-
-    const detalle = async (row) => {
-      $q.loading.show({
-        spinner: QSpinnerFacebook,
-        spinnerColor: "purple-ieen",
-        spinnerSize: 140,
-        backgroundColor: "purple-3",
-        message: "Espere un momento, por favor...",
-        messageColor: "black",
-      });
-      let resp = await notificacionStore.leerNotificacion(row.id);
-      if (resp.success == true) {
-        await notificacionStore.loadNotificaciones();
-      }
-      let url = sistemas.value.find((x) => x.value == row.sistema_Id);
-      if (row.sistema_Id == localStorage.getItem("sistema")) {
-        router.push({
-          name: "misSolicitudes",
-        });
-      } else {
-        window.location =
-          url.url +
-          `/#/?key=${localStorage.getItem("key")}&sistema=${
-            row.sistema_Id
-          }&usr=${localStorage.getItem("usuario")}`;
-      }
-      $q.loading.hide();
-    };
 
     const loadMenu = async () => {
       $q.loading.show();
@@ -464,11 +325,6 @@ export default defineComponent({
 
     return {
       show,
-      no_notificaciones,
-      notificaciones,
-      toNotificaciones,
-      marcarLeido,
-      notificaciones_all,
 
       linksList,
       linksArchivoTramite,
