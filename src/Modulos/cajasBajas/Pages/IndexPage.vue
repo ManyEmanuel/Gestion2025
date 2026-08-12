@@ -25,11 +25,11 @@
       </div>
       <div class="col">
         <div class="text-right q-pa-md items-start q-gutter-md">
-          <!-- Corte: Anexo 14 (formato de baja completo) diferido — depende de roles legados
-               (elaboró/valida/visto bueno/aprobó) que el backend nuevo no modela y de un endpoint
-               legado por caja. Rehacer como reporte de backend si se requiere. -->
+          <!-- Corte al backend nuevo: Anexo 14 (inventario de baja) ahora es un reporte de backend
+               (GET /api/reportes/baja/{bajaId}/inventario, PDF QuestPDF). Los roles de firma que el
+               dominio nuevo no modela (valida/supervisa/aprobación) se imprimen con línea en blanco. -->
           <q-btn
-            v-if="false"
+            v-if="modulo == null ? false : modulo.leer"
             type="button"
             class="q-ma-sm"
             color="purple-ieen"
@@ -76,23 +76,20 @@ import { useAuthStore } from "../../../stores/auth_store";
 import { useBajaDocumentalStore } from "../../../stores/baja_documental_store";
 import { useCajaBajaDocumentalStore } from "../../../stores/caja_baja_documental";
 import { useDetalleCajaBajaStore } from "../../../stores/detalle_caja_baja_store";
-import { useDisposicionDocStore } from "../../../stores/disposicion_documental_store";
 import { onBeforeMount } from "vue";
 import { espera } from "../../../helpers/helper";
 import ModalComp from "../components/ModalComp.vue";
 import TablaComp from "../components/TablaComp.vue";
-import { genera_anexo_14 } from "src/helpers/anexo_14";
+import { descargarReporte } from "../../../helpers/descargar_reporte";
 
 const $q = useQuasar();
 const authStore = useAuthStore();
 const bajaDocumentalStore = useBajaDocumentalStore();
 const cajaBajaDocumentalStore = useCajaBajaDocumentalStore();
-const disposicionDocStore = useDisposicionDocStore();
 const detalleCajaBajaStore = useDetalleCajaBajaStore();
 
 const { modulo } = storeToRefs(authStore);
 const { encabezado } = storeToRefs(bajaDocumentalStore);
-const { disposiciones } = storeToRefs(disposicionDocStore);
 const { cajas, isCompleto } = storeToRefs(cajaBajaDocumentalStore);
 const siglas = "AI-CJS-BAJAS";
 
@@ -160,28 +157,21 @@ const afectarBaja = async () => {
   });
 };
 
+// MIGRADO al backend nuevo: descarga el Anexo 14 (inventario de baja documental) en PDF generado por
+// el servidor (GET /api/reportes/baja/{bajaId}/inventario), aislado por área.
 const anexo_14 = async () => {
-  $q.loading.show();
-  if (cajas.value.length > 0) {
-    await disposicionDocStore.loadDisposiciones("S");
-    let sustantivas = disposiciones.value;
-    await disposicionDocStore.loadDisposiciones("C");
-    let comunes = disposiciones.value;
-
-    let resp = await cajaBajaDocumentalStore.loadAnexo14(
-      comunes,
-      sustantivas,
-      cajas.value,
-      encabezado.value
-    );
-    genera_anexo_14(resp.encabezado, resp.cuerpo);
-  } else {
-    $q.notify({
-      type: "negative",
-      message: "No se cuenta con cajas registradas",
-    });
+  if (cajas.value.length == 0) {
+    $q.notify({ type: "negative", message: "No se cuenta con cajas registradas" });
+    return;
   }
-
+  $q.loading.show();
+  const resp = await descargarReporte(
+    `/reportes/baja/${props.bajaId}/inventario`,
+    "Anexo14_Baja.pdf"
+  );
   $q.loading.hide();
+  if (!resp.success) {
+    $q.notify({ type: "negative", message: resp.data });
+  }
 };
 </script>

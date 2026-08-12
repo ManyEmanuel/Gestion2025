@@ -92,7 +92,6 @@ import { useCajaTransferenciaStore } from "../../../stores/caja_trasnferencia_st
 import { useDetalleCajaTransferenciaStore } from "../../../stores/detalle_caja_Transferencia";
 import { onBeforeMount } from "vue";
 import { genera_anexo_9 } from "../../../helpers/helper";
-import { genera_anexo_10 } from "../../../helpers/anexo_10";
 import { descargarReporte } from "../../../helpers/descargar_reporte";
 
 import ModalComp from "../components/ModalComp.vue";

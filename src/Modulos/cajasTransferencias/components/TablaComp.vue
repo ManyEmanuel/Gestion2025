@@ -58,6 +58,19 @@
                 >
                   <q-tooltip>Generar listado excel</q-tooltip>
                 </q-btn>
+                <!-- Corte al backend nuevo: Anexo 10 (cédula por caja) ahora es un reporte de backend
+                     (GET /api/reportes/transferencia/caja/{cajaId}/cedula, PDF). Serie/subserie y fechas
+                     extremas se derivan de los expedientes; la ubicación física se asigna en concentración. -->
+                <q-btn
+                  v-if="modulo == null ? false : modulo.leer"
+                  flat
+                  round
+                  color="purple-ieen"
+                  icon="description"
+                  @click="cedulaCaja(col.value)"
+                >
+                  <q-tooltip>Cédula por caja (Anexo 10)</q-tooltip>
+                </q-btn>
                 <!-- Corte: la caja es inmutable en el backend nuevo (sin delete); se deshabilita. -->
                 <q-btn
                   v-if="false"
@@ -88,6 +101,7 @@ import { useDetalleCajaTransferenciaStore } from "../../../stores/detalle_caja_T
 import { onBeforeMount, ref } from "vue";
 import * as XLSX from "xlsx";
 import { espera } from "../../../helpers/helper";
+import { descargarReporte } from "../../../helpers/descargar_reporte";
 
 const $q = useQuasar();
 const authStore = useAuthStore();
@@ -197,6 +211,20 @@ const generarExcel = async (id) => {
   await detalleCajaTransferencia.loadDetalles(id);
   console.log("Esto es detalles", detalles.value);
   $q.loading.hide();
+};
+
+// MIGRADO al backend nuevo: descarga el Anexo 10 (cédula de identificación por caja) en PDF generado
+// por el servidor (GET /api/reportes/transferencia/caja/{cajaId}/cedula), aislado por área.
+const cedulaCaja = async (id) => {
+  $q.loading.show();
+  const resp = await descargarReporte(
+    `/reportes/transferencia/caja/${id}/cedula`,
+    "Anexo10_Cedula_Caja.pdf"
+  );
+  $q.loading.hide();
+  if (!resp.success) {
+    $q.notify({ type: "negative", message: resp.data });
+  }
 };
 
 const ListadoExcel = async (id) => {

@@ -60,17 +60,18 @@
                 >
                   <q-tooltip>Eliminar registro</q-tooltip>
                 </q-btn>
-                <!-- Corte: Anexo 12 (catálogo de firmas) diferido — depende del responsable de área,
-                     que el backend nuevo no modela. Rehacer como reporte de backend si se requiere. -->
+                <!-- Corte al backend nuevo: Anexo 12 (catálogo de firmas) ahora es un reporte de backend
+                     (GET /api/reportes/enlace/{enlaceId}/catalogo-firmas, PDF). El "responsable del área"
+                     que el dominio nuevo no modela se imprime con línea en blanco; el enlace sí se resuelve. -->
                 <q-btn
-                  v-if="false"
+                  v-if="modulo.leer"
                   flat
                   round
                   color="purple-ieen"
                   icon="description"
                   @click="generar(col.value)"
                 >
-                  <q-tooltip>Catálogo de firmas(Anexo 12)</q-tooltip>
+                  <q-tooltip>Catálogo de firmas (Anexo 12)</q-tooltip>
                 </q-btn>
                 <q-btn
                   v-if="props.row.estatus == 'Inactivo'"
@@ -107,7 +108,7 @@ import { storeToRefs } from "pinia";
 import { useQuasar } from "quasar";
 import { onMounted, ref, watch } from "vue";
 import { useEnlaceArchivoStore } from "../../../stores/enlace_archivo_store";
-import { genera_anexo_12 } from "../../../helpers/anexo_12";
+import { descargarReporte } from "../../../helpers/descargar_reporte";
 import { useAuthStore } from "../../../stores/auth_store";
 import { espera } from "../../../helpers/helper";
 
@@ -176,20 +177,18 @@ const editar = async (id) => {
   enlaceArchivoStore.actualizarModal(true);
 };
 
+// MIGRADO al backend nuevo: descarga el Anexo 12 (catálogo de firmas del área del enlace) en PDF
+// generado por el servidor (GET /api/reportes/enlace/{enlaceId}/catalogo-firmas).
 const generar = async (id) => {
   $q.loading.show();
-  let resp = await enlaceArchivoStore.loadInformacionAnexo(id);
-  genera_anexo_12(resp[0]);
-  if (resp[0].registro == false) {
-    $q.dialog({
-      title: "Sin fecha de asignación",
-      message:
-        "El enlace no cuenta con fecha de asignación, para actualizar este dato, ingrese a la edición de información del enlace",
-    }).onOk(() => {
-      // console.log('OK')
-    });
-  }
+  const resp = await descargarReporte(
+    `/reportes/enlace/${id}/catalogo-firmas`,
+    "Anexo12_Catalogo_Firmas.pdf"
+  );
   $q.loading.hide();
+  if (!resp.success) {
+    $q.notify({ type: "negative", message: resp.data });
+  }
 };
 
 const activarEnlace = async (id) => {
