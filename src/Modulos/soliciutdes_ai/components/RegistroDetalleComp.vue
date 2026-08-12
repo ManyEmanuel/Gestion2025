@@ -1,35 +1,55 @@
 <template>
   <div class="text-h6">Detalle</div>
-  <q-form
-    class="row q-col-gutter-xs"
-    @submit="agregar_detalle"
-    ref="my_form_det"
-  >
-    <div class="col-2 col-xs-2 col-md-2">
-      <q-select v-model="anioRegistro" :options="aniosFiltro" label="Año" />
-    </div>
-    <div class="col-10 col-xs-10 col-md-10">
+  <q-form class="row q-col-gutter-xs" @submit="agregar_detalle" ref="my_form_det">
+    <div class="col-12 col-xs-2 col-md-3">
       <q-select
-        v-model="inventario_id"
-        :options="inventariosOptFiltro"
-        label="Clave inventarios"
+        use-input
+        v-model="anioDetalle"
+        :options="listaAnios"
+        label="Año"
+        hint="Seleccione un año"
+      />
+    </div>
+    <div class="col-12 col-xs-12 col-md-9">
+      <q-select
+        use-input
+        @filter="filtro_inventario"
+        v-model="inventarioId"
+        :options="options_inventario"
+        label="Clave inventario"
         hint="Seleccione clave"
         lazy-rules
         :rules="[(val) => !!val || 'La clave es requerida']"
       />
     </div>
+    <div class="col-12 col-xs-6 col-md-4">
+      <q-input
+        stack-label
+        v-model="inventario.fecha_Termino"
+        label="Fecha de conclusión"
+        hint="Fecha de conclusión del expediente"
+        type="date"
+      />
+    </div>
+    <div class="col-12 col-xs-6 col-md-8">
+      <q-input
+        v-model="inventario.ubicacion"
+        label="Signatura Topográfica"
+        hint="Indique ubicación / signatura"
+      />
+    </div>
     <div class="col-12 col-xs-12 col-md-12">
       <q-input
-        v-model="detalle.descripcion"
-        label="Descripción"
-        hint="Indique descripción"
+        v-model="descripcion"
+        label="Descripción del contenido del expediente"
+        hint="Ingrese descripción"
         lazy-rules
         :rules="[(val) => !!val || 'La descripción es requerida']"
       />
     </div>
     <div class="col-12 col-xs-12 col-md-12">
       <q-input
-        v-model="detalle.observaciones"
+        v-model="observaciones"
         label="Observaciones"
         hint="Puede describir observaciones"
       />
@@ -61,7 +81,7 @@
 <script setup>
 import { useQuasar } from "quasar";
 import { storeToRefs } from "pinia";
-import { onBeforeMount, onMounted, ref, watch } from "vue";
+import { ref, watch } from "vue";
 import { useSolicitudPrestamoAiStore } from "../../../stores/solicitud_prestamo_ai_store";
 import { useDetalleSolicitudAISotre } from "../../../stores/detalle_solicitud_prestamo_ai_store";
 import { useInventarioAreaStore } from "../../../stores/inventario_area_store";
@@ -69,107 +89,99 @@ import { useInventarioAreaStore } from "../../../stores/inventario_area_store";
 const $q = useQuasar();
 const solicitudStore = useSolicitudPrestamoAiStore();
 const detalleStore = useDetalleSolicitudAISotre();
-const inventariosAreasSotre = useInventarioAreaStore();
+const inventariosAreas = useInventarioAreaStore();
 
-const { solicitud, isEditar, isHistorico } = storeToRefs(solicitudStore);
-const { detalle, array_detalle, detalles } = storeToRefs(detalleStore);
-const { inventariosOpt, inventario, inventariosOptFiltro, aniosFiltro } =
-  storeToRefs(inventariosAreasSotre);
-const inventario_id = ref(null);
+const { solicitud, isEditar } = storeToRefs(solicitudStore);
+const { detalles } = storeToRefs(detalleStore);
+// Corte al backend nuevo: el picker de expediente lo carga el modal (loadInventariosAreaAi al elegir área);
+// aquí se consume el estado compartido con el picker de préstamo de Trámite.
+const { inventariosArea, inventario, listaAnios, inventariosAreaFiltro } =
+  storeToRefs(inventariosAreas);
+const inventarioId = ref(null);
+const anioDetalle = ref(null);
+const descripcion = ref(null);
+const observaciones = ref(null);
+const loading = ref(false);
 const my_form_det = ref(null);
-const anioRegistro = ref(null);
+const options_inventario = ref(inventariosAreaFiltro.value);
 
-const leerInventario = async (id) => {
-  $q.loading.show();
-  await inventariosAreasSotre.loadInventario(id);
-  detalle.value.descripcion = inventario.value.descripcion;
-  detalle.value.inventario_Id = inventario_id.value.value;
-  detalle.value.inventario_Clave_Clasificacion =
-    inventario.value.clave_Clasificacion;
-  $q.loading.hide();
-};
+watch(inventariosArea, () => {
+  inventarioId.value = null;
+  inventariosAreas.initInventario();
+});
 
-watch(inventario_id, (val) => {
+watch(inventarioId, (val) => {
   if (val != null) {
-    leerInventario(val.value);
+    inventariosAreas.seleccionarInventarioLocal(val.value);
   } else {
-    detalle.value.inventario_Clave_Clasificacion = null;
-    detalle.value.descripcion = null;
+    inventariosAreas.initInventario();
   }
 });
 
-watch(anioRegistro, (val) => {
+watch(anioDetalle, (val) => {
   if (val != null) {
-    console.log("val", val);
-    cargarFiltro(val);
+    inventariosAreas.loadInventariosAreaAnio(val);
   }
 });
 
-onMounted(() => {
-  load_inventarios();
-});
-
-const load_inventarios = async () => {
-  $q.loading.show();
-  await inventariosAreasSotre.loadInventarioOptAiHistorico(isHistorico.value);
-  if (aniosFiltro.value.length > 0) anioRegistro.value = aniosFiltro.value[0];
-  $q.loading.hide();
+const limpiar = () => {
+  inventariosAreas.initInventario();
+  descripcion.value = null;
+  observaciones.value = null;
+  inventarioId.value = null;
+  if (my_form_det.value) my_form_det.value.resetValidation();
 };
 
-const cargarFiltro = async (anio) => {
-  $q.loading.show();
-  await inventariosAreasSotre.loadFiltroAnio(anio);
-  $q.loading.hide();
-};
-
-const limpiar = async () => {
-  detalleStore.init_detalle();
-  inventario_id.value = null;
-  my_form_det.value.reset();
+const filtro_inventario = (val, update) => {
+  if (val === "") {
+    update(() => {
+      options_inventario.value = inventariosAreaFiltro.value;
+    });
+    return;
+  }
+  update(() => {
+    const needle = val.toLowerCase();
+    options_inventario.value = inventariosAreaFiltro.value.filter(
+      (v) => v.label.toLowerCase().indexOf(needle) > -1
+    );
+  });
 };
 
 const agregar_detalle = async () => {
+  const objDetalle = {
+    id: null,
+    inventario_Id: inventarioId.value.value,
+    inventario_Clave_Clasificacion: inventarioId.value.label,
+    ubicacion: inventario.value.ubicacion,
+    descripcion: descripcion.value,
+    observaciones: observaciones.value,
+    fecha_Inicio_Conclusion: inventario.value.fecha_Termino,
+  };
   $q.loading.show();
   if (isEditar.value) {
-    const existe = detalles.value.some(
-      (x) => x.inventario_Id == inventario_id.value.value
-    );
-    if (existe == true) {
-      limpiar();
-      $q.notify({
-        type: "warning",
-        message: "Ya has agregado esa clave",
-      });
+    const existe = detalles.value.some((x) => x.inventario_Id == objDetalle.inventario_Id);
+    if (existe) {
       $q.loading.hide();
+      $q.notify({ type: "warning", message: "Ya has agregado esa clave" });
       return;
     }
-    const resp = await detalleStore.create(solicitud.value.id, detalle.value);
+    const resp = await detalleStore.create(solicitud.value.id, objDetalle);
     if (resp.success) {
       limpiar();
-      $q.notify({
-        type: "positive",
-        message: resp.data,
-      });
+      $q.notify({ type: "positive", message: resp.data });
     } else {
-      $q.notify({
-        type: "negative",
-        message: resp.data,
-      });
+      $q.notify({ type: "negative", message: resp.data });
     }
   } else {
-    const existe = array_detalle.value.some(
-      (x) => x.inventario_Id == detalle.value.inventario_Id
+    const existe = detalleStore.array_detalle.some(
+      (x) => x.inventario_Id == objDetalle.inventario_Id
     );
     if (!existe) {
-      detalle.value.id = array_detalle.value.length + 1;
-      detalleStore.add_detalle({ ...detalle.value });
+      objDetalle.id = detalleStore.array_detalle.length + 1;
+      detalleStore.add_detalle({ ...objDetalle });
       limpiar();
     } else {
-      $q.loading.hide();
-      $q.notify({
-        type: "warning",
-        message: "Ya has agregado esa clave",
-      });
+      $q.notify({ type: "warning", message: "Ya has agregado esa clave" });
     }
   }
   $q.loading.hide();

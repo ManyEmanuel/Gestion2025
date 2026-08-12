@@ -638,6 +638,29 @@ export const useInventarioAreaStore = defineStore('InventarioArea', {
       }
     },
 
+    // Corte al backend nuevo (corte de clientes): picker de expedientes para el ALTA de préstamo de
+    // Archivo Institucional (Concentración/Histórico). Igual que loadInventariosArea (préstamo de Trámite)
+    // pero pide ?fase=Concentracion&fase=Historico: el préstamo AI es sobre expedientes ya en el archivo
+    // institucional. Comparte el estado (inventariosArea/listaAnios) y los helpers __opcionExpediente/
+    // seleccionarInventarioLocal/loadInventariosAreaAnio con el picker de Trámite. Área = la seleccionada
+    // en el modal (área responsable/dueña del expediente).
+    async loadInventariosAreaAi(areaId) {
+      try {
+        this.inventariosArea = []
+        const resp = await api.get(`/expedientes/por-area/${areaId}?fase=Concentracion&fase=Historico`)
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          this.inventariosArea = resp.data.map((e) => this.__opcionExpediente(e))
+          const anios = this.inventariosArea.map(x => x.anio).filter(a => !isNaN(a))
+          this.listaAnios = [...new Set(anios)].sort((a, b) => a - b)
+          return { success: true }
+        }
+        return { success: false, data: "Respuesta inesperada del servidor." }
+      } catch (error) {
+        console.error(error)
+        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+      }
+    },
+
     async loadInventario(id) {
       try {
         this.initInventario()

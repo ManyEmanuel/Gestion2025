@@ -21,30 +21,26 @@
       <q-card-section>
         <q-form class="row q-col-gutter-xs" ref="myForm">
           <div class="col-12 col-xs-12 col-md-12">
-            <q-input
-              v-model="solicitud.area_Responsable"
-              label="Area responsable"
-              readonly
+            <q-select
+              use-input
+              :autofocus="true"
+              v-model="areaRespId"
+              :options="options_areas"
+              @filter="filtro_area"
+              label="Área responsable"
+              hint="Seleccione el área dueña de los expedientes (concentración/histórico)"
               lazy-rules
-              :rules="[(val) => !!val || 'El area responsable es requerida']"
+              :rules="[(val) => !!val || 'El área responsable es requerida']"
             />
           </div>
           <div class="col-12 col-xs-12 col-md-12">
-            <q-input
-              v-model="solicitud.area_Solicitante"
-              label="Area solicitante"
-              readonly
-              lazy-rules
-              :rules="[(val) => !!val || 'El area solicitante es requerida']"
-            />
-          </div>
-          <div class="col-12 col-xs-12 col-md-12">
-            <q-input
-              v-model="solicitud.solicitante"
+            <q-select
+              v-model="empleadoId"
+              :options="empleados"
               label="Solicitante"
-              readonly
+              hint="Seleccione solicitante"
               lazy-rules
-              :rules="[(val) => !!val || 'El area responsable es requerida']"
+              :rules="[(val) => !!val || 'El solicitante es requerido']"
             />
           </div>
           <div class="col-12 col-xs-6 col-md-6">
@@ -53,7 +49,7 @@
               stack-label
               label="Fecha solicitada"
               type="date"
-              hint="ingrese la fecha que desea se le realice el prestamo"
+              hint="Fecha en que desea el préstamo"
               lazy-rules
               :rules="[(val) => !!val || 'La fecha solicitada es requerida']"
             />
@@ -64,7 +60,7 @@
               stack-label
               label="Fecha devolución"
               type="date"
-              hint="ingrese la fecha que regresará el prestamo"
+              hint="Fecha compromiso de devolución"
               lazy-rules
               :rules="[(val) => !!val || 'La fecha de devolución es requerida']"
             />
@@ -76,22 +72,7 @@
               hint="Ingrese las observaciones de la solicitud"
             />
           </div>
-
-          <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
-            <q-input
-              v-model="solicitud.correo"
-              label="Correo Electrónico"
-              hint="Correo Electrónico del solicitante"
-            />
-          </div>
-          <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
-            <q-input
-              v-model="solicitud.telefono"
-              label="Teléfono"
-              hint="Teléfono del solicitante"
-            />
-          </div>
-          <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+          <div class="col-12 col-md-12">
             Tipo de archivo a solicitar
             <q-option-group
               v-model="tipoDocumento"
@@ -117,10 +98,11 @@
             <q-btn
               color="red"
               label="Cancelar"
-              @click="actualizarModal(false)"
+              @click="actualizarModal"
               icon="highlight_off"
             />
             <q-btn
+              :loading="loading"
               type="button"
               color="secondary"
               label="Guardar"
@@ -141,31 +123,63 @@
 <script setup>
 import { storeToRefs } from "pinia";
 import { useQuasar } from "quasar";
-import { onMounted, ref } from "vue";
-import { useAuthStore } from "../../../stores/auth_store";
-import { useRouter } from "vue-router";
+import { ref, watch } from "vue";
 import { useSolicitudPrestamoAiStore } from "../../../stores/solicitud_prestamo_ai_store";
 import { useDetalleSolicitudAISotre } from "../../../stores/detalle_solicitud_prestamo_ai_store";
+import { useInventarioAreaStore } from "../../../stores/inventario_area_store";
+import { useAreaStore } from "../../../stores/areas_store";
 
 import RegistroDetalleComp from "../components/RegistroDetalleComp.vue";
 import TablaDetalleComp from "../components/TablaDetalleComp.vue";
 
 const $q = useQuasar();
-const router = useRouter();
-const authStore = useAuthStore();
 const solicitudPrestamoStore = useSolicitudPrestamoAiStore();
 const detalleStore = useDetalleSolicitudAISotre();
-const { isEditar, solicitud, modal, isHistorico } = storeToRefs(
-  solicitudPrestamoStore
-);
+const inventariosAreas = useInventarioAreaStore();
+const areasStore = useAreaStore();
+
+const { isEditar, solicitud, modal } = storeToRefs(solicitudPrestamoStore);
 const { array_detalle } = storeToRefs(detalleStore);
+// Corte al backend nuevo: área responsable de /api/areas (scopea el picker), solicitante de /api/empleados.
+const { areas, empleados } = storeToRefs(areasStore);
+const areaRespId = ref(null);
+const empleadoId = ref(null);
+const options_areas = ref(areas.value);
+const loading = ref(false);
 const myForm = ref(null);
 const opcionesTipo = ref([
   { label: "Fisico", value: "Fisico" },
   { label: "Digital", value: "Digital" },
 ]);
 const tipoDocumento = ref([]);
+
+// Corte: al elegir el área responsable se carga el picker de expedientes en Concentración/Histórico
+// de esa área (para el préstamo del archivo institucional).
+watch(areaRespId, (area) => {
+  if (area != null) {
+    inventariosAreas.loadInventariosAreaAi(area.value);
+  }
+});
+
+const filtro_area = (val, update) => {
+  if (val === "") {
+    update(() => {
+      options_areas.value = areas.value;
+    });
+    return;
+  }
+  update(() => {
+    const needle = val.toLowerCase();
+    options_areas.value = areas.value.filter(
+      (v) => v.label.toLowerCase().indexOf(needle) > -1
+    );
+  });
+};
+
 const actualizarModal = () => {
+  areaRespId.value = null;
+  empleadoId.value = null;
+  tipoDocumento.value = [];
   solicitudPrestamoStore.initSolicitud();
   detalleStore.init_array_detalle();
   solicitudPrestamoStore.actualizarModal(false);
@@ -173,37 +187,21 @@ const actualizarModal = () => {
 };
 
 const onSubmit = async () => {
-  if (tipoDocumento.value.length > 0) {
-    if (tipoDocumento.value.includes("Digital")) {
-      solicitud.value.digital = true;
-    }
-
-    if (tipoDocumento.value.includes("Fisico")) {
-      solicitud.value.fisico = true;
-    }
-  }
   const valido = await myForm.value.validate();
-  if (valido) {
-    let resp = null;
-    if (isEditar.value) {
-      resp = await solicitudPrestamoStore.update(solicitud.value);
-    } else {
-      solicitud.value.detalle = array_detalle.value;
-      resp = await solicitudPrestamoStore.create(solicitud.value);
-    }
-    if (resp.success) {
-      $q.notify({
-        type: "positive",
-        message: resp.data,
-      });
-      actualizarModal();
-    } else {
-      $q.notify({
-        type: "negative",
-        message: resp.data,
-      });
-    }
+  if (!valido) return;
+  loading.value = true;
+  solicitud.value.fisico = tipoDocumento.value.includes("Fisico");
+  solicitud.value.digital = tipoDocumento.value.includes("Digital");
+  solicitud.value.area_Responsable_Id = areaRespId.value.value;
+  solicitud.value.solicitante_Id = empleadoId.value.value;
+  solicitud.value.detalle = array_detalle.value;
+  const resp = await solicitudPrestamoStore.create(solicitud.value);
+  loading.value = false;
+  if (resp.success) {
+    $q.notify({ type: "positive", message: resp.data });
+    actualizarModal();
+  } else {
+    $q.notify({ type: "negative", message: resp.data });
   }
 };
 </script>
-

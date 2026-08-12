@@ -46,14 +46,12 @@ import { storeToRefs } from "pinia";
 import { useQuasar } from "quasar";
 import { onBeforeMount, ref } from "vue";
 import { useAuthStore } from "../../../stores/auth_store";
-import { useSolicitudPrestamoAiStore } from "../../../stores/solicitud_prestamo_ai_store";
 
 import TablaComp from "../components/TablaAIComp.vue";
 import ModalComp from "../components/ModalAIComp.vue";
 
 const $q = useQuasar();
 const authStore = useAuthStore();
-const solicitudPrestamoStore = useSolicitudPrestamoAiStore();
 const { modulo } = storeToRefs(authStore);
 const siglas = "AI-PRESTAMOS-AI-AI";
 const tab = ref("pendientes");
@@ -66,14 +64,4 @@ const leerPermisos = async () => {
 onBeforeMount(() => {
   leerPermisos();
 });
-
-const actualizarModal = async () => {
-  $q.loading.show();
-  solicitudPrestamoStore.initSolicitud();
-  await solicitudPrestamoStore.loadArea();
-  await solicitudPrestamoStore.loadEnlace();
-  solicitudPrestamoStore.updateEditar(false);
-  $q.loading.hide();
-  solicitudPrestamoStore.actualizarModal(true);
-};
 </script>

@@ -10,6 +10,20 @@ import { api } from 'src/boot/axios';
 // Corte al backend nuevo: las escrituras REST responden 201/204 y problem+json en error (axios lanza).
 const mensajeError = (e, defecto = "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte") =>
   (e && e.response && e.response.data && (e.response.data.detail || e.response.data.title)) || defecto
+// Empleado y área del usuario autenticado, de los claims del JWT (solicitante registro + área solicitante
+// del alta de préstamo AI).
+function datosUsuarioToken() {
+  try {
+    const token = localStorage.getItem('key')
+    if (!token) return {}
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+    const payload = JSON.parse(decodeURIComponent(escape(atob(base64))))
+    return { empleadoId: payload.empleado_id || null, areaId: payload.area || null }
+  } catch (e) {
+    console.error(e)
+    return {}
+  }
+}
 const soloFecha = (iso) => (iso ? String(iso).substring(0, 10) : null)
 const formatoTexto = (fisico, digital) =>
   fisico && digital ? "Físico y Digital" : fisico ? "Físico" : digital ? "Digital" : ""
@@ -285,116 +299,61 @@ export const useSolicitudPrestamoAiStore = defineStore('useSolicitudPrestamoAi',
       }
     },
 
-    async loadArea() {
-      try {
-        const resp = await api.get("/Areas/AreaByUsuario")
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          console.log(data)
-          if (success == true) {
-            const { area_Id, area, area_Padre_Id, area_Padre } = data;
-            this.solicitud.area_Responsable_Id = area_Padre_Id
-            this.solicitud.area_Responsable = area_Padre
-            this.solicitud.area_Solicitante_Id = area_Id
-            this.solicitud.area_Solicitante = area
-          }
-        }
-        const respArea = await api.get(`/Areas/${this.solicitud.area_Solicitante_Id}`)
-        let areaDatos = respArea.data.data
-        if (areaDatos.extension.length > 3) {
-          this.solicitud.telefono = areaDatos.extension
-        } else {
-          this.solicitud.telefono = "3112103233 Ext. " + areaDatos.extension
-        }
-
-
-      } catch (error) {
-        console.error(e)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-      }
-    },
-
-    async loadEnlace() {
-      try {
-
-        const resp = await api.get("/Archivo/Enlace/ByUsuarioEmp")
-        if (resp.status == 200) {
-          const { success, id, enlace } = resp.data
-          if (success === true) {
-            this.solicitud.solicitante_Id = id
-            this.solicitud.solicitante = enlace
-            const respEmpleado = await api.get(`/Empleados/${this.solicitud.solicitante_Id}`)
-            let datosEmpleado = respEmpleado.data.data
-            this.solicitud.correo = datosEmpleado.email
-            return { success }
-
-
-          } else {
-            return { success, data }
-          }
-
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-        }
-
-      } catch (error) {
-        console.error(error)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-      }
-    },
-
+    // MIGRADO al backend nuevo (corte de clientes): el ALTA que el legado hacía en UN POST (cabecera +
+    // expedientes embebidos) se DESCOMPONE en Crear préstamo (POST /api/prestamos, estado Solicitado) +
+    // un AgregarExpediente (POST /api/prestamos/{id}/expedientes) por cada expediente del detalle. El
+    // modelo de préstamo es UNIFICADO (mismo que Trámite): área solicitante y empleado de registro salen
+    // del JWT; área responsable y solicitante los elige el usuario en el modal; los expedientes vienen del
+    // picker de Concentración/Histórico. clasificado=false (el préstamo AI no es de expedientes clasificados).
     async create(solicitud) {
       try {
-        const resp = await api.post('/Archivo/SolicitudesPrestamosAI', solicitud)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success) {
-            this.loadSolicitudes()
-          }
-          return { success, data }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        const usuario = datosUsuarioToken()
+        if (!usuario.empleadoId || !usuario.areaId) {
+          return { success: false, data: "Tu usuario no tiene empleado/área asociada para registrar la solicitud." }
         }
+        // 1) Crear la cabecera del préstamo.
+        const respCrear = await api.post('/prestamos', {
+          areaResponsableId: solicitud.area_Responsable_Id,
+          areaSolicitanteId: usuario.areaId,
+          solicitanteId: solicitud.solicitante_Id,
+          empleadoRegistroId: usuario.empleadoId,
+          fechaDevolucionCompromiso: solicitud.fecha_Posible_Devolucion,
+          fisico: solicitud.fisico === true,
+          digital: solicitud.digital === true,
+          folio: solicitud.folio || null,
+          observaciones: solicitud.observaciones || null,
+          clasificado: false
+        })
+        const prestamoId = respCrear && respCrear.data && respCrear.data.id
+        if (!prestamoId) {
+          return { success: false, data: "No se pudo crear la solicitud." }
+        }
+        // 2) Agregar cada expediente del detalle embebido.
+        for (const d of (solicitud.detalle || [])) {
+          await api.post(`/prestamos/${prestamoId}/expedientes`, {
+            inventarioGeneralId: d.inventario_Id,
+            ubicacion: d.ubicacion || null,
+            descripcion: d.descripcion || null,
+            observaciones: d.observaciones || null
+          })
+        }
+        this.loadSolicitudes()
+        return { success: true, data: "Solicitud registrada con éxito" }
       } catch (error) {
         console.error(error)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        return { success: false, data: mensajeError(error) }
       }
     },
 
-    async update(solicitud) {
-      try {
-        const resp = await api.put(`/Archivo/SolicitudesPrestamosAI/${solicitud.id}`, solicitud)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success) {
-            this.loadSolicitudes()
-          }
-          return { success, data }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-        }
-      } catch (error) {
-        console.error(error)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-      }
+    // Corte al backend nuevo: el préstamo es INMUTABLE en el modelo unificado (no hay update/delete de
+    // solicitud). La edición/eliminación están deshabilitadas en la UI; estos stubs solo blindan
+    // referencias residuales de componentes legados inalcanzables (ModalAIComp/detallePrestamo).
+    async update() {
+      return { success: false, data: "La edición de solicitudes no está disponible (el préstamo es inmutable)." }
     },
 
-    async delete(id) {
-      try {
-        const resp = await api.delete(`/Archivo/SolicitudesPrestamosAI/${id}`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success) {
-            this.loadSolicitudes()
-          }
-          return { success, data }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo" }
-        }
-      } catch (error) {
-        console.error(error)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-      }
+    async delete() {
+      return { success: false, data: "La eliminación de solicitudes no está disponible (el préstamo es inmutable)." }
     },
 
     // MIGRADO al backend nuevo: POST /api/prestamos/{id}/autorizar { autorizaId } -> 204. El backend

@@ -18,6 +18,7 @@ export const useDetalleSolicitudAISotre = defineStore('detalleSolicitudAI', {
       inventario_Id: null,
       descripcion: null,
       observaciones: null,
+      ubicacion: null,
       inventario_Clave_Clasificacion: null,
     }
   }),
@@ -28,6 +29,7 @@ export const useDetalleSolicitudAISotre = defineStore('detalleSolicitudAI', {
       this.detalle.inventario_Id = null
       this.detalle.descripcion = null
       this.detalle.observaciones = null
+      this.detalle.ubicacion = null
       this.detalle.inventario_Clave_Clasificacion = null
     },
 
