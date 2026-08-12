@@ -135,12 +135,6 @@ const routes = [
         props: true,
         component: () => import('../Modulos/soliciutdes_ai/pages/detallePrestamo.vue')
       },
-      {
-        path: "/notificaciones",
-        name: "notificaciones",
-        component: () =>
-          import("../Modulos/notificaciones/pages/IndexPage.vue"),
-      },
     ]
   },
 
