@@ -53,6 +53,18 @@
                 >
                   <q-tooltip>Anexo 13</q-tooltip>
                 </q-btn>
+                <!-- Corte al backend nuevo: Anexo 15 (cédula por caja de transferencia secundaria) como
+                     reporte de backend (GET /api/reportes/transferencia-secundaria/caja/{cajaId}/cedula, PDF). -->
+                <q-btn
+                  v-if="modulo == null ? false : modulo.leer"
+                  flat
+                  round
+                  color="purple-ieen"
+                  icon="document_scanner"
+                  @click="cedulaCaja(col.value)"
+                >
+                  <q-tooltip>Cédula por caja (Anexo 15)</q-tooltip>
+                </q-btn>
                 <!-- Corte: la caja es inmutable en el backend nuevo (sin delete); se deshabilita. -->
                 <q-btn
                   v-if="false"
@@ -82,6 +94,7 @@ import { useTransferenciaSecundariaEncabezadoStore } from "../../../stores/trans
 import { useCajaTransferenciaSecundariaterStore } from "../../../stores/caja_transferencia_secundaria_store";
 import { useDetalleCajaTransferenciaSecundariaStore } from "../../../stores/detalle_caja_transferencia_secundaria_store";
 import { espera } from "../../../helpers/helper";
+import { descargarReporte } from "../../../helpers/descargar_reporte";
 
 const $q = useQuasar();
 const authStore = useAuthStore();
@@ -177,6 +190,20 @@ const anexo_13 = async (id) => {
   let Nocaja = caja.value.no_Caja;
   genera_anexo_13("Historico", transferencia, area, Nocaja, detalles.value);
   $q.loading.hide();
+};
+
+// MIGRADO al backend nuevo: descarga el Anexo 15 (cédula de identificación por caja de transferencia
+// secundaria) en PDF generado por el servidor (GET /api/reportes/transferencia-secundaria/caja/{id}/cedula).
+const cedulaCaja = async (id) => {
+  $q.loading.show();
+  const resp = await descargarReporte(
+    `/reportes/transferencia-secundaria/caja/${id}/cedula`,
+    "Anexo15_Cedula_Caja.pdf"
+  );
+  $q.loading.hide();
+  if (!resp.success) {
+    $q.notify({ type: "negative", message: resp.data });
+  }
 };
 </script>
 
