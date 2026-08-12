@@ -6,8 +6,8 @@ import { api } from 'src/boot/axios';
 // de permiso archivo.<grupo>.*. Se extiende a medida que se migra cada módulo.
 // Mapa siglas del cliente -> grupo de permiso archivo.<grupo>.*. Incluye tanto las páginas
 // (loadModulo por-página) como los ítems de menú (loadModulos, construido desde el JWT). Solo se
-// listan los módulos MIGRADOS y verificados; los diferidos (inventarioAI, transferencias secundarias,
-// inv. gral. por áreas) se omiten a propósito para que no aparezcan en el menú.
+// listan los módulos MIGRADOS y verificados; los diferidos (inventarioAI, inv. gral. por áreas) se
+// omiten a propósito para que no aparezcan en el menú.
 const MAPA_SIGLAS_GRUPO = {
   'AI-CAT-SECCIONES': 'clasificacion',
   'AI-CAT-DISP-DOC': 'disposicion',
@@ -16,6 +16,8 @@ const MAPA_SIGLAS_GRUPO = {
   'AI-TP-AI': 'transferencia',
   'AI-CJS-TRANS': 'transferencia',
   'AI-CJS-TRANS-AI': 'transferencia',
+  'AI-TS': 'transferencia-secundaria',
+  'AI-CJS-TRNS-SEC': 'transferencia-secundaria',
   'AI-BD': 'baja',
   'AI-CJS-BAJAS': 'baja',
   'AI-CAT-ENLACE': 'enlace',
@@ -30,7 +32,7 @@ const MAPA_SIGLAS_GRUPO = {
 // cajas (AI-CJS-*) se navegan desde dentro de su encabezado, no van en el menú.
 const SIGLAS_MENU = [
   'AI-CAT-SECCIONES', 'AI-CAT-DISP-DOC', 'AI-CAT-ENLACE', 'AI-CAT-VOBO',
-  'AI-INV-AREA', 'AI-TP', 'AI-TP-AI', 'AI-BD',
+  'AI-INV-AREA', 'AI-TP', 'AI-TP-AI', 'AI-TS', 'AI-BD',
   'AI-PRESTAMOS', 'AI-PRESTAMOS-CLASI', 'AI-PRESTAMOS-AI', 'AI-PRESTAMOS-AI-AI',
 ];
 

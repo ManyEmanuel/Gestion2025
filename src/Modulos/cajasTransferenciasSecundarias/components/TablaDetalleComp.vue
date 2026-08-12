@@ -27,7 +27,10 @@
           <q-tr :props="props">
             <q-td v-for="col in props.cols" :key="col.name" :props="props">
               <div v-if="col.name === 'id'">
+                <!-- Corte: en el backend nuevo el expediente ya persistido es inmutable (sin delete);
+                     solo se puede quitar del arreglo ANTES de guardar la caja (alta). -->
                 <q-btn
+                  v-if="!isEditar"
                   flat
                   round
                   color="purple-ieen"
@@ -128,23 +131,8 @@ const eliminar = async (id) => {
     },
   }).onOk(async () => {
     $q.loading.show();
-    let resp = null;
-    if (isEditar.value == true) {
-      resp = await detalleStore.deleteDetalle(caja.value.id, id);
-      if (resp.success) {
-        $q.notify({
-          type: "positive",
-          message: resp.data,
-        });
-      } else {
-        $q.notify({
-          type: "negative",
-          message: resp.data,
-        });
-      }
-    } else {
-      detalleStore.deleteDetalleArray(id);
-    }
+    // Corte: solo remoción del arreglo pre-persistencia (alta). El expediente ya guardado es inmutable.
+    detalleStore.deleteDetalleArray(id);
     $q.loading.hide();
   });
 };

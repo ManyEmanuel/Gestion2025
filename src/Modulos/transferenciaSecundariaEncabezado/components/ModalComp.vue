@@ -20,118 +20,59 @@
       </q-card-section>
       <q-card-section>
         <q-form class="row q-col-gutter-xs" @submit="onSubmit">
-          <div class="col-12 col-xs-6 col-md-6" v-if="isEditar">
+          <div class="col-12 col-xs-6 col-md-6">
             <q-input
-              v-model="encabezado.fecha_Registro"
-              label="Fecha registro"
+              v-model="encabezado.no_Transferencia"
+              label="No. transferencia"
+              lazy-rules
+              :rules="[
+                (val) => !!val || 'El número de transferencia es requerido',
+              ]"
+            />
+          </div>
+          <div class="col-12 col-xs-6 col-md-6">
+            <q-input
+              v-model="encabezado.nombre"
+              label="Nombre"
+              hint="Ingrese un nombre para identificar la transferencia"
+              lazy-rules
+              :rules="[(val) => !!val || 'El nombre es requerido']"
+            />
+          </div>
+          <div class="col-12 col-xs-6 col-md-6">
+            <q-select
+              v-model="areaResponsableSel"
+              :options="areas"
+              use-input
+              input-debounce="0"
+              @filter="filtro_areas"
+              label="Área responsable"
+              hint="Seleccione el área responsable"
+              lazy-rules
+              :rules="[(val) => !!val || 'El área responsable es requerida']"
+            />
+          </div>
+          <div class="col-12 col-xs-6 col-md-6">
+            <q-input
+              v-model="encabezado.area_Generadora"
+              label="Área generadora"
+              readonly
+            />
+          </div>
+          <div class="col-12 col-xs-6 col-md-6">
+            <q-input
+              v-model="encabezado.elaboro"
+              label="Elaboró"
+              hint="Enlace del archivo de trámite"
               readonly
             />
           </div>
           <div class="col-12 col-xs-12 col-md-12">
             <q-input
-              v-model="encabezado.area_Responsable"
-              label="Area responsable"
-              readonly
-              lazy-rules
-              :rules="[(val) => !!val || 'El area responsable es requerida']"
-            />
-          </div>
-          <div class="col-12 col-xs-12 col-md-6">
-            <q-select
-              v-model="area_id"
-              use-input
-              input-debounce="0"
-              @filter="filtro_areas"
-              :options="options_areas"
-              autofocus
-              label="Area generadora"
-              hint="Seleccione area generadora"
-              lazy-rules
-              :rules="[(val) => !!val || 'El area generadora es requerida']"
-            />
-          </div>
-          <div class="col-12 col-xs-12 col-md-6">
-            <q-input
-              v-model="encabezado.nombre"
-              label="Nombre de Transferencia"
-              lazy-rules
-              :rules="[
-                (val) => !!val || 'El nombre de transferencia es requerido',
-              ]"
-            />
-          </div>
-          <div class="col-12 col-xs-12 col-md-6">
-            <q-input
-              v-model="encabezado.no_Transferencia"
-              label="No. Trasferencia"
-              lazy-rules
-              :rules="[
-                (val) => !!val || 'El no. de transferencia es requerido',
-              ]"
-            />
-          </div>
-          <div class="col-12 col-xs-12 col-md-6">
-            <q-input
-              stack-label
-              v-model="encabezado.fecha_Elaboracion"
-              type="date"
-              label="Fecha elaboración"
-              lazy-rules
-              :rules="[
-                (val) => !!val || 'La fecha de elaboración es requerida',
-              ]"
-            />
-          </div>
-          <div class="col-12 col-xs-12 col-md-6">
-            <q-input
-              v-model="encabezado.elaboro"
-              label="Elaboró"
-              readonly
-              lazy-rules
-              :rules="[
-                (val) =>
-                  !!val ||
-                  'El empleado(a) que elaboró la transferencia es requerido(a)',
-              ]"
-            />
-          </div>
-          <div class="col-12 col-xs-12 col-md-6">
-            <q-input
-              v-model="encabezado.valida"
-              label="Valida"
-              readonly
-              lazy-rules
-              :rules="[
-                (val) =>
-                  !!val ||
-                  'El empleado(a) que valida la transferencia es requerido(a)',
-              ]"
-            />
-          </div>
-          <div class="col-12 col-xs-12 col-md-6">
-            <q-input
-              v-model="encabezado.visto_Bueno"
-              label="Visto bueno"
-              readonly
-              lazy-rules
-              :rules="[
-                (val) =>
-                  !!val ||
-                  'El empleado(a) dió visto bueno a la transferencia es requerido(a)',
-              ]"
-            />
-          </div>
-          <div class="col-12 col-xs-12 col-md-6">
-            <q-input
-              v-model="encabezado.aprobo"
-              label="Aprobó"
-              readonly
-              lazy-rules
-              :rules="[
-                (val) =>
-                  !!val ||
-                  'El empleado(a) aprobó a la transferencia es requerido(a)',
-              ]"
+              v-model="encabezado.observaciones"
+              label="Observaciones"
+              type="textarea"
+              autogrow
             />
           </div>
           <div class="col-12 justify-end">
@@ -167,19 +108,20 @@ import { useQuasar } from "quasar";
 import { storeToRefs } from "pinia";
 import { useTransferenciaSecundariaEncabezadoStore } from "../../../stores/transferencia_secundaria_encabezado_store";
 import { useAreaStore } from "../../../stores/areas_store";
-import { ref, watch, onBeforeMount } from "vue";
+import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { espera } from "../../../helpers/helper";
 
 const $q = useQuasar();
 const router = useRouter();
 const transferenciaStore = useTransferenciaSecundariaEncabezadoStore();
 const areaStore = useAreaStore();
-const { areas, area } = storeToRefs(areaStore);
-const { modal, encabezado, isEditar } = storeToRefs(transferenciaStore);
-const options_areas = ref(areas.value);
-const area_id = ref(null);
-let captura = false;
+const { modal, isEditar, encabezado } = storeToRefs(transferenciaStore);
+// Corte al backend nuevo: el área responsable se elige de /api/areas (loadListaAreas en la página).
+const { areas } = storeToRefs(areaStore);
+const areaResponsableSel = ref(null);
+const options_areas = ref([]);
+const loading = ref(false);
+
 const filtro_areas = (val, update) => {
   if (val === "") {
     update(() => {
@@ -195,34 +137,22 @@ const filtro_areas = (val, update) => {
   });
 };
 
-watch(area_id, (val) => {
-  if (val != null) {
-    load_padre(val.value);
-  } else {
-    areaStore.initArea();
-  }
-});
-
-const load_padre = async (id) => {
-  $q.loading.show();
-  await areaStore.loadPadreByHija(id);
-  await transferenciaStore.loadEnlace(id);
-  await transferenciaStore.loadResponsableArea(id);
-  await transferenciaStore.loadAprueba();
-  await espera();
-  encabezado.value.area_Responsable = area.value.area;
-  encabezado.value.area_Responsable_Id = area.value.id;
-  $q.loading.hide();
+const actualizarModal = (valor) => {
+  transferenciaStore.initEncabezado();
+  areaResponsableSel.value = null;
+  transferenciaStore.actualizarModal(valor);
 };
 
 const onSubmit = async () => {
-  $q.loading.show();
-  encabezado.value.area_Generadora_Id = area_id.value.value;
-  encabezado.value.area_Responsable_Id = area.value.id;
+  loading.value = true;
+  // Corte: el área responsable viene del selector (no del legado).
+  if (areaResponsableSel.value) {
+    encabezado.value.area_Responsable_Id = areaResponsableSel.value.value;
+    encabezado.value.area_Responsable = areaResponsableSel.value.label;
+  }
   const resp = await transferenciaStore.createTransferencia(encabezado.value);
-  $q.loading.hide();
+  loading.value = false;
   if (resp.success) {
-    await transferenciaStore.loadEncabezados();
     $q.notify({
       type: "positive",
       message: resp.data,
@@ -244,17 +174,10 @@ const onSubmit = async () => {
       },
     })
       .onOk(() => {
-        if (isEditar.value == true) {
-          router.push({
-            name: "cajasTranSec",
-            params: { transferenciaId: encabezado.value.id },
-          });
-        } else {
-          router.push({
-            name: "cajasTranSec",
-            params: { transferenciaId: resp.id },
-          });
-        }
+        router.push({
+          name: "cajasTranSec",
+          params: { transferenciaId: resp.id },
+        });
       })
       .onCancel(() => {
         actualizarModal(false);
@@ -266,9 +189,7 @@ const onSubmit = async () => {
     });
   }
 };
-
-const actualizarModal = () => {
-  area_id.value = null;
-  transferenciaStore.actualizarModal(false);
-};
 </script>
+
+<style>
+</style>

@@ -60,14 +60,16 @@ const leerPermisos = async () => {
   $q.loading.hide();
 };
 
+// Corte al backend nuevo: se cargan el área generadora (del usuario, JWT) y su enlace ("Elaboró"); el
+// área responsable se elige con un selector (loadListaAreas). Los roles legados (aprueba/responsable de
+// archivo), que el backend nuevo no modela, ya no se cargan.
 const actualizarModal = async (valor) => {
   $q.loading.show();
+  transferenciaSecundariaStore.initEncabezado();
   await espera();
-
-  //transferenciaSecundariaStore.initEncabezado();
   await areaStore.loadListaAreas();
-  await transferenciaSecundariaStore.loadAprueba();
-  await transferenciaSecundariaStore.loadRespArchivo();
+  await transferenciaSecundariaStore.loadArea();
+  await transferenciaSecundariaStore.loadEnlace();
   transferenciaSecundariaStore.updateEditar(false);
   transferenciaSecundariaStore.actualizarModal(valor);
   $q.loading.hide();

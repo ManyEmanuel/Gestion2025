@@ -7,7 +7,7 @@
   >
     <q-card style="width: 800px; max-width: 80vw">
       <q-card-section class="row">
-        <div class="text-h6">Caja de transferencia {{}}</div>
+        <div class="text-h6">Caja de transferencia secundaria</div>
         <q-space />
         <q-btn
           icon="close"
@@ -26,6 +26,7 @@
               label="No. Caja"
               hint="Ingrese número de caja"
               type="Number"
+              :readonly="soloLectura"
               lazy-rules
               :rules="[(val) => !!val || 'El numero de caja es requerido']"
             />
@@ -37,6 +38,7 @@
               label="Peso ( Kilogramos)"
               hint="Ingrese peso"
               type="Number"
+              :readonly="soloLectura"
             />
           </div>
           <div class="col-12 col-xs-12 col-md-12">
@@ -47,6 +49,7 @@
               counter
               label="Seccion"
               hint="Seleccione sección"
+              :readonly="soloLectura"
               lazy-rules
               :rules="[(val) => !!val || 'La sección es requerida']"
             />
@@ -56,6 +59,7 @@
               v-model="caja.fecha_Antigua"
               label="Año mas antiguo"
               type="Number"
+              :readonly="soloLectura"
             />
           </div>
           <div class="col-12 col-xs-6 col-md-4">
@@ -63,6 +67,7 @@
               v-model="caja.fecha_Reciente"
               label="Año mas reciente"
               type="Number"
+              :readonly="soloLectura"
             />
           </div>
           <div class="col-12 col-xs-6 col-md-4">
@@ -86,7 +91,10 @@
       <q-separator />
       <br />
       <q-card-section>
-        <RegistroDetalleComp />
+        <RegistroDetalleComp
+          v-if="encabezado.estatus == 'Borrador'"
+          :transferenciaId="transferenciaId"
+        />
       </q-card-section>
       <br />
       <q-card-section>
@@ -102,7 +110,11 @@
               @click="actualizarModal(false)"
               icon="highlight_off"
             />
+            <!-- Corte: la caja es inmutable en el backend nuevo (sin update de noCaja/peso/años). En
+                 edición el modal solo AGREGA expedientes (cada uno se persiste al vuelo vía
+                 RegistroDetalleComp); por eso Guardar solo aparece al crear una caja en Borrador. -->
             <q-btn
+              v-if="!isEditar && encabezado.estatus == 'Borrador'"
               :loading="loading"
               type="button"
               color="secondary"
@@ -126,7 +138,7 @@
 <script setup>
 import { useQuasar } from "quasar";
 import { storeToRefs } from "pinia";
-import { onBeforeMount, ref, watch, watchEffect } from "vue";
+import { computed, onBeforeMount, ref, watch, watchEffect } from "vue";
 import { useCajaTransferenciaSecundariaterStore } from "../../../stores/caja_transferencia_secundaria_store";
 import { useSeccionStore } from "../../../stores/secciones_store";
 import { useDetalleCajaTransferenciaSecundariaStore } from "../../../stores/detalle_caja_transferencia_secundaria_store";
@@ -144,7 +156,7 @@ const inventariosAreaStore = useInventarioAreaStore();
 const transferenciaStore = useTransferenciaSecundariaEncabezadoStore();
 
 const { listaSecciones } = storeToRefs(seccionStore);
-const { caja, modal, isEditar } = storeToRefs(cajaStore);
+const { caja, cajas, modal, isEditar } = storeToRefs(cajaStore);
 const { arrayDetalles } = storeToRefs(detalleCajaStore);
 const { encabezado } = storeToRefs(transferenciaStore);
 
@@ -152,8 +164,15 @@ const seccionId = ref(null);
 const loading = ref(false);
 const myForm = ref(null);
 const props = defineProps({
-  transferenciaId: Number,
+  // Corte al backend nuevo: los ids de transferencia secundaria son Guids (string), no enteros.
+  transferenciaId: String,
 });
+
+// Corte: al editar una caja (o fuera de Borrador) los campos de la caja son de solo-lectura; el
+// backend nuevo no actualiza la caja, en edición solo se agregan expedientes.
+const soloLectura = computed(
+  () => isEditar.value == true || encabezado.value.estatus != "Borrador"
+);
 
 onBeforeMount(() => {
   seccionStore.loadListaSecciones();
@@ -177,27 +196,27 @@ watchEffect(() => {
   if (
     seccionId.value != null &&
     caja.value.fecha_Antigua != null &&
-    caja.value.fecha_Reciente != null
+    caja.value.fecha_Reciente != null &&
+    caja.value.fecha_Antigua.toString().length === 4 &&
+    caja.value.fecha_Reciente.toString().length === 4
   ) {
     cargarInventariosopt();
   }
 });
 
-const cargarInventariosopt = async (val) => {
+// Corte al backend nuevo: el picker filtra por el área del usuario (JWT), fase=Concentracion, y excluye
+// las claves ya capturadas en las cajas de la transferencia; los años/secciones ya no filtran el endpoint
+// (se conservan como metadatos de la caja / filtro local por año en el RegistroDetalle).
+const cargarInventariosopt = async () => {
   $q.loading.show();
-  await inventariosAreaStore.loadInventariosByAreaOptAI(
-    seccionId.value,
-    encabezado.value.area_Generadora_Id,
-    caja.value.fecha_Antigua,
-    caja.value.fecha_Reciente
-  );
+  await inventariosAreaStore.loadInventariosSecundariaOpt(cajas.value);
   $q.loading.hide();
 };
 
 const cargarSeccion = async (val) => {
   await espera(200);
   let array_secciones = [];
-  val.secciones_Id.forEach((element) => {
+  (val.secciones_Id || []).forEach((element) => {
     const seccionFiltrada = listaSecciones.value.find(
       (x) => x.value == `${element}`
     );
@@ -215,25 +234,16 @@ const onSubmit = async () => {
     caja.value.detalle = arrayDetalles.value;
     let resp = null;
     $q.loading.show();
-    if (isEditar.value == true) {
-      resp = await cajaStore.updateCaja(props.transferenciaId, caja.value);
-    } else {
-      resp = await cajaStore.createCaja(props.transferenciaId, caja.value);
-    }
+    // Corte: solo el alta (crear caja). El backend nuevo no actualiza la caja (inmutable); en
+    // edición el modal solo agrega expedientes (Guardar está oculto), así que aquí no hay updateCaja.
+    resp = await cajaStore.createCaja(props.transferenciaId, caja.value);
     $q.loading.hide();
     if (resp.success) {
-      $q.notify({
-        type: "positive",
-        message: resp.data,
-      });
+      $q.notify({ type: "positive", message: resp.data });
       actualizarModal();
     } else {
-      $q.notify({
-        type: "negative",
-        message: resp.data,
-      });
+      $q.notify({ type: "negative", message: resp.data });
     }
-    $q.loading.hide();
   }
 };
 </script>

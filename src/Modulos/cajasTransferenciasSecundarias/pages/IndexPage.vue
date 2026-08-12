@@ -25,7 +25,11 @@
       </div>
       <div class="col">
         <div class="text-right q-pa-md items-start q-gutter-md">
+          <!-- Corte al backend nuevo: el Anexo 15 (cédula por caja de transferencia secundaria) es un PDF
+               de cliente que dependía de endpoints y roles legados; se OCULTA y queda diferido para
+               rehacerse como reporte de backend (análogo a Anexo 10/14). -->
           <q-btn
+            v-if="false"
             type="button"
             class="q-ma-sm"
             color="purple-ieen"
@@ -73,10 +77,8 @@ import { useTransferenciaSecundariaEncabezadoStore } from "../../../stores/trans
 import { useCajaTransferenciaSecundariaterStore } from "../../../stores/caja_transferencia_secundaria_store";
 import { useDetalleCajaTransferenciaSecundariaStore } from "../../../stores/detalle_caja_transferencia_secundaria_store";
 import { onBeforeMount } from "vue";
-import { genera_anexo_15 } from "src/helpers/anexo_15";
 import TablaComp from "../components/TablaComp.vue";
 import ModalComp from "../components/ModalComp.vue";
-import { useDisposicionDocStore } from "../../../stores/disposicion_documental_store";
 
 const $q = useQuasar();
 const authStore = useAuthStore();
@@ -86,8 +88,6 @@ const detalleCajaStore = useDetalleCajaTransferenciaSecundariaStore();
 const { modulo } = storeToRefs(authStore);
 const { encabezado, encabezados } = storeToRefs(transferenciaStore);
 const { cajas, isCompleto } = storeToRefs(cajaStore);
-const disposicionDocStore = useDisposicionDocStore();
-const { disposiciones } = storeToRefs(disposicionDocStore);
 const siglas = "AI-CJS-TRNS-SEC";
 
 const leerPermisos = async () => {
@@ -97,7 +97,8 @@ const leerPermisos = async () => {
 };
 
 const props = defineProps({
-  transferenciaId: Number,
+  // Corte al backend nuevo: los ids de transferencia secundaria son Guids (string), no enteros.
+  transferenciaId: String,
 });
 
 onBeforeMount(() => {
@@ -154,31 +155,6 @@ const afectar_transferencia = async () => {
       }
     });
   }
-};
-
-const anexo_15 = async () => {
-  $q.loading.show();
-  if (cajas.value.length > 0) {
-    await disposicionDocStore.loadDisposiciones("S");
-    let sustantivas = disposiciones.value;
-    await disposicionDocStore.loadDisposiciones("C");
-    let comunes = disposiciones.value;
-
-    let resp = await cajaStore.loadAnexo15(
-      comunes,
-      sustantivas,
-      cajas.value,
-      encabezado.value
-    );
-    genera_anexo_15(resp.encabezado, resp.cuerpo);
-  } else {
-    $q.notify({
-      type: "negative",
-      message: "No se cuenta con cajas registradas",
-    });
-  }
-
-  $q.loading.hide();
 };
 </script>
 

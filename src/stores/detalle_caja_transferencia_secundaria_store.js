@@ -1,6 +1,10 @@
 import { defineStore } from 'pinia';
 import { api } from 'src/boot/axios';
 
+// Corte al backend nuevo: agregar expediente responde 204 y problem+json en error (axios lanza).
+const mensajeError = (e, defecto = "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte") =>
+  (e && e.response && e.response.data && (e.response.data.detail || e.response.data.title)) || defecto
+
 export const useDetalleCajaTransferenciaSecundariaStore = defineStore('detalle transferencia secundaria', {
   state: () => ({
     isLoading: false,
@@ -38,75 +42,52 @@ export const useDetalleCajaTransferenciaSecundariaStore = defineStore('detalle t
       this.arrayDetalles = []
     },
 
+    // MIGRADO al backend nuevo (corte de clientes): GET /api/transferenciassecundarias/cajas/{cajaId}/detalle
+    // (aislado por el área de la transferencia) con datos del expediente resueltos.
     async load_detalles(caja_id) {
       try {
-        const resp = await api.get(`/Archivo/DetalleCajasTransferenciaSecundaria/GetAll/${caja_id}`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            if (data) {
-              console.log(data)
-              this.detalles = []
-              let detalleArray = data.map((detalle) => {
-                return {
-                  id: detalle.id,
-                  clave_Clasificacion: detalle.clave_Clasificacion,
-                  descripcion: detalle.descripcion,
-                  total_Paginas: detalle.total_Paginas,
-                  observaciones: detalle.observaciones,
-                  fecha_Inicio: detalle.fecha_Inicio,
-                  fecha_Termino: detalle.fecha_Termino
-                }
-              })
-              this.detalles = detalleArray;
-            }
-          }
+        const resp = await api.get(`/transferenciassecundarias/cajas/${caja_id}/detalle`)
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          this.detalles = resp.data.map((d) => ({
+            id: d.id,
+            clave_Clasificacion: d.claveClasificacion,
+            descripcion: d.descripcion,
+            total_Paginas: d.totalPaginas,
+            observaciones: d.observaciones,
+            signatura_Topografica: d.signaturaTopografica,
+            fecha_Inicio: d.fechaInicio,
+            fecha_Termino: d.fechaTermino
+          }))
+          return { success: true }
         }
+        return { success: false, data: "Respuesta inesperada del servidor." }
       } catch (error) {
         console.error(error)
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
       }
     },
 
-    async create(caja_id, detalle) {
+    // MIGRADO al backend nuevo: POST /api/transferenciassecundarias/{transferenciaId}/expedientes
+    // { cajaId, ... } -> 204. Se usa al EDITAR una caja (agregar un expediente extra); solo mientras la
+    // transferencia está en Borrador. Recibe transferenciaId (lo pasa el componente por prop).
+    async create(transferenciaId, caja_id, detalle) {
       try {
-        const resp = await api.post(`/Archivo/DetalleCajasTransferenciaSecundaria/${caja_id}`, detalle)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            this.load_detalles(caja_id)
-            return { success, data }
-          } else {
-            return { success, data }
-          }
+        const resp = await api.post(`/transferenciassecundarias/${transferenciaId}/expedientes`, {
+          cajaId: caja_id,
+          inventarioGeneralId: detalle.inventario_Area_Id,
+          descripcion: detalle.descripcion || null,
+          signaturaTopografica: detalle.signatura_Topografica || null,
+          observaciones: detalle.observaciones || null,
+          totalPaginas: detalle.total_Paginas != null ? Number(detalle.total_Paginas) : null
+        })
+        if (resp.status === 204 || resp.status === 200) {
+          this.load_detalles(caja_id)
+          return { success: true, data: "Expediente agregado" }
         }
-        else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-        }
+        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
       } catch (e) {
         console.error(e)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-      }
-    },
-
-
-    async deleteDetalle(caja_id, id) {
-      try {
-        const resp = await api.delete(`/Archivo/DetalleCajasTransferenciaSecundaria/${id}`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            this.load_detalles(caja_id)
-            return { success, data }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo" }
-        }
-      } catch (e) {
-        console.log(e)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        return { success: false, data: mensajeError(e) }
       }
     },
 
