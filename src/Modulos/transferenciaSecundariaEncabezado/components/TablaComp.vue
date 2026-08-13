@@ -102,6 +102,9 @@ const { encabezados, isLoading, encabezadosFiltro, listaAreasGeneradoras } =
 const areasLista = ref("Ver todos");
 
 onBeforeMount(() => {
+  // Sincroniza el filtro del store con el default del selector al montar (evita que un filtro previo
+  // persista entre montajes); durante la sesión se preserva al crear (createTransferencia → loadEncabezados).
+  transferenciaSecundariaStore.areaFiltroActiva = areasLista.value;
   transferenciaSecundariaStore.loadEncabezados();
 });
 
