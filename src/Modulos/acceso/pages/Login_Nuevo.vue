@@ -11,12 +11,16 @@
           v-model="usuario"
           label="Usuario"
           autofocus
+          name="usuario"
+          autocomplete="username"
           :rules="[(v) => !!v || 'Requerido']"
         />
         <q-input
           v-model="password"
           label="Contraseña"
           type="password"
+          name="password"
+          autocomplete="current-password"
           :rules="[(v) => !!v || 'Requerido']"
         />
 
