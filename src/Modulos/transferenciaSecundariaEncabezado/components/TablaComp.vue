@@ -56,6 +56,16 @@
                 >
                   <q-tooltip>Cajas</q-tooltip>
                 </q-btn>
+                <q-btn
+                  v-if="modulo == null ? false : modulo.leer"
+                  flat
+                  round
+                  color="purple-ieen"
+                  icon="verified"
+                  @click="abrirActos(props.row)"
+                >
+                  <q-tooltip>Actos y firma</q-tooltip>
+                </q-btn>
               </div>
               <label v-else>{{ col.value }}</label>
             </q-td>
@@ -63,6 +73,7 @@
         </template>
       </q-table>
     </div>
+    <ActosDialog v-model="mostrarActos" proceso="secundaria" :proceso-id="actoProcesoId" :nombre="actoNombre" />
   </div>
 </template>
 <script setup>
@@ -73,6 +84,12 @@ import { onBeforeMount, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
 import { espera } from "../../../helpers/helper";
+import ActosDialog from "../../../components/ActosDialog.vue";
+
+const mostrarActos = ref(false);
+const actoProcesoId = ref(null);
+const actoNombre = ref("");
+const abrirActos = (row) => { actoProcesoId.value = row.id; actoNombre.value = row.nombre; mostrarActos.value = true; };
 
 const $q = useQuasar();
 const authStore = useAuthStore();
