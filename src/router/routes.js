@@ -135,6 +135,38 @@ const routes = [
         props: true,
         component: () => import('../Modulos/soliciutdes_ai/pages/detallePrestamo.vue')
       },
+      // Cumplimiento LGA/Nayarit (Fases 3-4)
+      {
+        path: '/avisos',
+        name: 'avisos',
+        component: () => import('../Modulos/avisos/pages/IndexPage.vue')
+      },
+      {
+        path: '/pada',
+        name: 'pada',
+        component: () => import('../Modulos/pada/pages/IndexPage.vue')
+      },
+      {
+        path: '/grupoInterdisciplinario',
+        name: 'grupoInterdisciplinario',
+        component: () => import('../Modulos/grupoInterdisciplinario/pages/IndexPage.vue')
+      },
+      {
+        path: '/sesionesGrupo/:grupoId',
+        name: 'sesionesGrupo',
+        props: true,
+        component: () => import('../Modulos/grupoInterdisciplinario/pages/SesionesPage.vue')
+      },
+      {
+        path: '/preservacion',
+        name: 'preservacion',
+        component: () => import('../Modulos/preservacion/pages/IndexPage.vue')
+      },
+      {
+        path: '/interoperabilidad',
+        name: 'interoperabilidad',
+        component: () => import('../Modulos/interoperabilidad/pages/IndexPage.vue')
+      },
     ]
   },
 

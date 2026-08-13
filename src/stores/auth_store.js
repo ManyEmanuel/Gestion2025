@@ -27,6 +27,13 @@ const MAPA_SIGLAS_GRUPO = {
   'AI-PRESTAMOS-CLASI': 'prestamo',
   'AI-PRESTAMOS-AI': 'prestamo',
   'AI-PRESTAMOS-AI-AI': 'prestamo',
+  // Cumplimiento LGA/Nayarit (Fases 3-4): planeación, grupo interdisciplinario, preservación,
+  // interoperabilidad y avisos. Los avisos reutilizan el permiso de transferencia secundaria.
+  'AI-PADA': 'pada',
+  'AI-GRUPO': 'grupo',
+  'AI-PRESERVACION': 'preservacion',
+  'AI-INTEROP': 'interoperabilidad',
+  'AI-AVISOS': 'transferencia-secundaria',
 };
 
 // Siglas que son ítems de MENÚ (top-level). Un subconjunto de MAPA_SIGLAS_GRUPO: las páginas de
@@ -35,6 +42,7 @@ const SIGLAS_MENU = [
   'AI-CAT-SECCIONES', 'AI-CAT-DISP-DOC', 'AI-CAT-ENLACE', 'AI-CAT-VOBO',
   'AI-INV-AREA', 'AI-TP', 'AI-TP-AI', 'AI-INV-AREA-AI', 'AI-TS', 'AI-BD',
   'AI-PRESTAMOS', 'AI-PRESTAMOS-CLASI', 'AI-PRESTAMOS-AI', 'AI-PRESTAMOS-AI-AI',
+  'AI-AVISOS', 'AI-PADA', 'AI-GRUPO', 'AI-PRESERVACION', 'AI-INTEROP',
 ];
 
 function permisosDelToken() {
@@ -96,7 +104,9 @@ export const useAuthStore = defineStore('AuthStore', {
       const modulos = []
       for (const sigla of SIGLAS_MENU) {
         const grupo = MAPA_SIGLAS_GRUPO[sigla]
-        if (grupo && permisos.includes(`archivo.${grupo}.ver`)) {
+        // El ítem se muestra si el usuario tiene CUALQUIER permiso del grupo (algunos grupos no tienen
+        // `.ver` sino acciones propias, p.ej. interoperabilidad.exportar / preservacion.ejecutar).
+        if (grupo && permisos.some((p) => p.startsWith(`archivo.${grupo}.`))) {
           modulos.push({
             siglas_Modulo: sigla,
             leer: true,
@@ -108,6 +118,11 @@ export const useAuthStore = defineStore('AuthStore', {
       }
       this.modulos = modulos
       return { success: true }
+    },
+
+    // Comprueba un permiso concreto del JWT (para acciones no estándar: aprobar/publicar/ejecutar/exportar).
+    tienePermiso(clave) {
+      return permisosDelToken().includes(clave)
     },
 
 
@@ -138,7 +153,8 @@ export const useAuthStore = defineStore('AuthStore', {
       const permisos = permisosDelToken();
       this.modulo = {
         siglas_Modulo: siglas,
-        leer: permisos.includes(`archivo.${grupo}.ver`),
+        // leer = cualquier permiso del grupo (algunos grupos no tienen `.ver`, p.ej. interoperabilidad).
+        leer: permisos.some((p) => p.startsWith(`archivo.${grupo}.`)),
         registrar: permisos.includes(`archivo.${grupo}.registrar`),
         actualizar: permisos.includes(`archivo.${grupo}.actualizar`),
         eliminar: permisos.includes(`archivo.${grupo}.eliminar`),

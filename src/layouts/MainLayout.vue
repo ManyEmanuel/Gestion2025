@@ -83,6 +83,18 @@
               v-bind="link"
             />
           </q-expansion-item>
+          <q-expansion-item
+            expand-separator
+            icon="verified"
+            label="Cumplimiento"
+            v-if="linkListCumplimiento.length > 0"
+          >
+            <EssentialLink
+              v-for="link in linkListCumplimiento"
+              :key="link.title"
+              v-bind="link"
+            />
+          </q-expansion-item>
         </q-list>
       </q-scroll-area>
       <q-img class="absolute-top" src="~assets/fondo.png" style="height: 160px">
@@ -139,6 +151,7 @@ export default defineComponent({
     const linksArchivoTramite = ref([]);
     const linkListPrestamos = ref([]);
     const linkListArchivoConcentracion = ref([]);
+    const linkListCumplimiento = ref([]);
     // Corte: SignalR (hub :9270) + campana de notificaciones retirados (notificaciones en tiempo real
     // deshabilitadas; el store legado /NotificacionesUniverso ya no se usa).
     const Empleado = ref(null);
@@ -303,6 +316,47 @@ export default defineComponent({
               siglas: "AI-PRESTAMOS-AI-AI",
             });
             break;
+
+          case "AI-AVISOS":
+            linkListArchivoConcentracion.value.push({
+              title: "Avisos al Archivo General",
+              icon: "notification_important",
+              link: { name: "avisos" },
+              siglas: "AI-AVISOS",
+            });
+            break;
+          case "AI-PADA":
+            linkListCumplimiento.value.push({
+              title: "PADA e informe anual",
+              icon: "event_note",
+              link: { name: "pada" },
+              siglas: "AI-PADA",
+            });
+            break;
+          case "AI-GRUPO":
+            linkListCumplimiento.value.push({
+              title: "Grupo interdisciplinario",
+              icon: "groups",
+              link: { name: "grupoInterdisciplinario" },
+              siglas: "AI-GRUPO",
+            });
+            break;
+          case "AI-PRESERVACION":
+            linkListCumplimiento.value.push({
+              title: "Preservación digital",
+              icon: "shield",
+              link: { name: "preservacion" },
+              siglas: "AI-PRESERVACION",
+            });
+            break;
+          case "AI-INTEROP":
+            linkListCumplimiento.value.push({
+              title: "Interoperabilidad / Exportar",
+              icon: "cloud_download",
+              link: { name: "interoperabilidad" },
+              siglas: "AI-INTEROP",
+            });
+            break;
         }
       });
       $q.loading.hide();
@@ -330,6 +384,7 @@ export default defineComponent({
       linksArchivoTramite,
       linkListPrestamos,
       linkListArchivoConcentracion,
+      linkListCumplimiento,
       leftDrawerOpen,
       Empleado,
       Perfil,
