@@ -121,6 +121,9 @@ const {
 const areasLista = ref("Ver todos");
 
 onBeforeMount(() => {
+  // Sincroniza el filtro del store con el default del selector al montar (evita que un filtro previo
+  // persista entre montajes); durante la sesión se preserva al crear (createTransferencia → loadEncabezados).
+  transferenciaPrimariaStore.areaFiltroActiva = areasLista.value;
   transferenciaPrimariaStore.loadEncabezados();
 });
 

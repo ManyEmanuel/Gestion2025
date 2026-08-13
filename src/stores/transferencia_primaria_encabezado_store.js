@@ -28,6 +28,7 @@ export const useTransferenciaPrimariaEncabezadoStore = defineStore('Transferenci
     modalAI: false,
     encabezados: [],
     encabezadosFiltro: [],
+    areaFiltroActiva: "Ver todos",
     encabezadosAi: [],
     encabezadosAiFiltro: [],
     inventarios: [],
@@ -250,7 +251,10 @@ export const useTransferenciaPrimariaEncabezadoStore = defineStore('Transferenci
             }
           })
           this.encabezados = encabezadosArray
-          this.encabezadosFiltro = encabezadosArray
+          // Respeta el filtro por área activo tras recargar (p.ej. al crear una transferencia).
+          this.encabezadosFiltro = this.areaFiltroActiva === "Ver todos"
+            ? encabezadosArray
+            : encabezadosArray.filter(enc => enc.area_Generadora == this.areaFiltroActiva)
           let areasUnicas = [...new Set(areas)].sort();
           areasUnicas.unshift("Ver todos");
           this.listaAreasGeneradoras = areasUnicas
@@ -266,6 +270,7 @@ export const useTransferenciaPrimariaEncabezadoStore = defineStore('Transferenci
 
     async loadEncabezadosFiltro(area) {
       try {
+        this.areaFiltroActiva = area
         if (area == "Ver todos") {
           this.encabezadosFiltro = this.encabezados
         } else {
