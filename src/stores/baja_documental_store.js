@@ -28,6 +28,7 @@ export const useBajaDocumentalStore = defineStore('BajaDocumental', {
     modal_ver: false,
     encabezados: [],
     encabezadosFiltro: [],
+    areaFiltroActiva: "Ver todos",
     encabezado: {
       id: null,
       area_Responsable_Id: null,
@@ -114,7 +115,10 @@ export const useBajaDocumentalStore = defineStore('BajaDocumental', {
             }
           })
           this.encabezados = encabezadosArray
-          this.encabezadosFiltro = encabezadosArray
+          // Respeta el filtro por área activo tras recargar (p.ej. al crear una baja).
+          this.encabezadosFiltro = this.areaFiltroActiva === "Ver todos"
+            ? encabezadosArray
+            : encabezadosArray.filter(enc => enc.area_Generadora == this.areaFiltroActiva)
           let areasUnicas = [...new Set(areas)].sort();
           areasUnicas.unshift("Ver todos");
           this.listaAreasGeneradoras = areasUnicas
@@ -130,6 +134,7 @@ export const useBajaDocumentalStore = defineStore('BajaDocumental', {
 
     async loadEncabezadosFiltro(area) {
       try {
+        this.areaFiltroActiva = area
         if (area == "Ver todos") {
           this.encabezadosFiltro = this.encabezados
         } else {

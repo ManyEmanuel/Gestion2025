@@ -104,6 +104,9 @@ const {
 } = storeToRefs(bajaStore);
 const areasLista = ref("Ver todos");
 onBeforeMount(() => {
+  // Sincroniza el filtro del store con el default del selector al montar (evita que un filtro previo
+  // persista entre montajes); durante la sesión se preserva al crear (createTransferencia → loadEncabezados).
+  bajaStore.areaFiltroActiva = areasLista.value;
   bajaStore.loadEncabezados();
 });
 
