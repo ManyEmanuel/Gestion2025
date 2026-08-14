@@ -95,6 +95,18 @@
               v-bind="link"
             />
           </q-expansion-item>
+          <q-expansion-item
+            expand-separator
+            icon="admin_panel_settings"
+            label="Administración"
+            v-if="linkListAdministracion.length > 0"
+          >
+            <EssentialLink
+              v-for="link in linkListAdministracion"
+              :key="link.title"
+              v-bind="link"
+            />
+          </q-expansion-item>
         </q-list>
       </q-scroll-area>
       <q-img class="absolute-top" src="~assets/fondo.png" style="height: 160px">
@@ -152,6 +164,7 @@ export default defineComponent({
     const linkListPrestamos = ref([]);
     const linkListArchivoConcentracion = ref([]);
     const linkListCumplimiento = ref([]);
+    const linkListAdministracion = ref([]);
     // Corte: SignalR (hub :9270) + campana de notificaciones retirados (notificaciones en tiempo real
     // deshabilitadas; el store legado /NotificacionesUniverso ya no se usa).
     const Empleado = ref(null);
@@ -357,6 +370,14 @@ export default defineComponent({
               siglas: "AI-INTEROP",
             });
             break;
+          case "AI-ADMIN-AREAS":
+            linkListAdministracion.value.push({
+              title: "Áreas",
+              icon: "account_tree",
+              link: { name: "administracionAreas" },
+              siglas: "AI-ADMIN-AREAS",
+            });
+            break;
         }
       });
       $q.loading.hide();
@@ -385,6 +406,7 @@ export default defineComponent({
       linkListPrestamos,
       linkListArchivoConcentracion,
       linkListCumplimiento,
+      linkListAdministracion,
       leftDrawerOpen,
       Empleado,
       Perfil,

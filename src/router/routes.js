@@ -167,6 +167,12 @@ const routes = [
         name: 'interoperabilidad',
         component: () => import('../Modulos/interoperabilidad/pages/IndexPage.vue')
       },
+      // Administración (ámbito global)
+      {
+        path: '/administracionAreas',
+        name: 'administracionAreas',
+        component: () => import('../Modulos/administracionAreas/pages/IndexPage.vue')
+      },
     ]
   },
 
