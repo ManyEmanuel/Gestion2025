@@ -378,6 +378,14 @@ export default defineComponent({
               siglas: "AI-ADMIN-AREAS",
             });
             break;
+          case "AI-ADMIN-EMPLEADOS":
+            linkListAdministracion.value.push({
+              title: "Empleados",
+              icon: "badge",
+              link: { name: "administracionEmpleados" },
+              siglas: "AI-ADMIN-EMPLEADOS",
+            });
+            break;
         }
       });
       $q.loading.hide();
