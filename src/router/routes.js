@@ -7,6 +7,12 @@ const routes = [
     component: () => import('../Modulos/acceso/pages/Login_Nuevo.vue')
   },
   {
+    // Cambio de contraseña forzado (tras entrar con una temporal). Sin el layout principal.
+    path: '/cambiar-password',
+    name: 'cambiarPassword',
+    component: () => import('../Modulos/acceso/pages/CambiarPassword.vue')
+  },
+  {
     path: '/',
     name: 'home',
     component: () => import('layouts/MainLayout.vue'),
@@ -177,6 +183,11 @@ const routes = [
         path: '/administracionEmpleados',
         name: 'administracionEmpleados',
         component: () => import('../Modulos/administracionEmpleados/pages/IndexPage.vue')
+      },
+      {
+        path: '/administracionUsuarios',
+        name: 'administracionUsuarios',
+        component: () => import('../Modulos/administracionUsuarios/pages/IndexPage.vue')
       },
     ]
   },

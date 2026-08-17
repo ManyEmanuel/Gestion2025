@@ -23,9 +23,25 @@ export const useAuthNuevoStore = defineStore('AuthNuevoStore', {
         localStorage.setItem('key', token);
         localStorage.setItem('usuario_nuevo', usuario);
         this.usuario = usuario;
-        return { success: true };
+        // El backend avisa si el usuario entró con una contraseña temporal y debe cambiarla.
+        return { success: true, debeCambiarPassword: !!resp?.data?.debeCambiarPassword };
       } catch (e) {
         const detail = e?.response?.data?.detail || 'Usuario o contraseña incorrectos.';
+        return { success: false, data: detail };
+      }
+    },
+
+    // Cambio de contraseña propio (self-service). Tras el alta/reset con contraseña temporal, el
+    // usuario debe cambiarla antes de usar el sistema. POST /api/usuarios/cambiar-password (204).
+    async cambiarPassword(passwordActual, passwordNueva) {
+      try {
+        const resp = await api.post('/usuarios/cambiar-password', { passwordActual, passwordNueva });
+        if (resp.status === 204 || resp.status === 200) {
+          return { success: true, data: 'Contraseña actualizada' };
+        }
+        return { success: false, data: 'Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte' };
+      } catch (e) {
+        const detail = (e?.response?.data?.detail || e?.response?.data?.title) || 'No se pudo cambiar la contraseña.';
         return { success: false, data: detail };
       }
     },
