@@ -173,6 +173,11 @@ const routes = [
         name: 'administracionAreas',
         component: () => import('../Modulos/administracionAreas/pages/IndexPage.vue')
       },
+      {
+        path: '/administracionEmpleados',
+        name: 'administracionEmpleados',
+        component: () => import('../Modulos/administracionEmpleados/pages/IndexPage.vue')
+      },
     ]
   },
 

@@ -37,6 +37,7 @@ const MAPA_SIGLAS_GRUPO = {
   // Administración (ámbito global): áreas y su jerarquía. Grupo `administracion.areas` -> los flags
   // leer/registrar/actualizar/eliminar salen de archivo.administracion.areas.{ver,registrar,actualizar,eliminar}.
   'AI-ADMIN-AREAS': 'administracion.areas',
+  'AI-ADMIN-EMPLEADOS': 'administracion.empleados',
 };
 
 // Siglas que son ítems de MENÚ (top-level). Un subconjunto de MAPA_SIGLAS_GRUPO: las páginas de
@@ -46,7 +47,7 @@ const SIGLAS_MENU = [
   'AI-INV-AREA', 'AI-TP', 'AI-TP-AI', 'AI-INV-AREA-AI', 'AI-TS', 'AI-BD',
   'AI-PRESTAMOS', 'AI-PRESTAMOS-CLASI', 'AI-PRESTAMOS-AI', 'AI-PRESTAMOS-AI-AI',
   'AI-AVISOS', 'AI-PADA', 'AI-GRUPO', 'AI-PRESERVACION', 'AI-INTEROP',
-  'AI-ADMIN-AREAS',
+  'AI-ADMIN-AREAS', 'AI-ADMIN-EMPLEADOS',
 ];
 
 function permisosDelToken() {
