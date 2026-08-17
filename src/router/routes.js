@@ -189,6 +189,11 @@ const routes = [
         name: 'administracionUsuarios',
         component: () => import('../Modulos/administracionUsuarios/pages/IndexPage.vue')
       },
+      {
+        path: '/administracionPerfiles',
+        name: 'administracionPerfiles',
+        component: () => import('../Modulos/administracionPerfiles/pages/IndexPage.vue')
+      },
     ]
   },
 
