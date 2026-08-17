@@ -394,6 +394,14 @@ export default defineComponent({
               siglas: "AI-ADMIN-USUARIOS",
             });
             break;
+          case "AI-ADMIN-PERFILES":
+            linkListAdministracion.value.push({
+              title: "Perfiles",
+              icon: "security",
+              link: { name: "administracionPerfiles" },
+              siglas: "AI-ADMIN-PERFILES",
+            });
+            break;
         }
       });
       $q.loading.hide();

@@ -39,6 +39,7 @@ const MAPA_SIGLAS_GRUPO = {
   'AI-ADMIN-AREAS': 'administracion.areas',
   'AI-ADMIN-EMPLEADOS': 'administracion.empleados',
   'AI-ADMIN-USUARIOS': 'administracion.usuarios',
+  'AI-ADMIN-PERFILES': 'administracion.perfiles',
 };
 
 // Siglas que son ítems de MENÚ (top-level). Un subconjunto de MAPA_SIGLAS_GRUPO: las páginas de
@@ -48,7 +49,7 @@ const SIGLAS_MENU = [
   'AI-INV-AREA', 'AI-TP', 'AI-TP-AI', 'AI-INV-AREA-AI', 'AI-TS', 'AI-BD',
   'AI-PRESTAMOS', 'AI-PRESTAMOS-CLASI', 'AI-PRESTAMOS-AI', 'AI-PRESTAMOS-AI-AI',
   'AI-AVISOS', 'AI-PADA', 'AI-GRUPO', 'AI-PRESERVACION', 'AI-INTEROP',
-  'AI-ADMIN-AREAS', 'AI-ADMIN-EMPLEADOS', 'AI-ADMIN-USUARIOS',
+  'AI-ADMIN-AREAS', 'AI-ADMIN-EMPLEADOS', 'AI-ADMIN-USUARIOS', 'AI-ADMIN-PERFILES',
 ];
 
 function permisosDelToken() {
