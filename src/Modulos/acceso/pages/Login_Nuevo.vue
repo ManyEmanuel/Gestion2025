@@ -59,7 +59,8 @@ export default defineComponent({
       const r = await authStore.login(usuario.value, password.value);
       cargando.value = false;
       if (r.success) {
-        router.push('/');
+        // Entró con contraseña temporal -> forzar el cambio antes de usar el sistema.
+        router.push(r.debeCambiarPassword ? '/cambiar-password' : '/');
       } else {
         error.value = r.data;
       }

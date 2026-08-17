@@ -386,6 +386,14 @@ export default defineComponent({
               siglas: "AI-ADMIN-EMPLEADOS",
             });
             break;
+          case "AI-ADMIN-USUARIOS":
+            linkListAdministracion.value.push({
+              title: "Usuarios",
+              icon: "manage_accounts",
+              link: { name: "administracionUsuarios" },
+              siglas: "AI-ADMIN-USUARIOS",
+            });
+            break;
         }
       });
       $q.loading.hide();
