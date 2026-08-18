@@ -77,6 +77,23 @@ institución o entidad federativa, alguien con conocimiento del marco legal apli
 revisar y ajustar esas citas caso por caso. No forman parte de las variables de entorno porque
 son fundamento jurídico, no texto de marca.
 
+## Verificación realizada
+
+Este mecanismo se probó en vivo (navegador + backend real, login completo) en dos escenarios:
+
+1. **`.env` de una institución de ejemplo distinta** (nombre, institución, subtítulo de login,
+   texto de pie de página y firmante del Anexo 11 todos con valores ficticios). Resultado:
+   pestaña del navegador, pantalla de login, encabezado y pie de `MainLayout` reflejaron el
+   valor de ejemplo en todo momento, incluso después de iniciar sesión y navegar al dashboard.
+   Sin errores de consola.
+2. **Sin `.env`** (archivo ausente, caso de desarrollo local / valores por defecto). Resultado:
+   los mismos puntos de la UI volvieron a mostrar los valores del IEEN Nayarit definidos como
+   default en `quasar.config.js` / `src/branding.js`. Sin errores de consola.
+
+En ambos casos el login contra el backend (`POST /api/auth/login`) funcionó normalmente — la
+configurabilidad de marca no interfiere con la autenticación. No se probó el reemplazo de
+`logo.png`/`fondo.png` (paso manual, fuera del alcance de las variables de entorno).
+
 ## Alcance de esta configurabilidad
 
 Estas variables se resuelven en tiempo de build (`quasar dev` / `quasar build`), no hay una
