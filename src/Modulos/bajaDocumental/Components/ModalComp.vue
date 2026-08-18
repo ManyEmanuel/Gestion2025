@@ -7,7 +7,7 @@
   >
     <q-card flat bordered style="width: 800px; max-width: 80vw">
       <q-card-section class="row">
-        <div class="text-h6">Baja documental</div>
+        <h2 class="text-h6">Baja documental</h2>
         <q-space />
         <q-btn
           icon="close"
@@ -16,7 +16,7 @@
           round
           dense
           v-close-popup
-        />
+        aria-label="Cerrar" />
       </q-card-section>
       <q-card-section>
         <!-- Corte al backend nuevo: se quitaron los roles legados (valida/visto bueno/aprobó) que el

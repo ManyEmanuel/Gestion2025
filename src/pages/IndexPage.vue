@@ -2,9 +2,9 @@
   <q-page class="q-pa-lg">
     <div class="row items-center q-mb-md">
       <div>
-        <div class="text-h6 text-purple-ieen">
+        <h1 class="text-h6 text-purple-ieen">
           Bienvenido{{ generoSufijo }}{{ nombreCorto ? ", " + nombreCorto : "" }}
-        </div>
+        </h1>
         <div class="text-caption text-grey-7" v-if="perfil">{{ perfil }}</div>
       </div>
       <q-space />

@@ -1,5 +1,7 @@
 <template>
-  <q-btn flat round color="negative" icon="delete" @click="confirmar">
+  <q-btn flat round color="negative" icon="delete" @click="confirmar"
+  :aria-label="label"
+>
     <q-tooltip>{{ label }}</q-tooltip>
   </q-btn>
 </template>

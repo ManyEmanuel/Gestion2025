@@ -39,7 +39,9 @@
                   color="purple-ieen"
                   icon="edit"
                   @click="editar(col.value)"
-                >
+                
+  aria-label="Editar registro"
+>
                   <q-tooltip>Editar registro</q-tooltip>
                 </q-btn>
                 <q-btn
@@ -53,7 +55,9 @@
                   color="purple-ieen"
                   icon="folder_open"
                   @click="verAceptado(col.value, props.row.folio_Solicitud)"
-                >
+                
+  aria-label="Ver documento"
+>
                   <q-tooltip>Ver documento</q-tooltip>
                 </q-btn>
               </div>

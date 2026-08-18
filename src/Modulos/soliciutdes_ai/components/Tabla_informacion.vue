@@ -33,7 +33,9 @@
                   color="purple-ieen"
                   icon="file_present"
                   @click="verAdjuntos(props.row['inventario_Id'])"
-                >
+                
+  aria-label="Ver adjuntos"
+>
                   <q-tooltip>Ver adjuntos</q-tooltip>
                 </q-btn>
               </div>

@@ -17,10 +17,10 @@
         :loading="cargando"
       >
         <template v-slot:top>
-          <div class="text-h6">Avisos de transferencia secundaria (plazo 45 días · LGA 59 / Nay 57)</div>
+          <h1 class="text-h6">Avisos de transferencia secundaria (plazo 45 días · LGA 59 / Nay 57)</h1>
           <q-space />
           <q-toggle v-model="soloPendientes" label="Solo pendientes" @update:model-value="recargar" />
-          <q-btn flat round dense icon="refresh" @click="recargar" />
+          <q-btn flat round dense icon="refresh" @click="recargar" aria-label="Actualizar" />
         </template>
 
         <template v-slot:body-cell-estado="props">
@@ -41,10 +41,14 @@
         <template v-slot:body-cell-acciones="props">
           <q-td :props="props">
             <q-btn v-if="modulo.actualizar && props.row.estado !== 'Enviado'" flat dense color="secondary"
-              icon="mark_email_read" @click="abrirEnviar(props.row)">
+              icon="mark_email_read" @click="abrirEnviar(props.row)"
+  aria-label="Marcar enviado"
+>
               <q-tooltip>Marcar enviado</q-tooltip>
             </q-btn>
-            <q-btn flat dense color="primary" icon="picture_as_pdf" @click="exportar(props.row.id)">
+            <q-btn flat dense color="primary" icon="picture_as_pdf" @click="exportar(props.row.id)"
+  aria-label="Descargar aviso (PDF)"
+>
               <q-tooltip>Descargar aviso (PDF)</q-tooltip>
             </q-btn>
           </q-td>
@@ -61,9 +65,9 @@
     <q-dialog v-model="dialogoEnviar" persistent>
       <q-card flat bordered style="width: 500px; max-width: 90vw">
         <q-card-section class="row items-center">
-          <div class="text-h6">Marcar aviso como enviado</div>
+          <h2 class="text-h6">Marcar aviso como enviado</h2>
           <q-space />
-          <q-btn icon="close" flat round dense v-close-popup />
+          <q-btn icon="close" flat round dense v-close-popup aria-label="Cerrar" />
         </q-card-section>
         <q-card-section>
           <q-form @submit="confirmarEnviar">

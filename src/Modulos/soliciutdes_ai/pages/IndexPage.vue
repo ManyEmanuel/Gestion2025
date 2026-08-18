@@ -15,6 +15,11 @@
     </div>
     <div class="row">
       <div class="col">
+        <h1 class="text-h6 text-purple-ieen q-px-md">Solicitudes de prestamos archivo institucional</h1>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
         <div class="text-right q-pa-md items-start q-gutter-md">
           <!-- Corte al backend nuevo: el ALTA de solicitud AI ya está migrada. El picker de expedientes
                en Concentración/Histórico se scopea por el área responsable elegida en el modal

@@ -15,6 +15,11 @@
     </div>
     <div class="row">
       <div class="col">
+        <h1 class="text-h6 text-purple-ieen q-px-md">Solicitudes de prestamos archivo institucional</h1>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
         <q-card flat bordered v-if="modulo == null ? false : modulo.leer">
           <q-tabs v-model="tab" class="text-purple-ieen" align="justify">
             <q-tab name="pendientes" label="Pendientes" />

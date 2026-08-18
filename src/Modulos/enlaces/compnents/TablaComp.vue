@@ -47,7 +47,9 @@
                   color="purple-ieen"
                   icon="edit"
                   @click="editar(col.value)"
-                >
+                
+  aria-label="Editar registro"
+>
                   <q-tooltip>Editar registro</q-tooltip>
                 </q-btn>
                 <BtnEliminar
@@ -67,7 +69,9 @@
                   color="purple-ieen"
                   icon="description"
                   @click="generar(col.value)"
-                >
+                
+  aria-label="Catálogo de firmas (Anexo 12)"
+>
                   <q-tooltip>Catálogo de firmas (Anexo 12)</q-tooltip>
                 </q-btn>
                 <q-btn
@@ -77,7 +81,9 @@
                   color="purple-ieen"
                   icon="person_add"
                   @click="activarEnlace(col.value)"
-                >
+                
+  aria-label="Activar Enlace"
+>
                   <q-tooltip>Activar Enlace </q-tooltip>
                 </q-btn>
                 <q-btn
@@ -87,7 +93,9 @@
                   color="purple-ieen"
                   icon="person_remove"
                   @click="desactivarEnlace(col.value)"
-                >
+                
+  aria-label="Desactivar Enlace"
+>
                   <q-tooltip>Desactivar Enlace</q-tooltip>
                 </q-btn>
               </div>

@@ -12,6 +12,11 @@
     </div>
     <div class="row">
       <div class="col">
+        <h1 class="text-h6 text-purple-ieen q-px-md">Transferencias primarias</h1>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
         <div class="text-right q-pa-md items-start q-gutter-md">
           <q-btn
             v-if="modulo == null ? false : modulo.registrar"

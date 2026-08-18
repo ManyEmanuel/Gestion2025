@@ -11,14 +11,20 @@
     <div v-if="modulo && modulo.leer">
       <q-table :rows="sesiones" :columns="columnas" row-key="id" flat bordered :pagination="{ rowsPerPage: 10 }">
         <template v-slot:top>
-          <div class="text-h6">Sesiones y acuerdos</div><q-space />
+          <h1 class="text-h6">Sesiones y acuerdos</h1><q-space />
           <q-btn v-if="modulo.registrar" color="secondary" icon="add" label="Nueva sesión" @click="nuevaSesion" />
         </template>
         <template v-slot:body-cell-acciones="props">
           <q-td :props="props">
-            <q-btn flat dense color="primary" icon="gavel" @click="abrirAcuerdos(props.row)"><q-tooltip>Acuerdos</q-tooltip></q-btn>
-            <q-btn v-if="modulo.actualizar" flat dense color="deep-purple" icon="edit" @click="editarSesion(props.row)"><q-tooltip>Editar</q-tooltip></q-btn>
-            <q-btn v-if="modulo.eliminar" flat dense color="red" icon="delete" @click="borrarSesion(props.row)"><q-tooltip>Eliminar</q-tooltip></q-btn>
+            <q-btn flat dense color="primary" icon="gavel" @click="abrirAcuerdos(props.row)"
+  aria-label="Acuerdos"
+><q-tooltip>Acuerdos</q-tooltip></q-btn>
+            <q-btn v-if="modulo.actualizar" flat dense color="deep-purple" icon="edit" @click="editarSesion(props.row)"
+  aria-label="Editar"
+><q-tooltip>Editar</q-tooltip></q-btn>
+            <q-btn v-if="modulo.eliminar" flat dense color="red" icon="delete" @click="borrarSesion(props.row)"
+  aria-label="Eliminar"
+><q-tooltip>Eliminar</q-tooltip></q-btn>
           </q-td>
         </template>
         <template v-slot:no-data><div class="full-width row flex-center q-pa-md text-grey-7">Sin sesiones.</div></template>
@@ -29,7 +35,7 @@
     <!-- Dialogo Sesión -->
     <q-dialog v-model="dlgSesion" persistent>
       <q-card flat bordered style="width: 640px; max-width: 92vw">
-        <q-card-section class="row items-center"><div class="text-h6">{{ sesEdit.id ? 'Editar' : 'Nueva' }} sesión</div><q-space /><q-btn icon="close" flat round dense v-close-popup /></q-card-section>
+        <q-card-section class="row items-center"><h2 class="text-h6">{{ sesEdit.id ? 'Editar' : 'Nueva' }} sesión</h2><q-space /><q-btn icon="close" flat round dense v-close-popup aria-label="Cerrar" /></q-card-section>
         <q-card-section><q-form @submit="guardarSesion">
           <q-input v-model="sesEdit.fecha" label="Fecha" type="date" stack-label lazy-rules :rules="[(v) => !!v || 'Requerido']" />
           <q-input v-model="sesEdit.ordenDelDia" label="Orden del día" type="textarea" autogrow />
@@ -42,7 +48,7 @@
     <!-- Dialogo Acuerdos -->
     <q-dialog v-model="dlgAcuerdos">
       <q-card flat bordered style="width: 860px; max-width: 94vw">
-        <q-card-section class="row items-center"><div class="text-h6">Acuerdos — sesión {{ sesion && fecha(sesion.fecha) }}</div><q-space /><q-btn icon="close" flat round dense v-close-popup /></q-card-section>
+        <q-card-section class="row items-center"><h2 class="text-h6">Acuerdos — sesión {{ sesion && fecha(sesion.fecha) }}</h2><q-space /><q-btn icon="close" flat round dense v-close-popup aria-label="Cerrar" /></q-card-section>
         <q-card-section>
           <q-list bordered separator v-if="sesion && sesion.acuerdos.length">
             <q-item v-for="a in sesion.acuerdos" :key="a.id">
@@ -54,7 +60,7 @@
                   <span v-if="!a.disposicionDocumentalId && !a.fichaTecnicaValoracionId">Sin vínculo a valoración</span>
                 </q-item-label>
               </q-item-section>
-              <q-item-section side v-if="modulo.actualizar"><q-btn flat dense round color="red" icon="delete" @click="borrarAcuerdo(a.id)" /></q-item-section>
+              <q-item-section side v-if="modulo.actualizar"><q-btn flat dense round color="red" icon="delete" @click="borrarAcuerdo(a.id)" aria-label="Eliminar" /></q-item-section>
             </q-item>
           </q-list>
           <div v-else class="text-grey-7 q-pa-sm text-center">Sin acuerdos.</div>

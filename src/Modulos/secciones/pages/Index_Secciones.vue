@@ -10,6 +10,11 @@
         </div>
       </div>
     </div>
+    <div class="row">
+      <div class="col">
+        <h1 class="text-h6 text-purple-ieen q-px-md">Secciones</h1>
+      </div>
+    </div>
     <div
       class="row items-start q-col-gutter-lg"
       v-if="modulo == null ? false : modulo.leer"

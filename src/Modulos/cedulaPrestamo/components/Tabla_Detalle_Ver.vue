@@ -34,7 +34,9 @@
                   color="purple-ieen"
                   icon="delete"
                   @click="eliminar(col.value)"
-                >
+                
+  aria-label="Eliminar registro"
+>
                   <q-tooltip>Eliminar registro</q-tooltip>
                 </q-btn> -->
               </div>

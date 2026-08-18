@@ -82,7 +82,9 @@
                   color="purple-ieen"
                   icon="file_present"
                   @click="adjuntos(col.value)"
-                >
+                
+  aria-label="Adjuntar archivo"
+>
                   <q-tooltip>Adjuntar archivo</q-tooltip>
                 </q-btn>
               </div>

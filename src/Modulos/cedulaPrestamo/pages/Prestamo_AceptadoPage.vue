@@ -14,6 +14,11 @@
         </div>
       </div>
     </div>
+    <div class="row">
+      <div class="col">
+        <h1 class="text-h6 text-purple-ieen q-px-md">Documentos de la cédula de préstamo</h1>
+      </div>
+    </div>
     <div class="col-12 col-xs-6 col-md-4">
       <q-card flat bordered>
         <q-card-section>
@@ -117,14 +122,16 @@
         <q-bar class="bg-purple-ieen text-white">
           Datos de comprobante
           <q-space />
-          <q-btn dense flat icon="close" v-close-popup>
+          <q-btn dense flat icon="close" v-close-popup
+  aria-label="Close"
+>
             <q-tooltip>Close</q-tooltip>
           </q-btn>
         </q-bar>
         <q-card-section>
-          <div class="text-h6">
+          <h2 class="text-h6">
             Complete los datos para generar el comprobante de devolución
-          </div>
+          </h2>
         </q-card-section>
 
         <q-card-section class="q-pt-none">

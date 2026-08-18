@@ -40,7 +40,9 @@
                   color="purple-ieen"
                   icon="edit"
                   @click="editar(col.value)"
-                >
+                
+  aria-label="Agregar expedientes"
+>
                   <q-tooltip>Agregar expedientes</q-tooltip>
                 </q-btn>
                 <q-btn
@@ -50,7 +52,9 @@
                   color="purple-ieen"
                   icon="description"
                   @click="anexo_13(col.value)"
-                >
+                
+  aria-label="Anexo 13"
+>
                   <q-tooltip>Anexo 13</q-tooltip>
                 </q-btn>
                 <!-- Corte al backend nuevo: Anexo 15 (cédula por caja de transferencia secundaria) como
@@ -62,7 +66,9 @@
                   color="purple-ieen"
                   icon="document_scanner"
                   @click="cedulaCaja(col.value)"
-                >
+                
+  aria-label="Cédula por caja (Anexo 15)"
+>
                   <q-tooltip>Cédula por caja (Anexo 15)</q-tooltip>
                 </q-btn>
               </div>

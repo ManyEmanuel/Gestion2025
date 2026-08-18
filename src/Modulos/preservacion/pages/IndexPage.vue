@@ -8,6 +8,7 @@
     </div>
 
     <div v-if="modulo && modulo.leer">
+      <h1 class="text-h6 text-purple-ieen">Preservación digital</h1>
       <div class="row q-col-gutter-md q-mb-md">
         <div class="col-12 col-md-4">
           <q-card flat bordered class="full-height">
@@ -42,19 +43,25 @@
         :pagination="{ rowsPerPage: 15 }"
       >
         <template v-slot:top>
-          <div class="text-h6">Adjuntos en riesgo de preservación</div>
+          <h2 class="text-h6">Adjuntos en riesgo de preservación</h2>
           <q-space />
-          <q-btn flat round dense icon="refresh" @click="recargar" />
+          <q-btn flat round dense icon="refresh" @click="recargar" aria-label="Actualizar" />
         </template>
         <template v-slot:body-cell-acciones="props">
           <q-td :props="props">
-            <q-btn v-if="puedeEjecutar" flat dense color="secondary" icon="fingerprint" @click="verificar(props.row.adjuntoId)">
+            <q-btn v-if="puedeEjecutar" flat dense color="secondary" icon="fingerprint" @click="verificar(props.row.adjuntoId)"
+  aria-label="Verificar integridad"
+>
               <q-tooltip>Verificar integridad</q-tooltip>
             </q-btn>
-            <q-btn v-if="puedeEjecutar" flat dense color="deep-purple" icon="autorenew" @click="abrirMigrar(props.row)">
+            <q-btn v-if="puedeEjecutar" flat dense color="deep-purple" icon="autorenew" @click="abrirMigrar(props.row)"
+  aria-label="Migrar formato"
+>
               <q-tooltip>Migrar formato</q-tooltip>
             </q-btn>
-            <q-btn flat dense color="primary" icon="history" @click="verHistorial(props.row)">
+            <q-btn flat dense color="primary" icon="history" @click="verHistorial(props.row)"
+  aria-label="Historial"
+>
               <q-tooltip>Historial</q-tooltip>
             </q-btn>
           </q-td>
@@ -69,8 +76,8 @@
     <!-- Migrar formato -->
     <q-dialog v-model="dialogoMigrar" persistent>
       <q-card flat bordered style="width: 520px; max-width: 90vw">
-        <q-card-section class="row items-center"><div class="text-h6">Migrar formato</div><q-space />
-          <q-btn icon="close" flat round dense v-close-popup /></q-card-section>
+        <q-card-section class="row items-center"><h2 class="text-h6">Migrar formato</h2><q-space />
+          <q-btn icon="close" flat round dense v-close-popup aria-label="Cerrar" /></q-card-section>
         <q-card-section>
           <div class="text-caption text-grey-8 q-mb-sm">{{ adjuntoSel && adjuntoSel.nombre }}</div>
           <q-form @submit="confirmarMigrar">
@@ -89,8 +96,8 @@
     <!-- Historial -->
     <q-dialog v-model="dialogoHistorial">
       <q-card flat bordered style="width: 800px; max-width: 92vw">
-        <q-card-section class="row items-center"><div class="text-h6">Historial de preservación</div><q-space />
-          <q-btn icon="close" flat round dense v-close-popup /></q-card-section>
+        <q-card-section class="row items-center"><h2 class="text-h6">Historial de preservación</h2><q-space />
+          <q-btn icon="close" flat round dense v-close-popup aria-label="Cerrar" /></q-card-section>
         <q-card-section>
           <q-list bordered separator v-if="acciones.length">
             <q-item v-for="a in acciones" :key="a.id">

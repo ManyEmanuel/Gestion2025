@@ -44,7 +44,9 @@
                   color="purple-ieen"
                   icon="visibility"
                   @click="ver(col.value)"
-                >
+                
+  aria-label="Ver registro"
+>
                   <q-tooltip>Ver registro</q-tooltip>
                 </q-btn>
                 <q-btn
@@ -54,7 +56,9 @@
                   color="purple-ieen"
                   icon="content_paste"
                   @click="toCajas(col.value)"
-                >
+                
+  aria-label="Cajas"
+>
                   <q-tooltip>Cajas</q-tooltip>
                 </q-btn>
                 <q-btn
@@ -64,7 +68,9 @@
                   color="purple-ieen"
                   icon="verified"
                   @click="abrirActos(props.row)"
-                >
+                
+  aria-label="Actos y firma"
+>
                   <q-tooltip>Actos y firma</q-tooltip>
                 </q-btn>
               </div>

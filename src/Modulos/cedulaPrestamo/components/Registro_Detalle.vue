@@ -1,5 +1,5 @@
 <template>
-  <div class="text-h6">Detalle</div>
+  <h2 class="text-h6">Detalle</h2>
   <q-form class="row q-col-gutter-xs" @submit="agregarDetalle">
     <div class="col-12 col-xs-2 col-md-3">
       <q-select

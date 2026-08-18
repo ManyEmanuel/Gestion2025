@@ -35,7 +35,9 @@
                   color="purple-ieen"
                   icon="visibility"
                   @click="ver(col.value)"
-                >
+                
+  aria-label="ver registro"
+>
                   <q-tooltip>ver registro</q-tooltip>
                 </q-btn>
                 <q-btn
@@ -44,7 +46,9 @@
                   color="purple-ieen"
                   icon="file_present"
                   @click="verAdjuntos(col.value)"
-                >
+                
+  aria-label="Ver adjuntos"
+>
                   <q-tooltip>Ver adjuntos</q-tooltip>
                 </q-btn>
               </div>

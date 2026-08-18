@@ -40,7 +40,12 @@
                       : 'edit'
                   "
                   @click="editar(col.value, props.row['estatus'])"
-                >
+                
+  :aria-label="encabezado.estatus == &quot;Afectada&quot; ||
+                    encabezado.estatus == &quot;Enviada&quot;
+                      ? &quot;Ver información&quot;
+                      : &quot;Agregar expedientes&quot;"
+>
                   <q-tooltip>{{
                     encabezado.estatus == "Afectada" ||
                     encabezado.estatus == "Enviada"
@@ -55,7 +60,9 @@
                   color="purple-ieen"
                   icon="assignment"
                   @click="ListadoExcel(col.value)"
-                >
+                
+  aria-label="Generar listado excel"
+>
                   <q-tooltip>Generar listado excel</q-tooltip>
                 </q-btn>
                 <!-- Corte al backend nuevo: Anexo 10 (cédula por caja) ahora es un reporte de backend
@@ -68,7 +75,9 @@
                   color="purple-ieen"
                   icon="description"
                   @click="cedulaCaja(col.value)"
-                >
+                
+  aria-label="Cédula por caja (Anexo 10)"
+>
                   <q-tooltip>Cédula por caja (Anexo 10)</q-tooltip>
                 </q-btn>
               </div>

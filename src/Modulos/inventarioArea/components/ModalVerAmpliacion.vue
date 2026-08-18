@@ -7,10 +7,10 @@
   >
     <q-card flat bordered style="width: 800px; max-width: 80vw">
       <q-card-section class="row">
-        <div class="text-h6">
+        <h2 class="text-h6">
           Registro de ampliación de vigencia del inventario
           {{ inventario.clave_Clasificacion }}
-        </div>
+        </h2>
         <q-space />
         <q-btn
           icon="close"
@@ -19,7 +19,7 @@
           round
           dense
           v-close-popup
-        />
+        aria-label="Cerrar" />
       </q-card-section>
       <q-card-section>
         <q-form class="row q-col-gutter-xs" @submit="onSubmit">
@@ -40,7 +40,9 @@
               size="30px"
               icon="preview"
               @click="ver"
-            >
+            
+  aria-label="Ver archivo"
+>
               <q-tooltip>Ver archivo</q-tooltip>
             </q-btn>
           </div>

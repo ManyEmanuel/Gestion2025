@@ -2,16 +2,16 @@
   <q-dialog :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)">
     <q-card flat bordered style="width: 960px; max-width: 95vw">
       <q-card-section class="row items-center bg-purple-ieen text-white">
-        <div class="text-h6">Actos de disposición {{ nombre ? '— ' + nombre : '' }}</div>
+        <h2 class="text-h6">Actos de disposición {{ nombre ? '— ' + nombre : '' }}</h2>
         <q-space />
-        <q-btn icon="close" flat round dense color="white" @click="cerrar" />
+        <q-btn icon="close" flat round dense color="white" @click="cerrar" aria-label="Cerrar" />
       </q-card-section>
 
       <q-card-section>
         <div class="q-mb-sm">
           <q-btn v-if="puedeAfectar" color="secondary" icon="description" label="Nuevo dictamen" dense @click="abrirCrear('dictamen')" />
           <q-btn v-if="puedeAfectar && proceso === 'baja'" color="deep-purple" icon="gavel" label="Nueva acta" dense class="q-ml-sm" @click="abrirCrear('acta')" />
-          <q-btn flat round dense icon="refresh" class="float-right" @click="recargar" />
+          <q-btn flat round dense icon="refresh" class="float-right" @click="recargar" aria-label="Actualizar" />
         </div>
 
         <q-banner v-if="proceso === 'baja'" dense class="bg-blue-1 q-mb-sm">
@@ -37,10 +37,18 @@
             </q-item-section>
             <q-item-section side>
               <div class="q-gutter-xs">
-                <q-btn v-if="puedeAfectar && a.estado === 'Proyecto'" flat dense color="green" icon="draw" @click="firmar(a)"><q-tooltip>Firmar</q-tooltip></q-btn>
-                <q-btn v-if="puedeAfectar && a.estado === 'Firmado'" flat dense color="deep-purple" icon="publish" @click="abrirPublicar(a)"><q-tooltip>Publicar</q-tooltip></q-btn>
-                <q-btn v-if="puedeVerificar && a.estaFirmado" flat dense color="teal" icon="verified_user" @click="verificar(a)"><q-tooltip>Verificar firma</q-tooltip></q-btn>
-                <q-btn flat dense color="primary" icon="picture_as_pdf" @click="descargar(a)"><q-tooltip>PDF</q-tooltip></q-btn>
+                <q-btn v-if="puedeAfectar && a.estado === 'Proyecto'" flat dense color="green" icon="draw" @click="firmar(a)"
+  aria-label="Firmar"
+><q-tooltip>Firmar</q-tooltip></q-btn>
+                <q-btn v-if="puedeAfectar && a.estado === 'Firmado'" flat dense color="deep-purple" icon="publish" @click="abrirPublicar(a)"
+  aria-label="Publicar"
+><q-tooltip>Publicar</q-tooltip></q-btn>
+                <q-btn v-if="puedeVerificar && a.estaFirmado" flat dense color="teal" icon="verified_user" @click="verificar(a)"
+  aria-label="Verificar firma"
+><q-tooltip>Verificar firma</q-tooltip></q-btn>
+                <q-btn flat dense color="primary" icon="picture_as_pdf" @click="descargar(a)"
+  aria-label="PDF"
+><q-tooltip>PDF</q-tooltip></q-btn>
               </div>
             </q-item-section>
           </q-item>
@@ -52,9 +60,9 @@
     <!-- Crear acto -->
     <q-dialog v-model="dlgCrear" persistent>
       <q-card flat bordered style="width: 560px; max-width: 92vw">
-        <q-card-section class="row items-center"><div class="text-h6">Nuevo {{ tipoCrear === 'acta' ? 'acta' : 'dictamen' }}</div><q-space /><q-btn icon="close" flat round dense v-close-popup /></q-card-section>
+        <q-card-section class="row items-center"><h3 class="text-h6">Nuevo {{ tipoCrear === 'acta' ? 'acta' : 'dictamen' }}</h3><q-space /><q-btn icon="close" flat round dense v-close-popup aria-label="Cerrar" /></q-card-section>
         <q-card-section><q-form @submit="guardarActo">
-          <q-input v-model="actoNuevo.folio" label="Folio" lazy-rules :rules="[(v) => !!v || 'Requerido']" />
+          <q-input v-model="actoNuevo.folio" label="Folio" autofocus lazy-rules :rules="[(v) => !!v || 'Requerido']" />
           <q-input v-model="actoNuevo.fundamentoLegal" label="Fundamento legal" type="textarea" autogrow lazy-rules :rules="[(v) => !!v || 'Requerido']" />
           <div class="text-right q-mt-md q-gutter-sm"><BtnCancelar /><q-btn :loading="guardando" type="submit" color="secondary" label="Guardar" icon="save" /></div>
         </q-form></q-card-section>
@@ -64,7 +72,7 @@
     <!-- Publicar -->
     <q-dialog v-model="dlgPublicar" persistent>
       <q-card flat bordered style="width: 520px; max-width: 90vw">
-        <q-card-section class="row items-center"><div class="text-h6">Publicar acto</div><q-space /><q-btn icon="close" flat round dense v-close-popup /></q-card-section>
+        <q-card-section class="row items-center"><h3 class="text-h6">Publicar acto</h3><q-space /><q-btn icon="close" flat round dense v-close-popup aria-label="Cerrar" /></q-card-section>
         <q-card-section><q-form @submit="confirmarPublicar">
           <q-input v-model="urlPub" label="URL de publicación (portal de transparencia)" lazy-rules :rules="[(v) => !!v || 'Requerido']" autofocus />
           <div class="text-right q-mt-md q-gutter-sm"><BtnCancelar /><q-btn :loading="guardando" type="submit" color="deep-purple" label="Publicar" icon="publish" /></div>
@@ -75,7 +83,7 @@
     <!-- Verificación de firma -->
     <q-dialog v-model="dlgVerif">
       <q-card flat bordered style="width: 560px; max-width: 92vw">
-        <q-card-section class="row items-center"><div class="text-h6">Verificación de firma</div><q-space /><q-btn icon="close" flat round dense v-close-popup /></q-card-section>
+        <q-card-section class="row items-center"><h3 class="text-h6">Verificación de firma</h3><q-space /><q-btn icon="close" flat round dense v-close-popup aria-label="Cerrar" /></q-card-section>
         <q-card-section v-if="verificacion">
           <q-banner v-if="!verificacion.tieneFirmaAvanzada" class="bg-orange-2">Este acto no tiene firma electrónica avanzada (firmado sin proveedor).</q-banner>
           <template v-else>

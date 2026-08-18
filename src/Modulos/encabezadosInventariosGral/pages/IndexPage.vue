@@ -15,6 +15,11 @@
     </div>
     <div class="row">
       <div class="col">
+        <h1 class="text-h6 text-purple-ieen q-px-md">Inventario general por expediente de todas las areas</h1>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
         <div class="text-right q-pa-md items-start q-gutter-md">
           <q-btn
             type="button"
@@ -37,12 +42,12 @@
           <q-separator />
           <q-tab-panels v-model="tab" animated>
             <q-tab-panel name="encabezado">
-              <div class="text-h6">Por encabezado</div>
+              <h2 class="text-h6">Por encabezado</h2>
               <Tabla v-if="modulo == null ? false : modulo.leer" />
             </q-tab-panel>
 
             <q-tab-panel name="detalle">
-              <div class="text-h6">Detalle</div>
+              <h2 class="text-h6">Detalle</h2>
               <TablaDetalle v-if="modulo == null ? false : modulo.leer" />
             </q-tab-panel>
           </q-tab-panels>

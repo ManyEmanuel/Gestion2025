@@ -62,7 +62,9 @@
                   color="purple-ieen"
                   icon="file_present"
                   @click="verAdjuntos(col.value)"
-                >
+                
+  aria-label="Adjuntar archivo"
+>
                   <q-tooltip>Adjuntar archivo</q-tooltip>
                 </q-btn>
                 <q-btn
@@ -71,7 +73,9 @@
                   color="purple-ieen"
                   icon="edit"
                   @click="editar(col.value)"
-                >
+                
+  aria-label="Editar registro"
+>
                   <q-tooltip>Editar registro</q-tooltip>
                 </q-btn>
               </div>

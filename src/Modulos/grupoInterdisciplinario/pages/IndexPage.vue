@@ -10,15 +10,23 @@
     <div v-if="modulo && modulo.leer">
       <q-table :rows="grupos" :columns="columnas" row-key="id" flat bordered :pagination="{ rowsPerPage: 10 }">
         <template v-slot:top>
-          <div class="text-h6">Grupos interdisciplinarios</div><q-space />
+          <h1 class="text-h6">Grupos interdisciplinarios</h1><q-space />
           <q-btn v-if="modulo.registrar" color="secondary" icon="add" label="Nuevo" @click="nuevoGrupo" />
         </template>
         <template v-slot:body-cell-acciones="props">
           <q-td :props="props">
-            <q-btn flat dense color="primary" icon="event" @click="irSesiones(props.row)"><q-tooltip>Sesiones</q-tooltip></q-btn>
-            <q-btn flat dense color="secondary" icon="group" @click="abrirIntegrantes(props.row)"><q-tooltip>Integrantes</q-tooltip></q-btn>
-            <q-btn v-if="modulo.actualizar" flat dense color="deep-purple" icon="edit" @click="editarGrupo(props.row)"><q-tooltip>Editar</q-tooltip></q-btn>
-            <q-btn v-if="modulo.eliminar" flat dense color="red" icon="delete" @click="borrarGrupo(props.row)"><q-tooltip>Eliminar</q-tooltip></q-btn>
+            <q-btn flat dense color="primary" icon="event" @click="irSesiones(props.row)"
+  aria-label="Sesiones"
+><q-tooltip>Sesiones</q-tooltip></q-btn>
+            <q-btn flat dense color="secondary" icon="group" @click="abrirIntegrantes(props.row)"
+  aria-label="Integrantes"
+><q-tooltip>Integrantes</q-tooltip></q-btn>
+            <q-btn v-if="modulo.actualizar" flat dense color="deep-purple" icon="edit" @click="editarGrupo(props.row)"
+  aria-label="Editar"
+><q-tooltip>Editar</q-tooltip></q-btn>
+            <q-btn v-if="modulo.eliminar" flat dense color="red" icon="delete" @click="borrarGrupo(props.row)"
+  aria-label="Eliminar"
+><q-tooltip>Eliminar</q-tooltip></q-btn>
           </q-td>
         </template>
         <template v-slot:no-data><div class="full-width row flex-center q-pa-md text-grey-7">Sin grupos registrados.</div></template>
@@ -29,7 +37,7 @@
     <!-- Dialogo Grupo -->
     <q-dialog v-model="dlgGrupo" persistent>
       <q-card flat bordered style="width: 640px; max-width: 92vw">
-        <q-card-section class="row items-center"><div class="text-h6">{{ grupoEdit.id ? 'Editar' : 'Nuevo' }} grupo</div><q-space /><q-btn icon="close" flat round dense v-close-popup /></q-card-section>
+        <q-card-section class="row items-center"><h2 class="text-h6">{{ grupoEdit.id ? 'Editar' : 'Nuevo' }} grupo</h2><q-space /><q-btn icon="close" flat round dense v-close-popup aria-label="Cerrar" /></q-card-section>
         <q-card-section><q-form @submit="guardarGrupo">
           <q-input v-model="grupoEdit.nombre" label="Nombre" lazy-rules :rules="[(v) => !!v || 'Requerido']" />
           <div class="row q-col-gutter-sm">
@@ -45,12 +53,12 @@
     <!-- Dialogo Integrantes -->
     <q-dialog v-model="dlgIntegrantes">
       <q-card flat bordered style="width: 720px; max-width: 92vw">
-        <q-card-section class="row items-center"><div class="text-h6">Integrantes — {{ grupo && grupo.nombre }}</div><q-space /><q-btn icon="close" flat round dense v-close-popup /></q-card-section>
+        <q-card-section class="row items-center"><h2 class="text-h6">Integrantes — {{ grupo && grupo.nombre }}</h2><q-space /><q-btn icon="close" flat round dense v-close-popup aria-label="Cerrar" /></q-card-section>
         <q-card-section>
           <q-list bordered separator v-if="grupo && grupo.integrantes.length">
             <q-item v-for="i in grupo.integrantes" :key="i.id">
               <q-item-section><q-item-label>{{ i.nombre }}</q-item-label><q-item-label caption>{{ i.rol }}</q-item-label></q-item-section>
-              <q-item-section side v-if="modulo.actualizar"><q-btn flat dense round color="red" icon="delete" @click="borrarIntegrante(i.id)" /></q-item-section>
+              <q-item-section side v-if="modulo.actualizar"><q-btn flat dense round color="red" icon="delete" @click="borrarIntegrante(i.id)" aria-label="Eliminar" /></q-item-section>
             </q-item>
           </q-list>
           <div v-else class="text-grey-7 q-pa-sm text-center">Sin integrantes.</div>

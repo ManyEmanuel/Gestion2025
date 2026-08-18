@@ -7,9 +7,9 @@
   >
     <q-card flat bordered style="width: 800px; max-width: 80vw">
       <q-card-section class="row">
-        <div class="text-h6">Inventario general por expediente</div>
+        <h2 class="text-h6">Inventario general por expediente</h2>
         <q-space />
-        <q-btn icon="close" @click="actualizarModal(false)" flat round dense />
+        <q-btn icon="close" @click="actualizarModal(false)" flat round dense aria-label="Cerrar" />
       </q-card-section>
       <q-card-section>
         <q-form class="row q-col-gutter-xs" @submit="onSubmit">

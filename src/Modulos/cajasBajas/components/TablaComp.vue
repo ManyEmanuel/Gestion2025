@@ -40,7 +40,9 @@
                   color="purple-ieen"
                   icon="edit"
                   @click="editar(col.value)"
-                >
+                
+  aria-label="Agregar expedientes"
+>
                   <q-tooltip>Agregar expedientes</q-tooltip>
                 </q-btn>
                 <q-btn
@@ -50,7 +52,9 @@
                   color="purple-ieen"
                   icon="description"
                   @click="anexo_13(col.value)"
-                >
+                
+  aria-label="Anexo 13"
+>
                   <q-tooltip>Anexo 13</q-tooltip>
                 </q-btn>
               </div>

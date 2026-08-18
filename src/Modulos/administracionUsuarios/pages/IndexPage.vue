@@ -6,7 +6,7 @@
         <q-breadcrumbs-el label="Usuarios" icon="manage_accounts" />
       </q-breadcrumbs>
       <div class="row items-center q-mb-md">
-        <div class="text-h6 text-purple-ieen">Administración de usuarios</div>
+        <h1 class="text-h6 text-purple-ieen">Administración de usuarios</h1>
         <q-space />
         <q-btn
           v-if="modulo.registrar"
@@ -61,7 +61,9 @@
               color="purple-ieen"
               icon="edit"
               @click="abrirEditar(props.row)"
-            >
+            
+  aria-label="Editar"
+>
               <q-tooltip>Editar</q-tooltip>
             </q-btn>
             <q-btn
@@ -71,7 +73,9 @@
               color="orange"
               icon="lock_reset"
               @click="confirmarReset(props.row)"
-            >
+            
+  aria-label="Resetear contraseña"
+>
               <q-tooltip>Resetear contraseña</q-tooltip>
             </q-btn>
             <q-btn
@@ -81,7 +85,9 @@
               :color="props.row.activo ? 'negative' : 'positive'"
               :icon="props.row.activo ? 'block' : 'check_circle'"
               @click="alternarEstado(props.row)"
-            >
+            
+  :aria-label="props.row.activo ? &quot;Desactivar&quot; : &quot;Activar&quot;"
+>
               <q-tooltip>{{ props.row.activo ? "Desactivar" : "Activar" }}</q-tooltip>
             </q-btn>
           </q-td>
@@ -142,7 +148,9 @@
           </div>
           <q-input v-model="passwordTemporal" readonly filled>
             <template v-slot:append>
-              <q-btn flat round icon="content_copy" @click="copiarTemp">
+              <q-btn flat round icon="content_copy" @click="copiarTemp"
+  aria-label="Copiar"
+>
                 <q-tooltip>Copiar</q-tooltip>
               </q-btn>
             </template>

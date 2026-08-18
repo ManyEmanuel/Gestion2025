@@ -6,7 +6,7 @@
         <q-breadcrumbs-el label="Perfiles" icon="security" />
       </q-breadcrumbs>
       <div class="row items-center q-mb-md">
-        <div class="text-h6 text-purple-ieen">Administración de perfiles</div>
+        <h1 class="text-h6 text-purple-ieen">Administración de perfiles</h1>
         <q-space />
         <q-btn
           v-if="modulo.registrar"
@@ -45,7 +45,9 @@
               color="purple-ieen"
               icon="edit"
               @click="abrirEditar(props.row)"
-            >
+            
+  aria-label="Editar"
+>
               <q-tooltip>Editar</q-tooltip>
             </q-btn>
             <q-btn
@@ -55,7 +57,9 @@
               color="teal"
               icon="key"
               @click="abrirPermisos(props.row)"
-            >
+            
+  aria-label="Permisos"
+>
               <q-tooltip>Permisos</q-tooltip>
             </q-btn>
             <BtnEliminar

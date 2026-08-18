@@ -26,7 +26,7 @@
                   icon="edit"
                   size="10px"
                   @click="editar(serie.id)"
-                />
+                aria-label="Editar" />
                 <q-btn
                   v-if="modulo == null ? false : modulo.eliminar"
                   round
@@ -34,7 +34,7 @@
                   icon="delete_outline"
                   size="10px"
                   @click="eliminar(serie.id, serie.descripcion)"
-                />
+                aria-label="Eliminar" />
               </div>
             </q-item-section>
           </q-item>

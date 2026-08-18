@@ -14,7 +14,7 @@
         <!-- Corte al backend nuevo: la campana de notificaciones se retiró (dependía de SignalR :9270 +
              endpoints legados /NotificacionesUniverso, dormantes). Reimplementar sobre el backend nuevo
              si se requiere. -->
-        <q-btn flat round dense icon="apps" @click="show" />
+        <q-btn flat round dense icon="apps" @click="show" aria-label="Aplicaciones" />
       </q-toolbar>
     </q-header>
 

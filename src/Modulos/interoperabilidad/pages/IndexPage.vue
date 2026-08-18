@@ -8,6 +8,7 @@
     </div>
 
     <div v-if="modulo && modulo.leer">
+      <h1 class="text-h6 text-purple-ieen">Interoperabilidad</h1>
       <q-banner dense class="bg-purple-ieen text-white q-mb-md" rounded>
         Export documentado y versionado de los instrumentos de control hacia el Registro Estatal /
         Archivo General del Estado (LGA 78-81 / Nay 60-61).
@@ -34,10 +35,10 @@
 
       <q-card flat bordered class="q-mt-lg" v-if="documento">
         <q-card-section class="row items-center">
-          <div class="text-h6">{{ tituloDe(esquemaActual) }}</div>
+          <h2 class="text-h6">{{ tituloDe(esquemaActual) }}</h2>
           <q-space />
           <q-chip dense color="grey-3">Generado: {{ fecha(documento.generadoEn) }}</q-chip>
-          <q-btn flat round dense icon="close" @click="cerrar" />
+          <q-btn flat round dense icon="close" @click="cerrar" aria-label="Cerrar" />
         </q-card-section>
         <q-separator />
         <q-card-section>

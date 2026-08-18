@@ -7,9 +7,9 @@
   >
     <q-card flat bordered style="width: 800px; max-width: 80vw">
       <q-card-section class="row">
-        <div class="text-h6">
+        <h2 class="text-h6">
           Archivos adjuntos de {{ inventario.clave_Clasificacion }}
-        </div>
+        </h2>
         <q-space />
         <q-btn
           icon="close"
@@ -18,7 +18,7 @@
           round
           dense
           v-close-popup
-        />
+        aria-label="Cerrar" />
       </q-card-section>
       <card-seccion class="row">
         <div class="col">
@@ -65,7 +65,9 @@
                       color="purple-ieen"
                       icon="sim_card_download"
                       @click="descargar(col.value)"
-                    >
+                    
+  aria-label="Descargar"
+>
                       <q-tooltip>Descargar</q-tooltip>
                     </q-btn>
                     <q-btn
@@ -74,7 +76,9 @@
                       color="purple-ieen"
                       icon="preview"
                       @click="ver(col.value)"
-                    >
+                    
+  aria-label="Ver archivo"
+>
                       <q-tooltip>Ver archivo</q-tooltip>
                     </q-btn>
                   </div>

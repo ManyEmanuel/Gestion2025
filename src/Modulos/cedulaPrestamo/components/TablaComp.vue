@@ -39,7 +39,9 @@
                   color="purple-ieen"
                   icon="visibility"
                   @click="ver(col.value)"
-                >
+                
+  aria-label="ver registro"
+>
                   <q-tooltip>ver registro</q-tooltip>
                 </q-btn>
                 <q-btn
@@ -49,7 +51,9 @@
                   color="positive"
                   icon="check_circle"
                   @click="aprobar(col.value)"
-                >
+                
+  aria-label="Aprobar"
+>
                   <q-tooltip>Aprobar</q-tooltip>
                 </q-btn>
                 <q-btn
@@ -59,7 +63,9 @@
                   color="negative"
                   icon="cancel"
                   @click="rechazar(col.value)"
-                >
+                
+  aria-label="Rechazar"
+>
                   <q-tooltip>Rechazar</q-tooltip>
                 </q-btn>
                 <q-btn
@@ -69,7 +75,9 @@
                   color="purple-ieen"
                   icon="folder_open"
                   @click="verAceptado(col.value)"
-                >
+                
+  aria-label="Ver documentos"
+>
                   <q-tooltip>Ver documentos</q-tooltip>
                 </q-btn>
               </div>

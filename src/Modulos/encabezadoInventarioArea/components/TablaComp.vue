@@ -36,7 +36,9 @@
                   color="purple-ieen"
                   icon="content_paste"
                   @click="toDetalle(col.value)"
-                >
+                
+  aria-label="Detalle"
+>
                   <q-tooltip>Detalle</q-tooltip>
                 </q-btn>
               </div>

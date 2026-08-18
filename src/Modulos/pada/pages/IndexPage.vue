@@ -19,7 +19,7 @@
         <q-tab-panel name="programas">
           <q-table :rows="programas" :columns="colProgramas" row-key="id" flat bordered :pagination="{ rowsPerPage: 10 }">
             <template v-slot:top>
-              <div class="text-h6">Programa Anual de Desarrollo Archivístico</div><q-space />
+              <h1 class="text-h6">Programa Anual de Desarrollo Archivístico</h1><q-space />
               <q-btn v-if="modulo.registrar" color="secondary" icon="add" label="Nuevo" @click="nuevoPrograma" />
             </template>
             <template v-slot:body-cell-estado="props">
@@ -27,10 +27,18 @@
             </template>
             <template v-slot:body-cell-acciones="props">
               <q-td :props="props">
-                <q-btn flat dense color="primary" icon="list_alt" @click="abrirActividades(props.row)"><q-tooltip>Actividades</q-tooltip></q-btn>
-                <q-btn v-if="modulo.actualizar && props.row.estado === 'Borrador'" flat dense color="secondary" icon="edit" @click="editarPrograma(props.row)"><q-tooltip>Editar</q-tooltip></q-btn>
-                <q-btn v-if="puedeAprobar && props.row.estado === 'Borrador'" flat dense color="green" icon="task_alt" @click="aprobarPrograma(props.row)"><q-tooltip>Aprobar</q-tooltip></q-btn>
-                <q-btn v-if="puedePublicar && props.row.estado === 'Aprobado'" flat dense color="deep-purple" icon="publish" @click="abrirPublicar('programa', props.row)"><q-tooltip>Publicar</q-tooltip></q-btn>
+                <q-btn flat dense color="primary" icon="list_alt" @click="abrirActividades(props.row)"
+  aria-label="Actividades"
+><q-tooltip>Actividades</q-tooltip></q-btn>
+                <q-btn v-if="modulo.actualizar && props.row.estado === 'Borrador'" flat dense color="secondary" icon="edit" @click="editarPrograma(props.row)"
+  aria-label="Editar"
+><q-tooltip>Editar</q-tooltip></q-btn>
+                <q-btn v-if="puedeAprobar && props.row.estado === 'Borrador'" flat dense color="green" icon="task_alt" @click="aprobarPrograma(props.row)"
+  aria-label="Aprobar"
+><q-tooltip>Aprobar</q-tooltip></q-btn>
+                <q-btn v-if="puedePublicar && props.row.estado === 'Aprobado'" flat dense color="deep-purple" icon="publish" @click="abrirPublicar('programa', props.row)"
+  aria-label="Publicar"
+><q-tooltip>Publicar</q-tooltip></q-btn>
               </q-td>
             </template>
           </q-table>
@@ -40,7 +48,7 @@
         <q-tab-panel name="informes">
           <q-table :rows="informes" :columns="colInformes" row-key="id" flat bordered :pagination="{ rowsPerPage: 10 }">
             <template v-slot:top>
-              <div class="text-h6">Informe anual de cumplimiento</div><q-space />
+              <h2 class="text-h6">Informe anual de cumplimiento</h2><q-space />
               <q-btn v-if="modulo.registrar" color="secondary" icon="add" label="Nuevo" @click="nuevoInforme" />
             </template>
             <template v-slot:body-cell-estado="props">
@@ -48,9 +56,15 @@
             </template>
             <template v-slot:body-cell-acciones="props">
               <q-td :props="props">
-                <q-btn v-if="modulo.actualizar && props.row.estado === 'Borrador'" flat dense color="secondary" icon="edit" @click="editarInforme(props.row)"><q-tooltip>Editar</q-tooltip></q-btn>
-                <q-btn v-if="puedeAprobar && props.row.estado === 'Borrador'" flat dense color="green" icon="task_alt" @click="aprobarInforme(props.row)"><q-tooltip>Aprobar</q-tooltip></q-btn>
-                <q-btn v-if="puedePublicar && props.row.estado === 'Aprobado'" flat dense color="deep-purple" icon="publish" @click="abrirPublicar('informe', props.row)"><q-tooltip>Publicar</q-tooltip></q-btn>
+                <q-btn v-if="modulo.actualizar && props.row.estado === 'Borrador'" flat dense color="secondary" icon="edit" @click="editarInforme(props.row)"
+  aria-label="Editar"
+><q-tooltip>Editar</q-tooltip></q-btn>
+                <q-btn v-if="puedeAprobar && props.row.estado === 'Borrador'" flat dense color="green" icon="task_alt" @click="aprobarInforme(props.row)"
+  aria-label="Aprobar"
+><q-tooltip>Aprobar</q-tooltip></q-btn>
+                <q-btn v-if="puedePublicar && props.row.estado === 'Aprobado'" flat dense color="deep-purple" icon="publish" @click="abrirPublicar('informe', props.row)"
+  aria-label="Publicar"
+><q-tooltip>Publicar</q-tooltip></q-btn>
               </q-td>
             </template>
           </q-table>
@@ -62,7 +76,7 @@
     <!-- Dialogo Programa -->
     <q-dialog v-model="dlgPrograma" persistent>
       <q-card flat bordered style="width: 640px; max-width: 92vw">
-        <q-card-section class="row items-center"><div class="text-h6">{{ progEdit.id ? 'Editar' : 'Nuevo' }} programa</div><q-space /><q-btn icon="close" flat round dense v-close-popup /></q-card-section>
+        <q-card-section class="row items-center"><h2 class="text-h6">{{ progEdit.id ? 'Editar' : 'Nuevo' }} programa</h2><q-space /><q-btn icon="close" flat round dense v-close-popup aria-label="Cerrar" /></q-card-section>
         <q-card-section><q-form @submit="guardarPrograma">
           <q-input v-model="progEdit.anio" label="Año" type="number" lazy-rules :rules="[(v) => !!v || 'Requerido']" />
           <q-input v-model="progEdit.objetivos" label="Objetivos" type="textarea" autogrow lazy-rules :rules="[(v) => !!v || 'Requerido']" />
@@ -75,7 +89,7 @@
     <!-- Dialogo Actividades -->
     <q-dialog v-model="dlgActividades">
       <q-card flat bordered style="width: 860px; max-width: 94vw">
-        <q-card-section class="row items-center"><div class="text-h6">Actividades — {{ programa && programa.anio }}</div><q-space /><q-btn icon="close" flat round dense v-close-popup /></q-card-section>
+        <q-card-section class="row items-center"><h2 class="text-h6">Actividades — {{ programa && programa.anio }}</h2><q-space /><q-btn icon="close" flat round dense v-close-popup aria-label="Cerrar" /></q-card-section>
         <q-card-section>
           <q-list bordered separator v-if="programa && programa.actividades.length">
             <q-item v-for="a in programa.actividades" :key="a.id">
@@ -84,7 +98,7 @@
                 <q-item-label caption>{{ a.responsable || '—' }} · {{ a.fechaInicio || '—' }} a {{ a.fechaFin || '—' }} · {{ estatusLabel(a.estatus) }}</q-item-label>
               </q-item-section>
               <q-item-section side v-if="puedeEditarActividades">
-                <q-btn flat dense round color="red" icon="delete" @click="borrarActividad(a.id)" />
+                <q-btn flat dense round color="red" icon="delete" @click="borrarActividad(a.id)" aria-label="Eliminar" />
               </q-item-section>
             </q-item>
           </q-list>
@@ -109,7 +123,7 @@
     <!-- Dialogo Informe -->
     <q-dialog v-model="dlgInforme" persistent>
       <q-card flat bordered style="width: 660px; max-width: 92vw">
-        <q-card-section class="row items-center"><div class="text-h6">{{ infEdit.id ? 'Editar' : 'Nuevo' }} informe</div><q-space /><q-btn icon="close" flat round dense v-close-popup /></q-card-section>
+        <q-card-section class="row items-center"><h2 class="text-h6">{{ infEdit.id ? 'Editar' : 'Nuevo' }} informe</h2><q-space /><q-btn icon="close" flat round dense v-close-popup aria-label="Cerrar" /></q-card-section>
         <q-card-section><q-form @submit="guardarInforme">
           <q-input v-model="infEdit.anio" label="Año" type="number" lazy-rules :rules="[(v) => !!v || 'Requerido']" />
           <q-select v-if="!infEdit.id" v-model="infEdit.programaAnualId" :options="opcionesProgramas" label="Programa (PADA)" emit-value map-options lazy-rules :rules="[(v) => !!v || 'Requerido']" />
@@ -124,7 +138,7 @@
     <!-- Dialogo Publicar -->
     <q-dialog v-model="dlgPublicar" persistent>
       <q-card flat bordered style="width: 520px; max-width: 90vw">
-        <q-card-section class="row items-center"><div class="text-h6">Publicar</div><q-space /><q-btn icon="close" flat round dense v-close-popup /></q-card-section>
+        <q-card-section class="row items-center"><h2 class="text-h6">Publicar</h2><q-space /><q-btn icon="close" flat round dense v-close-popup aria-label="Cerrar" /></q-card-section>
         <q-card-section><q-form @submit="confirmarPublicar">
           <q-input v-model="urlPub" label="URL de publicación en el portal" lazy-rules :rules="[(v) => !!v || 'Requerido']" autofocus />
           <div class="text-right q-mt-md q-gutter-sm"><BtnCancelar /><q-btn :loading="guardando" type="submit" color="deep-purple" label="Publicar" icon="publish" /></div>

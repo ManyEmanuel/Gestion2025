@@ -13,6 +13,11 @@
         </div>
       </div>
     </div>
+    <div class="row">
+      <div class="col">
+        <h1 class="text-h6 text-purple-ieen q-px-md">Transferencias primarias AI</h1>
+      </div>
+    </div>
     <TablaComp v-if="modulo == null ? false : modulo.leer" />
     <SinPermisoBanner v-else modulo="Transferencias primarias AI" />
     <ModalComp />

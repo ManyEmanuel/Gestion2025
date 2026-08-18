@@ -7,7 +7,7 @@
   >
     <q-card flat bordered style="width: 800px; max-width: 80vw">
       <q-card-section class="row">
-        <div class="text-h6">Enlaces de áreas</div>
+        <h2 class="text-h6">Enlaces de áreas</h2>
         <q-space />
         <q-btn
           icon="close"
@@ -16,7 +16,7 @@
           round
           dense
           v-close-popup
-        />
+        aria-label="Cerrar" />
       </q-card-section>
       <q-card-section>
         <q-form class="row q-col-gutter-xs" @submit="onSubmit">

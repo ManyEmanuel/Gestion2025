@@ -39,7 +39,7 @@
                     icon="edit"
                     size="10px"
                     @click="editar(seccion.id)"
-                  />
+                  aria-label="Editar" />
                   <q-btn
                     v-if="modulo == null ? false : modulo.eliminar"
                     round
@@ -47,7 +47,7 @@
                     icon="delete_outline"
                     size="10px"
                     @click="eliminar(seccion.id, seccion.descripcion)"
-                  />
+                  aria-label="Eliminar" />
                 </div>
               </q-item-section>
             </q-item>
@@ -77,7 +77,7 @@
                     icon="edit"
                     size="10px"
                     @click="editar(seccion.id)"
-                  />
+                  aria-label="Editar" />
                   <q-btn
                     v-if="modulo == null ? false : modulo.eliminar"
                     round
@@ -85,7 +85,7 @@
                     icon="delete_outline"
                     size="10px"
                     @click="eliminar(seccion.id, seccion.descripcion)"
-                  />
+                  aria-label="Eliminar" />
                 </div>
               </q-item-section>
             </q-item>

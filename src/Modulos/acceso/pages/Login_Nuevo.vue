@@ -2,7 +2,7 @@
   <div class="fullscreen flex flex-center bg-grey-2">
     <q-card flat bordered style="width: 360px; max-width: 90vw" class="q-pa-md">
       <q-card-section class="text-center">
-        <div class="text-h6">Gestión Documental</div>
+        <h1 class="text-h6">Gestión Documental</h1>
         <div class="text-caption text-grey-7">Archivo — acceso al sistema</div>
       </q-card-section>
 
@@ -24,7 +24,7 @@
           :rules="[(v) => !!v || 'Requerido']"
         />
 
-        <div v-if="error" class="text-negative text-caption">{{ error }}</div>
+        <div v-if="error" class="text-negative text-caption" role="alert" aria-live="assertive">{{ error }}</div>
 
         <q-btn
           type="submit"

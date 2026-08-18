@@ -45,7 +45,9 @@
                   color="purple-ieen"
                   icon="content_paste"
                   @click="toCajas(col.value)"
-                >
+                
+  aria-label="Cajas"
+>
                   <q-tooltip>Cajas</q-tooltip>
                 </q-btn>
                 <!-- Corte: el backend nuevo usa estatus 'Borrador'/'Enviada'/'Afectada'; enviar
@@ -61,7 +63,9 @@
                   color="purple-ieen"
                   icon="send"
                   @click="enviarTransferencia(col.value)"
-                >
+                
+  aria-label="Enviar transferencia"
+>
                   <q-tooltip>Enviar transferencia</q-tooltip>
                 </q-btn>
               </div>

@@ -52,7 +52,9 @@
                   color="purple-ieen"
                   icon="cached"
                   @click="ver(col.value)"
-                >
+                
+  aria-label="ver registro"
+>
                   <q-tooltip>ver registro</q-tooltip>
                 </q-btn>
                 <q-btn
@@ -61,7 +63,9 @@
                   color="purple-ieen"
                   icon="visibility"
                   @click="ver(col.value)"
-                >
+                
+  aria-label="ver registro"
+>
                   <q-tooltip>ver registro</q-tooltip>
                 </q-btn>
                 <q-btn
@@ -70,7 +74,9 @@
                   color="purple-ieen"
                   icon="content_paste"
                   @click="toDetalle(col.value)"
-                >
+                
+  aria-label="Detalle"
+>
                   <q-tooltip>Detalle</q-tooltip>
                 </q-btn>
               </div>

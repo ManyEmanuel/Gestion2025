@@ -35,7 +35,9 @@
                   color="purple-ieen"
                   icon="edit"
                   @click="editar(col.value)"
-                >
+                
+  aria-label="Editar registro"
+>
                   <q-tooltip>Editar registro</q-tooltip>
                 </q-btn>
                 <BtnEliminar

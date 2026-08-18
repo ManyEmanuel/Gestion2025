@@ -39,7 +39,9 @@
                   color="purple-ieen"
                   icon="edit"
                   @click="editar(col.value)"
-                >
+                
+  aria-label="Editar registro"
+>
                   <q-tooltip>Editar registro</q-tooltip>
                 </q-btn>
                 <q-btn
@@ -49,7 +51,9 @@
                   color="positive"
                   icon="check_circle"
                   @click="aceptarcion(col.value, props.row.folio_Solicitud)"
-                >
+                
+  aria-label="Aceptar solicitud"
+>
                   <q-tooltip>Aceptar solicitud</q-tooltip>
                 </q-btn>
                 <q-btn
@@ -59,7 +63,9 @@
                   color="negative"
                   icon="cancel"
                   @click="cancelacion(col.value, props.row.folio_Solicitud)"
-                >
+                
+  aria-label="Rechazar solicitud"
+>
                   <q-tooltip>Rechazar solicitud</q-tooltip>
                 </q-btn>
                 <q-btn
@@ -69,7 +75,9 @@
                   color="purple-ieen"
                   icon="folder_open"
                   @click="verAceptado(col.value, props.row.folio_Solicitud)"
-                >
+                
+  aria-label="Ver documento"
+>
                   <q-tooltip>Ver documento</q-tooltip>
                 </q-btn>
                 <q-btn
@@ -79,8 +87,9 @@
                   color="purple-ieen"
                   icon="visibility"
                   @click="verRechazado(col.value, props.row.folio_Solicitud)"
+                  aria-label="Ver rechazado"
                 >
-                  <q-tooltip>Aceptar solicitud</q-tooltip>
+                  <q-tooltip>Ver rechazado</q-tooltip>
                 </q-btn>
               </div>
               <label v-else>{{ col.value }}</label>

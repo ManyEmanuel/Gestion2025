@@ -17,10 +17,10 @@
     <div class="row items-center">
       <div class="col">
         <div class="text-left">
-          <h5>
+          <h1 class="text-h6">
             Cajas de transferencia
             {{ encabezado != null ? encabezado.numero_Transferencia : "" }}
-          </h5>
+          </h1>
         </div>
       </div>
       <div class="col">
@@ -49,7 +49,7 @@
           <q-separator />
           <q-tab-panels v-model="tab" animated>
             <q-tab-panel name="encabezado">
-              <div class="text-h6">Por cajas</div>
+              <h2 class="text-h6">Por cajas</h2>
               <TablaComp
                 :transferenciaId="transferenciaId"
                 v-if="modulo == null ? false : modulo.leer"
@@ -57,7 +57,7 @@
             </q-tab-panel>
 
             <q-tab-panel name="detalle">
-              <div class="text-h6">Detalle</div>
+              <h2 class="text-h6">Detalle</h2>
               <TablaDetalleComp
                 :transferenciaId="transferenciaId"
                 v-if="modulo == null ? false : modulo.leer"

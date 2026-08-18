@@ -5,9 +5,14 @@
         <div class="q-pa-md q-gutter-sm">
           <q-breadcrumbs>
             <q-breadcrumbs-el icon="home" to="/" />
-            <q-breadcrumbs-el label="Trasnferencias secundarias" icon="group" />
+            <q-breadcrumbs-el label="Transferencias secundarias" icon="group" />
           </q-breadcrumbs>
         </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <h1 class="text-h6 text-purple-ieen q-px-md">Transferencias secundarias</h1>
       </div>
     </div>
     <div class="row">

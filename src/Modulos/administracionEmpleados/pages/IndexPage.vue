@@ -6,7 +6,7 @@
         <q-breadcrumbs-el label="Empleados" icon="badge" />
       </q-breadcrumbs>
       <div class="row items-center q-mb-md">
-        <div class="text-h6 text-purple-ieen">Administración de empleados</div>
+        <h1 class="text-h6 text-purple-ieen">Administración de empleados</h1>
         <q-space />
         <q-btn
           v-if="modulo.registrar"
@@ -50,7 +50,9 @@
               color="purple-ieen"
               icon="edit"
               @click="abrirEditar(props.row)"
-            >
+            
+  aria-label="Editar"
+>
               <q-tooltip>Editar</q-tooltip>
             </q-btn>
             <BtnEliminar
@@ -96,7 +98,9 @@
               emit-value
               map-options
             />
-            <q-btn flat round color="purple-ieen" icon="add" @click="nuevoPuesto">
+            <q-btn flat round color="purple-ieen" icon="add" @click="nuevoPuesto"
+  aria-label="Nuevo puesto"
+>
               <q-tooltip>Nuevo puesto</q-tooltip>
             </q-btn>
           </div>

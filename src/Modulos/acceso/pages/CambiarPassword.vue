@@ -2,7 +2,7 @@
   <div class="fullscreen flex flex-center bg-grey-2">
     <q-card flat bordered style="width: 380px; max-width: 90vw" class="q-pa-md">
       <q-card-section class="text-center">
-        <div class="text-h6">Cambiar contraseña</div>
+        <h1 class="text-h6">Cambiar contraseña</h1>
         <div class="text-caption text-grey-7">
           Ingresaste con una contraseña temporal. Define una nueva para continuar.
         </div>
@@ -34,7 +34,7 @@
           :rules="[(v) => v === nueva || 'No coincide']"
         />
 
-        <div v-if="error" class="text-negative text-caption">{{ error }}</div>
+        <div v-if="error" class="text-negative text-caption" role="alert" aria-live="assertive">{{ error }}</div>
 
         <q-btn
           type="submit"
