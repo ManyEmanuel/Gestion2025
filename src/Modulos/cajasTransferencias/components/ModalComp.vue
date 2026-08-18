@@ -5,7 +5,7 @@
     transition-show="scale"
     transition-hide="scale"
   >
-    <q-card style="width: 800px; max-width: 80vw">
+    <q-card flat bordered style="width: 800px; max-width: 80vw">
       <q-card-section class="row">
         <div class="text-h6">Caja de transferencia</div>
         <q-space />
@@ -104,12 +104,7 @@
       <q-card-section>
         <div class="col-12 justify-end">
           <div class="text-right q-gutter-xs">
-            <q-btn
-              color="red"
-              label="Cancelar"
-              @click="actualizarModal(false)"
-              icon="highlight_off"
-            />
+            <BtnCancelar @click="actualizarModal(false)" />
             <!-- Corte: la caja es inmutable en el backend nuevo (sin update de noCaja/peso). En
                  edición el modal solo AGREGA expedientes (cada uno se persiste al vuelo vía
                  RegistroDetalle); por eso Guardar solo aparece al crear una caja en Borrador. -->
@@ -147,6 +142,7 @@ import { onBeforeMount, ref, watch } from "vue";
 import { espera } from "../../../helpers/helper";
 import RegistroDetalle from "../components/RegistroDetalleComp.vue";
 import TablaDetalle from "../components/Tabla_Detalle.vue";
+import BtnCancelar from "../../../components/BtnCancelar.vue";
 
 const $q = useQuasar();
 const cajaTransferenciaStore = useCajaTransferenciaStore();
@@ -212,6 +208,7 @@ const cargarInventariosopt = async (val) => {
 
 const cargarSeccion = async (val) => {
   $q.loading.show();
+  // TODO(ux-audit): revisar si este delay compensa una transición real o reactividad no otorgada
   await espera(500);
   let array_secciones = [];
   val.secciones_Id.forEach((element) => {
@@ -222,7 +219,6 @@ const cargarSeccion = async (val) => {
   });
 
   seccionId.value = array_secciones;
-  await espera(500);
   cargarInventariosopt(seccionId.value);
   $q.loading.hide();
 };

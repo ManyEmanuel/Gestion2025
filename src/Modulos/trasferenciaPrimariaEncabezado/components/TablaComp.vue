@@ -9,7 +9,7 @@
         :visible-columns="visible_columns"
         row-key="id"
         rows-per-page-label="Filas por pagina"
-        no-data-label="No hay registros"
+        no-data-label="No hay transferencias registradas. Usa el botón Nuevo para crear la primera."
         class="my-sticky-last-column-table"
       >
         <template v-slot:top>
@@ -37,18 +37,6 @@
           <q-tr :props="props">
             <q-td v-for="col in props.cols" :key="col.name" :props="props">
               <div v-if="col.name === 'id'">
-                <!-- Corte: el backend nuevo trata la transferencia como inmutable (sin update);
-                     se deshabilita editar. Alta = crear (etapa 2), envío/afectar = transiciones. -->
-                <q-btn
-                  v-if="false"
-                  flat
-                  round
-                  color="purple-ieen"
-                  icon="edit"
-                  @click="editar(col.value)"
-                >
-                  <q-tooltip>Editar registro</q-tooltip>
-                </q-btn>
                 <q-btn
                   v-if="modulo == null ? false : modulo.leer"
                   flat
@@ -75,17 +63,6 @@
                 >
                   <q-tooltip>Enviar transferencia</q-tooltip>
                 </q-btn>
-                <!-- Corte: transferencia inmutable en el backend nuevo (sin delete); se deshabilita. -->
-                <q-btn
-                  v-if="false"
-                  flat
-                  round
-                  color="purple-ieen"
-                  icon="delete"
-                  @click="eliminar(col.value)"
-                >
-                  <q-tooltip>Eliminar registro</q-tooltip>
-                </q-btn>
               </div>
               <label v-else>{{ col.value }}</label>
             </q-td>
@@ -104,7 +81,6 @@ import { useTransferenciaPrimariaEncabezadoStore } from "../../../stores/transfe
 import { onBeforeMount, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
-import { espera } from "../../../helpers/helper";
 
 const $q = useQuasar();
 const authStore = useAuthStore();
@@ -236,15 +212,6 @@ const pagination = ref({
   descending: false,
 });
 
-const editar = async (id) => {
-  $q.loading.show();
-  await transferenciaPrimariaStore.loadEncabezado(id);
-  transferenciaPrimariaStore.updateEditar(true);
-  await espera();
-  transferenciaPrimariaStore.actualizarModal(true);
-  $q.loading.hide();
-};
-
 const toCajas = (id) => {
   router.push({
     name: "cajasTransferencias",
@@ -298,56 +265,4 @@ const cargaDatos = async (dato) => {
   await transferenciaPrimariaStore.loadEncabezadosFiltro(dato);
   $q.loading.hide();
 };
-const eliminar = async (id) => {
-  $q.dialog({
-    title: "Eliminación de registro",
-    message: "¿Esta seguro de eliminar el registro?",
-    icon: "Warning",
-    persistent: true,
-    transitionShow: "scale",
-    transitionHide: "scale",
-    ok: {
-      color: "positive",
-      label: "Sí! eliminar",
-    },
-    cancel: {
-      color: "negative",
-      label: "Cancelar",
-    },
-  }).onOk(async () => {
-    $q.loading.show();
-    const resp =
-      await transferenciaPrimariaStore.deleteTransferenciaPrimariaEncabezado(
-        id
-      );
-    if (resp.success) {
-      $q.loading.hide();
-      $q.notify({
-        type: "positive",
-        message: resp.data,
-      });
-    } else {
-      $q.loading.hide();
-      $q.notify({
-        type: "negative",
-        message: resp.data,
-      });
-    }
-  });
-};
 </script>
-<style lang="sass">
-.my-sticky-last-column-table
-
-  thead tr:last-child th:last-child
-    background-color: #fff
-
-  td:last-child
-    background-color: #fff
-
-  th:last-child,
-  td:last-child
-    position: sticky
-    right: 0
-    z-index: 1
-</style>

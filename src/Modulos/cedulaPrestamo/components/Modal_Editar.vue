@@ -5,7 +5,7 @@
     transition-show="scale"
     transition-hide="scale"
   >
-    <q-card style="width: 800px; max-width: 80vw">
+    <q-card flat bordered style="width: 800px; max-width: 80vw">
       <q-card-section class="row">
         <div class="text-h6">Editar prestamo</div>
         <q-space />
@@ -82,12 +82,7 @@
       <q-card-section>
         <div class="col-12 justify-end">
           <div class="text-right q-gutter-xs">
-            <q-btn
-              color="red"
-              label="Cancelar"
-              @click="actualizarModal(false)"
-              icon="highlight_off"
-            />
+            <BtnCancelar @click="actualizarModal(false)" />
             <q-btn
               :loading="loading"
               type="button"
@@ -114,6 +109,7 @@ import { storeToRefs } from "pinia";
 import { computed, ref, watch } from "vue";
 import { useCedulaPrestamoStore } from "../../../stores/cedula_prestamo_store";
 import { useInventarioAreaStore } from "../../../stores/inventario_area_store";
+import BtnCancelar from "../../../components/BtnCancelar.vue";
 import { useAreaStore } from "../../../stores/areas_store";
 import { useDetalleCedulaPrestamoStore } from "../../../stores/detalle_cedula_prestamo";
 import { espera } from "../../../helpers/helper";
@@ -184,6 +180,7 @@ const cargarRegistro = async (registro) => {
     (x) => x.value == `${registro.area_Solicitante_Id}`
   );
   areaSolId.value = areaSolFiltro;
+  // TODO(ux-audit): revisar si este delay compensa una transición real o reactividad no otorgada
   await espera(50);
   const empleadoFiltrado = empleados.value.find(
     (x) => x.value == `${registro.solicitante_Id}`

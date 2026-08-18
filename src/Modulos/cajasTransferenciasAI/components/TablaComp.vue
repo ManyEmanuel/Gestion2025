@@ -13,7 +13,7 @@
         :loading="isLoading"
         row-key="id"
         rows-per-page-label="Filas por pagina"
-        no-data-label="No hay registros"
+        no-data-label="No hay cajas registradas en esta transferencia"
       >
         <template v-slot:top-right>
           <q-input

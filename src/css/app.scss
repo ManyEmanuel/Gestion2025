@@ -1,1 +1,20 @@
 // app global css in SCSS form
+
+// Tablas con la última columna (normalmente "Acciones") fija al hacer scroll horizontal.
+// Antes esta misma regla vivía duplicada en ~30 archivos .vue de módulo; una sola definición global.
+.my-sticky-last-column-table {
+  thead tr:last-child th:last-child {
+    background-color: #fff;
+  }
+
+  td:last-child {
+    background-color: #fff;
+  }
+
+  th:last-child,
+  td:last-child {
+    position: sticky;
+    right: 0;
+    z-index: 1;
+  }
+}

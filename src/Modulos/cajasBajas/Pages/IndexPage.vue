@@ -63,6 +63,7 @@
       </div>
     </div>
     <TablaComp :bajaId="bajaId" v-if="modulo == null ? false : modulo.leer" />
+    <SinPermisoBanner v-else modulo="Cajas de baja documental" />
     <ModalComp
       v-if="modulo == null ? false : modulo.registrar"
       :transferenciaId="bajaId"
@@ -77,9 +78,9 @@ import { useBajaDocumentalStore } from "../../../stores/baja_documental_store";
 import { useCajaBajaDocumentalStore } from "../../../stores/caja_baja_documental";
 import { useDetalleCajaBajaStore } from "../../../stores/detalle_caja_baja_store";
 import { onBeforeMount } from "vue";
-import { espera } from "../../../helpers/helper";
 import ModalComp from "../components/ModalComp.vue";
 import TablaComp from "../components/TablaComp.vue";
+import SinPermisoBanner from "../../../components/SinPermisoBanner.vue";
 import { descargarReporte } from "../../../helpers/descargar_reporte";
 
 const $q = useQuasar();
@@ -110,13 +111,10 @@ onBeforeMount(() => {
 });
 
 const actualizarModal = async (valor) => {
-  $q.loading.show();
   cajaBajaDocumentalStore.updateEditar(false);
   cajaBajaDocumentalStore.initCaja();
   detalleCajaBajaStore.init_array_detalle();
-  await espera();
   cajaBajaDocumentalStore.actualizarModal(valor);
-  $q.loading.hide();
 };
 
 const afectarBaja = async () => {

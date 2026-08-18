@@ -7,7 +7,7 @@
         :filter="filter"
         row-key="id"
         rows-per-page-label="Filas por pagina"
-        no-data-label="No hay registros"
+        no-data-label="No hay disposiciones documentales registradas. Usa el botón Nuevo para crear la primera."
         class="my-sticky-last-column-table"
       >
         <template v-slot:top-right>
@@ -37,16 +37,13 @@
                 >
                   <q-tooltip>Editar registro</q-tooltip>
                 </q-btn>
-                <q-btn
+                <BtnEliminar
                   v-if="modulo == null ? false : modulo.eliminar"
-                  flat
-                  round
-                  color="purple-ieen"
-                  icon="delete"
-                  @click="eliminar(col.value)"
-                >
-                  <q-tooltip>Eliminar registro</q-tooltip>
-                </q-btn>
+                  label="Eliminar disposición"
+                  titulo="Eliminar disposición"
+                  :mensaje="mensajeEliminar(props.row)"
+                  @confirmado="eliminarDisposicion(col.value)"
+                />
               </div>
               <label v-else>{{ col.value }}</label>
             </q-td>
@@ -66,6 +63,7 @@ import { useSeccionStore } from "../../../stores/secciones_store";
 import { useSeriesStore } from "../../../stores/series_store";
 import { useSubSerieStore } from "../../../stores/sub_series_store";
 import { useAuthStore } from "../../../stores/auth_store";
+import BtnEliminar from "../../../components/BtnEliminar.vue";
 const $q = useQuasar();
 const disposicionDocStore = useDisposicionDocStore();
 const seccionStore = useSeccionStore();
@@ -190,17 +188,8 @@ const filter = ref("");
 
 const { disposiciones } = storeToRefs(disposicionDocStore);
 
-const espera = () => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve("resolved");
-    }, 200);
-  });
-};
-
 const editar = async (id) => {
   $q.loading.show();
-  await espera();
   await disposicionDocStore.loadValoresDocumentales();
   await disposicionDocStore.loadNivelesSeguridad();
   await seccionStore.loadListaSecciones();
@@ -215,53 +204,12 @@ const editar = async (id) => {
   disposicionDocStore.actualizarModalEditar(true);
 };
 
-const eliminar = async (id) => {
-  $q.dialog({
-    title: "Eliminación de registro",
-    message: "¿Esta seguro de eliminar el registro?",
-    icon: "Warning",
-    persistent: true,
-    transitionShow: "scale",
-    transitionHide: "scale",
-    ok: {
-      color: "positive",
-      label: "Sí! eliminar",
-    },
-    cancel: {
-      color: "negative",
-      label: "Cancelar",
-    },
-  }).onOk(async () => {
-    $q.loading.show();
-    const resp = await disposicionDocStore.deleteDisposicion(id);
-    if (resp.success) {
-      $q.loading.hide();
-      $q.notify({
-        type: "positive",
-        message: resp.data,
-      });
-    } else {
-      $q.loading.hide();
-      $q.notify({
-        type: "negative",
-        message: resp.data,
-      });
-    }
-  });
+const mensajeEliminar = (row) => `¿Eliminar la disposición documental de "${row.nombre}"?`;
+
+const eliminarDisposicion = async (id) => {
+  $q.loading.show();
+  const resp = await disposicionDocStore.deleteDisposicion(id);
+  $q.loading.hide();
+  $q.notify({ type: resp.success ? "positive" : "negative", message: resp.data });
 };
 </script>
-<style lang="sass">
-.my-sticky-last-column-table
-
-  thead tr:last-child th:last-child
-    background-color: #fff
-
-  td:last-child
-    background-color: #fff
-
-  th:last-child,
-  td:last-child
-    position: sticky
-    right: 0
-    z-index: 1
-</style>

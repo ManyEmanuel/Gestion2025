@@ -26,6 +26,7 @@
       </div>
     </div>
     <TablaComp v-if="modulo == null ? false : modulo.leer" />
+    <SinPermisoBanner v-else modulo="Baja documental" />
     <ModalComp />
     <ModalVerComp />
   </q-page>
@@ -37,11 +38,11 @@ import { storeToRefs } from "pinia";
 import { useAreaStore } from "../../../stores/areas_store";
 import { useAuthStore } from "../../../stores/auth_store";
 import { useBajaDocumentalStore } from "../../../stores/baja_documental_store";
-import { espera } from "../../../helpers/helper";
 import { genera_anexo_13 } from "src/helpers/anexo_13";
 
 import TablaComp from "../Components/TablaComp.vue";
 import ModalComp from "../Components/ModalComp.vue";
+import SinPermisoBanner from "../../../components/SinPermisoBanner.vue";
 import ModalVerComp from "../Components/ModalVerComp.vue";
 
 const $q = useQuasar();
@@ -63,7 +64,6 @@ onBeforeMount(() => {
 
 const actualizarModal = async (valor) => {
   $q.loading.show();
-  await espera();
   bajaStore.initEncabezado();
   await areaStore.loadListaAreas();
   // Corte al backend nuevo: área generadora = área del usuario (JWT); 'Elaboró' = su enlace; el área

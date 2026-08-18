@@ -14,7 +14,7 @@
             <q-card-section>
               <div class="text-subtitle1 text-purple-ieen">Política de formatos de preservación</div>
               <div class="q-mt-sm q-gutter-xs">
-                <q-chip v-for="f in politica.formatosAceptados" :key="f" dense color="purple-ieen-3" text-color="white">{{ f }}</q-chip>
+                <q-chip v-for="f in politica.formatosAceptados" :key="f" dense color="purple-ieen-1" text-color="white">{{ f }}</q-chip>
               </div>
             </q-card-section>
           </q-card>
@@ -64,11 +64,11 @@
         </template>
       </q-table>
     </div>
-    <q-banner v-else class="bg-orange-2">No tiene permiso para ver la preservación.</q-banner>
+    <SinPermisoBanner v-else modulo="Preservación digital" />
 
     <!-- Migrar formato -->
     <q-dialog v-model="dialogoMigrar" persistent>
-      <q-card style="width: 520px; max-width: 90vw">
+      <q-card flat bordered style="width: 520px; max-width: 90vw">
         <q-card-section class="row items-center"><div class="text-h6">Migrar formato</div><q-space />
           <q-btn icon="close" flat round dense v-close-popup /></q-card-section>
         <q-card-section>
@@ -78,7 +78,7 @@
               :rules="[(v) => !!v || 'El nuevo formato es requerido']" autofocus />
             <q-input v-model="observaciones" label="Observaciones" type="textarea" autogrow class="q-mt-sm" />
             <div class="text-right q-mt-md q-gutter-sm">
-              <q-btn color="red" label="Cancelar" icon="highlight_off" v-close-popup />
+              <BtnCancelar />
               <q-btn :loading="guardando" type="submit" color="secondary" label="Registrar" icon="save" />
             </div>
           </q-form>
@@ -88,7 +88,7 @@
 
     <!-- Historial -->
     <q-dialog v-model="dialogoHistorial">
-      <q-card style="width: 800px; max-width: 92vw">
+      <q-card flat bordered style="width: 800px; max-width: 92vw">
         <q-card-section class="row items-center"><div class="text-h6">Historial de preservación</div><q-space />
           <q-btn icon="close" flat round dense v-close-popup /></q-card-section>
         <q-card-section>
@@ -116,6 +116,8 @@ import { onBeforeMount, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { useAuthStore } from "../../../stores/auth_store";
 import { usePreservacionStore } from "../../../stores/preservacion_store";
+import SinPermisoBanner from "../../../components/SinPermisoBanner.vue";
+import BtnCancelar from "../../../components/BtnCancelar.vue";
 
 const $q = useQuasar();
 const authStore = useAuthStore();

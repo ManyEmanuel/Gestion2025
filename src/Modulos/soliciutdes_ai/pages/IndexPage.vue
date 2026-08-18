@@ -32,6 +32,7 @@
       </div>
     </div>
     <TablaComp v-if="modulo == null ? false : modulo.leer" />
+    <SinPermisoBanner v-else modulo="Solicitudes de préstamos archivo institucional" />
     <ModalComp />
   </q-page>
 </template>
@@ -45,6 +46,7 @@ import { useAreaStore } from "../../../stores/areas_store";
 
 import ModalComp from "../components/ModalComp.vue";
 import TablaComp from "../components/TablaComp.vue";
+import SinPermisoBanner from "../../../components/SinPermisoBanner.vue";
 
 const $q = useQuasar();
 const authStore = useAuthStore();

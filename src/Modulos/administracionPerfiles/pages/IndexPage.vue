@@ -1,6 +1,10 @@
 <template>
   <q-page class="q-pa-md">
     <div v-if="modulo && modulo.leer">
+      <q-breadcrumbs class="q-mb-sm">
+        <q-breadcrumbs-el icon="home" to="/" />
+        <q-breadcrumbs-el label="Perfiles" icon="security" />
+      </q-breadcrumbs>
       <div class="row items-center q-mb-md">
         <div class="text-h6 text-purple-ieen">Administración de perfiles</div>
         <q-space />
@@ -20,7 +24,7 @@
         row-key="id"
         :loading="cargando"
         rows-per-page-label="Filas por página"
-        no-data-label="No hay perfiles"
+        no-data-label="No hay perfiles registrados. Usa &quot;Nuevo perfil&quot; para crear el primero."
       >
         <template v-slot:top-right>
           <q-input dense debounce="300" v-model="filter" placeholder="Buscar..">
@@ -54,32 +58,29 @@
             >
               <q-tooltip>Permisos</q-tooltip>
             </q-btn>
-            <q-btn
+            <BtnEliminar
               v-if="modulo.eliminar"
-              flat
-              round
-              color="negative"
-              icon="delete"
-              @click="confirmarEliminar(props.row)"
-            >
-              <q-tooltip>Eliminar</q-tooltip>
-            </q-btn>
+              label="Eliminar perfil"
+              titulo="Eliminar perfil"
+              :mensaje="mensajeEliminar(props.row)"
+              @confirmado="eliminarPerfil(props.row)"
+            />
           </q-td>
         </template>
       </q-table>
     </div>
-    <div v-else class="text-grey q-pa-lg">No tiene permisos para ver este módulo.</div>
+    <SinPermisoBanner v-else modulo="Administración de perfiles" />
 
     <!-- Alta / edición -->
     <q-dialog v-model="mostrarDialog" persistent>
-      <q-card style="min-width: 420px">
+      <q-card flat bordered style="min-width: 420px">
         <q-card-section class="text-h6">{{ editando ? "Editar perfil" : "Nuevo perfil" }}</q-card-section>
         <q-card-section class="q-gutter-md">
           <q-input v-model="form.nombre" label="Nombre *" autofocus :rules="[(v) => !!v || 'Requerido']" />
           <q-input v-model="form.descripcion" label="Descripción" type="textarea" autogrow />
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="Cancelar" v-close-popup />
+          <BtnCancelar />
           <q-btn color="purple-ieen" label="Guardar" :loading="guardando" @click="guardar" />
         </q-card-actions>
       </q-card>
@@ -87,7 +88,7 @@
 
     <!-- Asignación de permisos -->
     <q-dialog v-model="mostrarPermisos" persistent>
-      <q-card style="min-width: 480px; max-width: 90vw">
+      <q-card flat bordered style="min-width: 480px; max-width: 90vw">
         <q-card-section class="text-h6">Permisos — {{ perfilPermisos.nombre }}</q-card-section>
         <q-card-section style="max-height: 60vh" class="scroll q-pt-none">
           <q-list>
@@ -114,7 +115,7 @@
           </q-list>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="Cancelar" v-close-popup />
+          <BtnCancelar />
           <q-btn color="purple-ieen" label="Guardar permisos" :loading="guardando" @click="guardarPermisos" />
         </q-card-actions>
       </q-card>
@@ -128,6 +129,9 @@ import { storeToRefs } from "pinia";
 import { useQuasar } from "quasar";
 import { useAuthStore } from "../../../stores/auth_store";
 import { usePerfilesStore } from "../../../stores/perfiles_store";
+import SinPermisoBanner from "../../../components/SinPermisoBanner.vue";
+import BtnCancelar from "../../../components/BtnCancelar.vue";
+import BtnEliminar from "../../../components/BtnEliminar.vue";
 
 const $q = useQuasar();
 const authStore = useAuthStore();
@@ -225,18 +229,12 @@ const guardarPermisos = async () => {
   }
 };
 
-const confirmarEliminar = (row) => {
-  $q.dialog({
-    title: "Eliminar perfil",
-    message: `¿Eliminar el perfil "${row.nombre}"?`,
-    cancel: { label: "Cancelar", color: "grey" },
-    ok: { label: "Eliminar", color: "negative" },
-    persistent: true,
-  }).onOk(async () => {
-    $q.loading.show();
-    const resp = await perfilesStore.eliminar(row.id);
-    $q.loading.hide();
-    $q.notify({ type: resp.success ? "positive" : "negative", message: resp.data });
-  });
+const mensajeEliminar = (row) => `¿Eliminar el perfil "${row.nombre}"?`;
+
+const eliminarPerfil = async (row) => {
+  $q.loading.show();
+  const resp = await perfilesStore.eliminar(row.id);
+  $q.loading.hide();
+  $q.notify({ type: resp.success ? "positive" : "negative", message: resp.data });
 };
 </script>

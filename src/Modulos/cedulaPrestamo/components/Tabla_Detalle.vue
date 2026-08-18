@@ -7,7 +7,7 @@
         :filter="filter"
         row-key="id"
         rows-per-page-label="Filas por pagina"
-        no-data-label="No hay registros"
+        no-data-label="No hay expedientes agregados. Usa el botón Agregar para añadir el primero."
         class="my-sticky-last-column-table"
       >
         <template v-slot:top-right>
@@ -27,15 +27,12 @@
           <q-tr :props="props">
             <q-td v-for="col in props.cols" :key="col.name" :props="props">
               <div v-if="col.name === 'id'">
-                <q-btn
-                  flat
-                  round
-                  color="purple-ieen"
-                  icon="delete"
-                  @click="eliminar(col.value)"
-                >
-                  <q-tooltip>Eliminar registro</q-tooltip>
-                </q-btn>
+                <BtnEliminar
+                  label="Eliminar expediente"
+                  titulo="Eliminar expediente"
+                  :mensaje="mensajeEliminar(props.row)"
+                  @confirmado="eliminarDetalle(col.value)"
+                />
               </div>
               <label v-else>{{ col.value }}</label>
             </q-td>
@@ -52,6 +49,7 @@ import { useQuasar } from "quasar";
 import { ref, warn, watch } from "vue";
 import { useDetalleCedulaPrestamoStore } from "../../../stores/detalle_cedula_prestamo";
 import { useCedulaPrestamoStore } from "../../../stores/cedula_prestamo_store";
+import BtnEliminar from "../../../components/BtnEliminar.vue";
 
 const $q = useQuasar();
 const detalleCedulaStore = useDetalleCedulaPrestamoStore();
@@ -114,61 +112,26 @@ const pagination = ref({
   descending: false,
 });
 
-const eliminar = async (id) => {
-  $q.dialog({
-    title: "Eliminación de registro",
-    message: "¿Esta seguro de eliminar el registro?",
-    icon: "Warning",
-    persistent: true,
-    transitionShow: "scale",
-    transitionHide: "scale",
-    ok: {
-      color: "positive",
-      label: "Sí! eliminar",
-    },
-    cancel: {
-      color: "negative",
-      label: "Cancelar",
-    },
-  }).onOk(async () => {
-    $q.loading.show();
-    let resp = null;
-    if (isEditar.value == true) {
-      resp = await detalleCedulaStore.deleteDetalle(id);
-    } else {
-      resp = detalleCedulaStore.deleteDetalleArray(id);
-    }
-    if (resp.success) {
-      $q.loading.hide();
-      detalleCedulaStore.loadDetalles(registro.value.id);
-      $q.notify({
-        type: "positive",
-        message: resp.data,
-      });
-    } else {
-      $q.loading.hide();
-      $q.notify({
-        type: "negative",
-        message: resp.data,
-      });
-    }
-  });
+const mensajeEliminar = (row) =>
+  `¿Eliminar el expediente "${row.inventario_Clave_Clasificacion}" de esta cédula?`;
+
+const eliminarDetalle = async (id) => {
+  $q.loading.show();
+  let resp = null;
+  if (isEditar.value == true) {
+    resp = await detalleCedulaStore.deleteDetalle(id);
+  } else {
+    resp = detalleCedulaStore.deleteDetalleArray(id);
+  }
+  if (resp.success) {
+    $q.loading.hide();
+    detalleCedulaStore.loadDetalles(registro.value.id);
+    $q.notify({ type: "positive", message: resp.data });
+  } else {
+    $q.loading.hide();
+    $q.notify({ type: "negative", message: resp.data });
+  }
 };
 
 const filter = ref("");
 </script>
-<style lang="sass">
-.my-sticky-last-column-table
-
-  thead tr:last-child th:last-child
-    background-color: #fff
-
-  td:last-child
-    background-color: #fff
-
-  th:last-child,
-  td:last-child
-    position: sticky
-    right: 0
-    z-index: 1
-</style>

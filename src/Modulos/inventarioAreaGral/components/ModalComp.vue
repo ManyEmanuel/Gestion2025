@@ -5,7 +5,7 @@
     transition-show="scale"
     transition-hide="scale"
   >
-    <q-card style="width: 800px; max-width: 80vw">
+    <q-card flat bordered style="width: 800px; max-width: 80vw">
       <q-card-section class="row">
         <div class="text-h6">Inventario general por expediente</div>
         <q-space />

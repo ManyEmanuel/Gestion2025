@@ -18,6 +18,7 @@
       <CardSerie />
       <CardSubSerie />
     </div>
+    <SinPermisoBanner v-else modulo="Secciones" />
     <ModalSecciones />
     <ModalSeries />
     <ModalSubSeries />
@@ -36,6 +37,7 @@ import CardSubSerie from "../components/Card_SubSerie.vue";
 import ModalSecciones from "../components/Modal_Seccion.vue";
 import ModalSeries from "../components/Modal_Serie.vue";
 import ModalSubSeries from "../components/Modal_SubSerie.vue";
+import SinPermisoBanner from "../../../components/SinPermisoBanner.vue";
 
 const $q = useQuasar();
 const authStore = useAuthStore();

@@ -8,7 +8,7 @@
         :loading="loadindg"
         row-key="id"
         rows-per-page-label="Filas por pagina"
-        no-data-label="No hay registros"
+        no-data-label="No hay bajas documentales registradas. Usa &quot;Nuevo&quot; para crear la primera."
         class="my-sticky-last-column-table"
       >
         <template v-slot:top>
@@ -83,7 +83,6 @@ import { useBajaDocumentalStore } from "../../../stores/baja_documental_store";
 import { onBeforeMount, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
-import { espera } from "../../../helpers/helper";
 import ActosDialog from "../../../components/ActosDialog.vue";
 
 const $q = useQuasar();
@@ -164,27 +163,6 @@ const columns = [
     sortable: true,
   },
   {
-    name: "valida",
-    align: "center",
-    label: "Valida",
-    field: "valida",
-    sortable: true,
-  },
-  {
-    name: "visto_Bueno",
-    align: "center",
-    label: "Visto bueno",
-    field: "visto_Bueno",
-    sortable: true,
-  },
-  {
-    name: "aprobo",
-    align: "center",
-    label: "Aprobó",
-    field: "aprobo",
-    sortable: true,
-  },
-  {
     name: "id",
     align: "center",
     label: "Acciones",
@@ -206,7 +184,6 @@ const pagination = ref({
 const ver = async (id) => {
   $q.loading.show();
   await bajaStore.loadEncabezado(id);
-  await espera(50);
   $q.loading.hide();
   bajaStore.actualizarModalVer(true);
 };
@@ -219,19 +196,4 @@ const toCajas = async (id) => {
   });
 };
 </script>
-
-<style lang="sass">
-.my-sticky-last-column-table
-
-  thead tr:last-child th:last-child
-    background-color: #fff
-
-  td:last-child
-    background-color: #fff
-
-  th:last-child,
-  td:last-child
-    position: sticky
-    right: 0
-    z-index: 1
-</style>
+

@@ -24,24 +24,24 @@
         <template v-slot:no-data><div class="full-width row flex-center q-pa-md text-grey-7">Sin sesiones.</div></template>
       </q-table>
     </div>
-    <q-banner v-else class="bg-orange-2">No tiene permiso.</q-banner>
+    <SinPermisoBanner v-else modulo="Sesiones del grupo interdisciplinario" />
 
     <!-- Dialogo Sesión -->
     <q-dialog v-model="dlgSesion" persistent>
-      <q-card style="width: 640px; max-width: 92vw">
+      <q-card flat bordered style="width: 640px; max-width: 92vw">
         <q-card-section class="row items-center"><div class="text-h6">{{ sesEdit.id ? 'Editar' : 'Nueva' }} sesión</div><q-space /><q-btn icon="close" flat round dense v-close-popup /></q-card-section>
         <q-card-section><q-form @submit="guardarSesion">
           <q-input v-model="sesEdit.fecha" label="Fecha" type="date" stack-label lazy-rules :rules="[(v) => !!v || 'Requerido']" />
           <q-input v-model="sesEdit.ordenDelDia" label="Orden del día" type="textarea" autogrow />
           <q-input v-model="sesEdit.minuta" label="Minuta (texto o URL del acta)" type="textarea" autogrow />
-          <div class="text-right q-mt-md q-gutter-sm"><q-btn color="red" label="Cancelar" icon="highlight_off" v-close-popup /><q-btn :loading="guardando" type="submit" color="secondary" label="Guardar" icon="save" /></div>
+          <div class="text-right q-mt-md q-gutter-sm"><BtnCancelar /><q-btn :loading="guardando" type="submit" color="secondary" label="Guardar" icon="save" /></div>
         </q-form></q-card-section>
       </q-card>
     </q-dialog>
 
     <!-- Dialogo Acuerdos -->
     <q-dialog v-model="dlgAcuerdos">
-      <q-card style="width: 860px; max-width: 94vw">
+      <q-card flat bordered style="width: 860px; max-width: 94vw">
         <q-card-section class="row items-center"><div class="text-h6">Acuerdos — sesión {{ sesion && fecha(sesion.fecha) }}</div><q-space /><q-btn icon="close" flat round dense v-close-popup /></q-card-section>
         <q-card-section>
           <q-list bordered separator v-if="sesion && sesion.acuerdos.length">
@@ -80,6 +80,8 @@ import { onBeforeMount, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { useAuthStore } from "../../../stores/auth_store";
 import { useGrupoStore } from "../../../stores/grupo_interdisciplinario_store";
+import SinPermisoBanner from "../../../components/SinPermisoBanner.vue";
+import BtnCancelar from "../../../components/BtnCancelar.vue";
 
 const props = defineProps({ grupoId: { type: String, required: true } });
 const $q = useQuasar();

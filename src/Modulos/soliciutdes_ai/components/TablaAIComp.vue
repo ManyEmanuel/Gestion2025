@@ -9,7 +9,7 @@
         :loading="isLoading"
         row-key="id"
         rows-per-page-label="Filas por pagina"
-        no-data-label="No hay registros"
+        :no-data-label="tipo == 0 ? 'No hay solicitudes pendientes de revisión.' : (tipo == 1 ? 'No hay solicitudes aprobadas.' : 'No hay solicitudes rechazadas.')"
         class="my-sticky-last-column-table"
       >
         <template v-slot:top-right>
@@ -101,7 +101,6 @@ import { useRouter } from "vue-router";
 import { useSolicitudPrestamoAiStore } from "../../../stores/solicitud_prestamo_ai_store";
 import { useDetalleSolicitudAISotre } from "../../../stores/detalle_solicitud_prestamo_ai_store";
 import { useVistosBuenosStore } from "../../../stores/visto_bueno_store";
-import { espera } from "src/helpers/anexo_08";
 
 const $q = useQuasar();
 const router = useRouter();
@@ -206,20 +205,14 @@ const editar = async (id) => {
   solicitudPrestamoStore.actualizarModal(true);
 };
 
-const verAceptado = async (id) => {
-  $q.loading.show();
-  await espera();
-  $q.loading.hide();
+const verAceptado = (id) => {
   router.push({
     name: "prestamoInstitucional",
     params: { encabezadoId: id, estatus: "Aprobado" },
   });
 };
 
-const verRechazado = async (id) => {
-  $q.loading.show();
-  await espera();
-  $q.loading.hide();
+const verRechazado = (id) => {
   router.push({
     name: "prestamoInstitucional",
     params: { encabezadoId: id, estatus: "Rechazado" },
@@ -319,19 +312,4 @@ const cancelacion = async (id, folio) => {
       });
   });
 };
-</script>
-<style lang="sass">
-.my-sticky-last-column-table
-
-  thead tr:last-child th:last-child
-    background-color: #fff
-
-  td:last-child
-    background-color: #fff
-
-  th:last-child,
-  td:last-child
-    position: sticky
-    right: 0
-    z-index: 1
-</style>
+</script>

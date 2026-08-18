@@ -15,7 +15,7 @@
       </div>
     </div>
     <div class="col-12 col-xs-6 col-md-4">
-      <q-card>
+      <q-card flat bordered>
         <q-card-section>
           <div class="row" v-if="props.estatus == 'Aprobado'">
             <div class="col" v-if="isHistrico == false">
@@ -143,7 +143,7 @@
       transition-show="scale"
       transition-hide="scale"
     >
-      <q-card style="width: 800px; max-width: 80vw">
+      <q-card flat bordered style="width: 800px; max-width: 80vw">
         <q-bar class="bg-purple-ieen text-white">
           Datos de la solicitud
           <q-space />
@@ -180,12 +180,7 @@
 
         <q-card-actions align="right">
           <div class="text-right q-gutter-xs">
-            <q-btn
-              color="red"
-              label="Cancelar"
-              @click="comprobante = false"
-              icon="highlight_off"
-            />
+            <BtnCancelar @click="comprobante = false" />
             <q-btn
               :loading="loading"
               type="button"
@@ -209,7 +204,7 @@
       transition-show="scale"
       transition-hide="scale"
     >
-      <q-card style="width: 800px; max-width: 80vw">
+      <q-card flat bordered style="width: 800px; max-width: 80vw">
         <q-bar class="bg-purple-ieen text-white">
           Datos de la solicitud
           <q-space />
@@ -247,12 +242,7 @@
                           color="purple-ieen"
                         >
                           <div class="row items-center justify-end">
-                            <q-btn
-                              v-close-popup
-                              label="Cancelar"
-                              color="purple-ieen"
-                              flat
-                            />
+                            <BtnCancelar />
                           </div>
                         </q-time>
                       </q-popup-proxy>
@@ -280,12 +270,7 @@
                           color="purple-ieen"
                         >
                           <div class="row items-center justify-end">
-                            <q-btn
-                              v-close-popup
-                              label="Cancelar"
-                              color="purple-ieen"
-                              flat
-                            />
+                            <BtnCancelar />
                           </div>
                         </q-time>
                       </q-popup-proxy>
@@ -299,12 +284,7 @@
 
         <q-card-actions align="right">
           <div class="text-right q-gutter-xs">
-            <q-btn
-              color="red"
-              label="Cancelar"
-              @click="horarios = false"
-              icon="highlight_off"
-            />
+            <BtnCancelar @click="horarios = false" />
             <q-btn
               :loading="loading"
               type="button"
@@ -344,6 +324,7 @@ import ModalViewer from "../../inventarioAreaGral/components/ModalVisorComp.vue"
 
 import { useSolicitudPrestamoAiStore } from "../../../stores/solicitud_prestamo_ai_store";
 import { useDetalleSolicitudAISotre } from "../../../stores/detalle_solicitud_prestamo_ai_store";
+import BtnCancelar from "../../../components/BtnCancelar.vue";
 //import Tabla from "../components/Tabla_Detalle_Aceptada.vue";
 //import ModalAdjuntoComp from "../../inventarioAreaGral/components/ModalAdjuntosComp.vue";
 //import ModalViewer from "../../inventarioAreaGral/components/ModalVisorComp.vue";

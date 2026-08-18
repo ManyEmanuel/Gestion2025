@@ -8,7 +8,7 @@
         :loading="loadindg"
         row-key="id"
         rows-per-page-label="Filas por pagina"
-        no-data-label="No hay registros"
+        no-data-label="No hay cajas registradas en esta baja documental. Usa &quot;Nueva caja&quot; para crear la primera."
         class="my-sticky-last-column-table"
       >
         <template v-slot:top>
@@ -53,17 +53,6 @@
                 >
                   <q-tooltip>Anexo 13</q-tooltip>
                 </q-btn>
-                <!-- Corte: la caja es inmutable en el backend nuevo (sin delete); se deshabilita. -->
-                <q-btn
-                  v-if="false"
-                  flat
-                  round
-                  color="purple-ieen"
-                  icon="delete"
-                  @click="eliminar(col.value)"
-                >
-                  <q-tooltip>Eliminar registro</q-tooltip>
-                </q-btn>
               </div>
               <label v-else>{{ col.value }}</label>
             </q-td>
@@ -81,7 +70,6 @@ import { genera_anexo_13 } from "../../../helpers/anexo_13";
 import { useCajaBajaDocumentalStore } from "../../../stores/caja_baja_documental";
 import { onBeforeMount, ref } from "vue";
 import { useDetalleCajaBajaStore } from "../../../stores/detalle_caja_baja_store";
-import { espera } from "../../../helpers/helper";
 import { useBajaDocumentalStore } from "src/stores/baja_documental_store";
 
 const $q = useQuasar();
@@ -168,7 +156,6 @@ const editar = async (id) => {
   $q.loading.show();
   cajaBajaStore.updateEditar(true);
   await cajaBajaStore.loadCaja(id);
-  await espera();
   cajaBajaStore.actualizarModal(true);
   $q.loading.hide();
 };
@@ -185,54 +172,5 @@ const anexo_13 = async (id) => {
   $q.loading.hide();
 };
 
-const eliminar = async (id) => {
-  $q.dialog({
-    title: "Eliminación de registro",
-    message: "¿Esta seguro de eliminar el registro?",
-    icon: "Warning",
-    persistent: true,
-    transitionShow: "scale",
-    transitionHide: "scale",
-    ok: {
-      color: "positive",
-      label: "Sí! eliminar",
-    },
-    cancel: {
-      color: "negative",
-      label: "Cancelar",
-    },
-  }).onOk(async () => {
-    $q.loading.show();
-    const resp = await cajaBajaStore.deleteCaja(id, props.bajaId);
-    if (resp.success) {
-      $q.loading.hide();
-      $q.notify({
-        type: "positive",
-        message: resp.data,
-      });
-    } else {
-      $q.loading.hide();
-      $q.notify({
-        type: "negative",
-        message: resp.data,
-      });
-    }
-  });
-};
 </script>
 
-<style lang="sass">
-.my-sticky-last-column-table
-
-  thead tr:last-child th:last-child
-    background-color: #fff
-
-  td:last-child
-    background-color: #fff
-
-  th:last-child,
-  td:last-child
-    position: sticky
-    right: 0
-    z-index: 1
-</style>

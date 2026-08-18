@@ -7,7 +7,7 @@
         :filter="filter"
         row-key="id"
         rows-per-page-label="Filas por paginas"
-        no-data-label="No hay registros"
+        no-data-label="No hay expedientes agregados a esta caja. Usa &quot;Agregar&quot; para registrar el primero."
         class="my-sticky-last-column-table"
       >
         <template v-slot:top-right>
@@ -29,16 +29,13 @@
               <div v-if="col.name === 'id'">
                 <!-- Corte: en el backend nuevo el expediente ya persistido es inmutable (sin delete);
                      solo se puede quitar del arreglo ANTES de guardar la caja (alta). -->
-                <q-btn
+                <BtnEliminar
                   v-if="!isEditar"
-                  flat
-                  round
-                  color="purple-ieen"
-                  icon="delete"
-                  @click="eliminar(col.value)"
-                >
-                  <q-tooltip>Eliminar registro</q-tooltip>
-                </q-btn>
+                  label="Eliminar expediente"
+                  titulo="Eliminar expediente"
+                  :mensaje="mensajeEliminar(props.row)"
+                  @confirmado="eliminarDetalle(col.value)"
+                />
               </div>
               <label v-else>{{ col.value }}</label>
             </q-td>
@@ -51,12 +48,11 @@
 
 <script setup>
 import { storeToRefs } from "pinia";
-import { useQuasar } from "quasar";
 import { ref, onBeforeMount } from "vue";
 import { useCajaTransferenciaSecundariaterStore } from "../../../stores/caja_transferencia_secundaria_store";
 import { useDetalleCajaTransferenciaSecundariaStore } from "../../../stores/detalle_caja_transferencia_secundaria_store";
+import BtnEliminar from "../../../components/BtnEliminar.vue";
 
-const $q = useQuasar();
 const cajaStore = useCajaTransferenciaSecundariaterStore();
 const detalleStore = useDetalleCajaTransferenciaSecundariaStore();
 const { caja, isEditar } = storeToRefs(cajaStore);
@@ -113,43 +109,11 @@ const columns = [
   },
 ];
 
-const eliminar = async (id) => {
-  $q.dialog({
-    title: "Eliminación de registro",
-    message: "¿Esta seguro de eliminar el registro?",
-    icon: "Warning",
-    persistent: true,
-    transitionShow: "scale",
-    transitionHide: "scale",
-    ok: {
-      color: "positive",
-      label: "Sí! eliminar",
-    },
-    cancel: {
-      color: "negative",
-      label: "Cancelar",
-    },
-  }).onOk(async () => {
-    $q.loading.show();
-    // Corte: solo remoción del arreglo pre-persistencia (alta). El expediente ya guardado es inmutable.
-    detalleStore.deleteDetalleArray(id);
-    $q.loading.hide();
-  });
+const mensajeEliminar = (row) => `¿Eliminar el expediente "${row.clave_Clasificacion}" de esta caja?`;
+
+// Corte: solo remoción del arreglo pre-persistencia (alta). El expediente ya guardado es inmutable.
+const eliminarDetalle = (id) => {
+  detalleStore.deleteDetalleArray(id);
 };
 </script>
 
-<style lang="sass">
-.my-sticky-last-column-table
-
-  thead tr:last-child th:last-child
-    background-color: #fff
-
-  td:last-child
-    background-color: #fff
-
-  th:last-child,
-  td:last-child
-    position: sticky
-    right: 0
-    z-index: 1
-</style>

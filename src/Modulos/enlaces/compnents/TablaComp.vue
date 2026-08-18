@@ -9,7 +9,7 @@
         row-key="id"
         :rows-per-page-options="[10]"
         rows-per-page-label="Filas por pagina"
-        no-data-label="No hay registros"
+        no-data-label="No hay enlaces registrados. Usa el botón Nuevo para crear el primero."
         class="my-sticky-last-column-table"
       >
         <template v-slot:top-left>
@@ -50,16 +50,13 @@
                 >
                   <q-tooltip>Editar registro</q-tooltip>
                 </q-btn>
-                <q-btn
+                <BtnEliminar
                   v-if="modulo.eliminar"
-                  flat
-                  round
-                  color="purple-ieen"
-                  icon="delete"
-                  @click="eliminar(col.value)"
-                >
-                  <q-tooltip>Eliminar registro</q-tooltip>
-                </q-btn>
+                  label="Eliminar registro"
+                  titulo="Eliminación de registro"
+                  :mensaje="mensajeEliminar(props.row)"
+                  @confirmado="eliminar(col.value)"
+                />
                 <!-- Corte al backend nuevo: Anexo 12 (catálogo de firmas) ahora es un reporte de backend
                      (GET /api/reportes/enlace/{enlaceId}/catalogo-firmas, PDF). El "responsable del área"
                      que el dominio nuevo no modela se imprime con línea en blanco; el enlace sí se resuelve. -->
@@ -110,7 +107,7 @@ import { onMounted, ref, watch } from "vue";
 import { useEnlaceArchivoStore } from "../../../stores/enlace_archivo_store";
 import { descargarReporte } from "../../../helpers/descargar_reporte";
 import { useAuthStore } from "../../../stores/auth_store";
-import { espera } from "../../../helpers/helper";
+import BtnEliminar from "../../../components/BtnEliminar.vue";
 
 const $q = useQuasar();
 const enlaceArchivoStore = useEnlaceArchivoStore();
@@ -167,13 +164,10 @@ const pagination = ref({
 
 const filter = ref("");
 
-const editar = async (id) => {
-  $q.loading.show();
-  await espera();
+const editar = (id) => {
   enlaceArchivoStore.initEnlaces();
   enlaceArchivoStore.loadEnlace(id);
   enlaceArchivoStore.updateEditar(true);
-  $q.loading.hide();
   enlaceArchivoStore.actualizarModal(true);
 };
 
@@ -274,54 +268,25 @@ watch(estatusVista, (val) => {
   }
 });
 
+const mensajeEliminar = (row) =>
+  `¿Eliminar el enlace del área "${row.area}" (${row.empleado})?`;
+
 const eliminar = async (id) => {
-  $q.dialog({
-    title: "Eliminación de registro",
-    message: "¿Esta seguro de eliminar el registro?",
-    icon: "Warning",
-    persistent: true,
-    transitionShow: "scale",
-    transitionHide: "scale",
-    ok: {
-      color: "positive",
-      label: "Sí! eliminar",
-    },
-    cancel: {
-      color: "negative",
-      label: "Cancelar",
-    },
-  }).onOk(async () => {
-    $q.loading.show();
-    const resp = await enlaceArchivoStore.deleteEnlace(id);
-    if (resp.success) {
-      $q.loading.hide();
-      $q.notify({
-        type: "positive",
-        message: resp.data,
-      });
-      await enlaceArchivoStore.loadEnlaces();
-    } else {
-      $q.loading.hide();
-      $q.notify({
-        type: "negative",
-        message: resp.data,
-      });
-    }
-  });
+  $q.loading.show();
+  const resp = await enlaceArchivoStore.deleteEnlace(id);
+  if (resp.success) {
+    $q.loading.hide();
+    $q.notify({
+      type: "positive",
+      message: resp.data,
+    });
+    await enlaceArchivoStore.loadEnlaces();
+  } else {
+    $q.loading.hide();
+    $q.notify({
+      type: "negative",
+      message: resp.data,
+    });
+  }
 };
 </script>
-<style lang="sass">
-.my-sticky-last-column-table
-
-  thead tr:last-child th:last-child
-    background-color: #fff
-
-  td:last-child
-    background-color: #fff
-
-  th:last-child,
-  td:last-child
-    position: sticky
-    right: 0
-    z-index: 1
-</style>

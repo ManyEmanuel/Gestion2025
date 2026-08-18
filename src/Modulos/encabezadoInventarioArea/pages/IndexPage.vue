@@ -30,7 +30,7 @@
     </div>
     <div class="row">
       <div class="col">
-        <q-card v-if="modulo == null ? false : modulo.leer">
+        <q-card flat bordered v-if="modulo == null ? false : modulo.leer">
           <q-tabs v-model="tab" class="text-purple-ieen" align="justify">
             <q-tab name="encabezado" label="Por encabezado" />
             <q-tab name="detalle" label="Detalles" />
@@ -48,6 +48,7 @@
             </q-tab-panel>
           </q-tab-panels>
         </q-card>
+        <SinPermisoBanner v-else modulo="Inventario general por expediente" />
       </div>
     </div>
     <Modal />
@@ -64,7 +65,6 @@ import { useAreaStore } from "../../../stores/areas_store";
 import { useAuthStore } from "../../../stores/auth_store";
 import { onBeforeMount, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { espera } from "../../../helpers/helper";
 
 import Modal from "../components/ModalComp.vue";
 import ModalComp from "../../inventarioAreaGral/components/ModalComp.vue";
@@ -72,6 +72,7 @@ import ModalAdjuntoComp from "../../inventarioAreaGral/components/ModalAdjuntosC
 import ModalViewer from "../../inventarioAreaGral/components/ModalVisorComp.vue";
 import Tabla from "../components/TablaComp.vue";
 import TablaDetalle from "../components/TablaDetalle.vue";
+import SinPermisoBanner from "../../../components/SinPermisoBanner.vue";
 
 const $q = useQuasar();
 const encabezadoInventariosStore = useEncabezadoInventarioStore();
@@ -96,12 +97,9 @@ encabezadoInventariosStore.loadEnlace();
 areaStore.loadListaAreas();
 
 const actualizarModal = async (valor) => {
-  $q.loading.show();
-  await espera(100);
   encabezadoInventariosStore.initEncabezado();
   encabezadoInventariosStore.actualizarModal(valor);
   encabezadoInventariosStore.updateEditar(false);
-  $q.loading.hide();
 };
 </script>
 

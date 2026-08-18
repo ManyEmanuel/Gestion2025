@@ -5,7 +5,7 @@
     transition-show="scale"
     transition-hide="scale"
   >
-    <q-card style="width: 800px; max-width: 80vw">
+    <q-card flat bordered style="width: 800px; max-width: 80vw">
       <q-card-section class="row">
         <div class="text-h6">Caja de baja documental</div>
         <q-space />
@@ -104,12 +104,7 @@
       <q-card-section>
         <div class="col-12 justify-end">
           <div class="text-right q-gutter-xs">
-            <q-btn
-              color="red"
-              label="Cancelar"
-              @click="actualizarModal(false)"
-              icon="highlight_off"
-            />
+            <BtnCancelar @click="actualizarModal(false)" />
             <!-- Corte: la caja es inmutable en el backend nuevo (sin update de noCaja/peso/años). En
                  edición el modal solo AGREGA expedientes (cada uno se persiste al vuelo vía
                  RegistroDetalleComp); por eso Guardar solo aparece al crear una caja en Borrador. -->
@@ -148,6 +143,7 @@ import { useBajaDocumentalStore } from "../../../stores/baja_documental_store";
 import { espera } from "../../../helpers/helper";
 import RegistroDetalleComp from "../components/RegistroDetalleComp.vue";
 import TablaDetalle from "../components/TablaDetalleComp.vue";
+import BtnCancelar from "../../../components/BtnCancelar.vue";
 const $q = useQuasar();
 const cajaStore = useCajaBajaDocumentalStore();
 const seccionStore = useSeccionStore();
@@ -214,6 +210,7 @@ const cargarInventariosopt = async () => {
 };
 
 const cargarSeccion = async (val) => {
+  // TODO(ux-audit): revisar si este delay compensa una transición real o reactividad no otorgada
   await espera(200);
   let array_secciones = [];
   (val.seccion_Id || []).forEach((element) => {

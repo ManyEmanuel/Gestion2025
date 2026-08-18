@@ -15,7 +15,7 @@
     </div>
     <div class="row">
       <div class="col">
-        <q-card v-if="modulo == null ? false : modulo.leer">
+        <q-card flat bordered v-if="modulo == null ? false : modulo.leer">
           <q-tabs v-model="tab" class="text-purple-ieen" align="justify">
             <q-tab name="pendientes" label="Pendientes" />
             <q-tab name="aprobadas" label="Aprobadas" />
@@ -36,6 +36,7 @@
             </q-tab-panel>
           </q-tab-panels>
         </q-card>
+        <SinPermisoBanner v-else modulo="Solicitudes préstamos archivo institucional" />
       </div>
     </div>
     <ModalComp />
@@ -49,6 +50,7 @@ import { useAuthStore } from "../../../stores/auth_store";
 
 import TablaComp from "../components/TablaAIComp.vue";
 import ModalComp from "../components/ModalAIComp.vue";
+import SinPermisoBanner from "../../../components/SinPermisoBanner.vue";
 
 const $q = useQuasar();
 const authStore = useAuthStore();

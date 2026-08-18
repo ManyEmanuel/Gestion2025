@@ -46,7 +46,7 @@
         :loading="loading"
         row-key="id"
         rows-per-page-label="Filas por pagina"
-        no-data-label="No hay registros"
+        no-data-label="No hay expedientes registrados en este inventario. Usa &quot;Nuevo&quot; para capturar el primero."
         selection="multiple"
         v-model:selected="selected"
         rows-selection
@@ -83,49 +83,6 @@
                   @click="adjuntos(col.value)"
                 >
                   <q-tooltip>Adjuntar archivo</q-tooltip>
-                </q-btn>
-                <!-- Corte: el expediente es inmutable en el backend nuevo (sin update/delete) y la
-                     ampliación de vigencia no la modela el dominio nuevo; se deshabilitan ampliar,
-                     ver-ampliación, editar y eliminar. La captura (crear) y los adjuntos siguen. -->
-                <q-btn
-                  v-if="false"
-                  flat
-                  round
-                  color="purple-ieen"
-                  icon="edit_calendar"
-                  @click="ampliacion(col.value)"
-                >
-                  <q-tooltip>Ampliar</q-tooltip>
-                </q-btn>
-                <q-btn
-                  v-if="false"
-                  flat
-                  round
-                  color="purple-ieen"
-                  icon="edit_calendar"
-                  @click="verampliacion(col.value)"
-                >
-                  <q-tooltip>Ver ampliacion</q-tooltip>
-                </q-btn>
-                <q-btn
-                  v-if="false"
-                  flat
-                  round
-                  color="purple-ieen"
-                  icon="edit"
-                  @click="editar(col.value)"
-                >
-                  <q-tooltip>Editar registro</q-tooltip>
-                </q-btn>
-                <q-btn
-                  v-if="false"
-                  flat
-                  round
-                  color="purple-ieen"
-                  icon="delete"
-                  @click="eliminar(col.value)"
-                >
-                  <q-tooltip>Eliminar registro</q-tooltip>
                 </q-btn>
               </div>
               <label v-else>{{ col.value }}</label>
@@ -311,13 +268,10 @@ const columns = [
   },
 ];
 
-const actualizarModal = async (valor) => {
-  $q.loading.show();
-  await espera();
+const actualizarModal = (valor) => {
   inventarioStore.initInventario();
   inventarioStore.actualizarModal(valor);
   inventarioStore.updateEditar(false);
-  $q.loading.hide();
 };
 
 const generar_anexo_4 = () => {
@@ -380,87 +334,16 @@ const pagination = ref({
 
 const filter = ref("");
 
-const editar = async (id) => {
-  inventarioStore.updateEditar(true);
-  inventarioStore.loadInventario(id);
-  await espera(200);
-  inventarioStore.actualizarModalEditar(true);
-};
-
 const adjuntos = async (id) => {
   $q.loading.show();
   inventarioStore.setInventario(id);
   adjuntoStore.loadAdjuntos(id);
+  // TODO(ux-audit): revisar si este delay compensa una transición real o reactividad no otorgada
   await espera(50);
   $q.loading.hide();
   adjuntoStore.actualizarModal(true);
 };
 
-const ampliacion = async (id) => {
-  $q.loading.show();
-  inventarioStore.setInventario(id);
-  await espera(50);
-  $q.loading.hide();
-  inventarioStore.actualizarModalAmpliacion(true);
-};
-
-const verampliacion = async (id) => {
-  $q.loading.show();
-  inventarioStore.setInventario(id);
-  await espera(50);
-  $q.loading.hide();
-  inventarioStore.actualizarModalVerAmpliacion(true);
-};
-
-const eliminar = async (id) => {
-  $q.dialog({
-    title: "Eliminación de registro",
-    message: "¿Esta seguro de eliminar el registro?",
-    icon: "Warning",
-    persistent: true,
-    transitionShow: "scale",
-    transitionHide: "scale",
-    ok: {
-      color: "positive",
-      label: "Sí! eliminar",
-    },
-    cancel: {
-      color: "negative",
-      label: "Cancelar",
-    },
-  }).onOk(async () => {
-    $q.loading.show();
-    const resp = await inventarioStore.deleteInventario(id, props.encabezadoId);
-    if (resp.success) {
-      $q.loading.hide();
-      $q.notify({
-        type: "positive",
-        message: resp.data,
-      });
-    } else {
-      $q.loading.hide();
-      $q.notify({
-        type: "negative",
-        message: resp.data,
-      });
-    }
-  });
-};
 </script>
 
 
-<style lang="sass">
-.my-sticky-last-column-table
-
-  thead tr:last-child th:last-child
-    background-color: #fff
-
-  td:last-child
-    background-color: #fff
-
-  th:last-child,
-  td:last-child
-    position: sticky
-    right: 0
-    z-index: 1
-</style>

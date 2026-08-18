@@ -8,7 +8,7 @@
         :loading="loadindg"
         row-key="id"
         rows-per-page-label="Filas por pagina"
-        no-data-label="No hay registros"
+        no-data-label="No hay expedientes registrados en el inventario general por expediente"
         class="my-sticky-last-column-table"
       >
         <template v-slot:top-right>
@@ -250,19 +250,4 @@ const pagination = ref({
 });
 
 const filter = ref("");
-</script>
-<style lang="sass">
-.my-sticky-last-column-table
-
-  thead tr:last-child th:last-child
-    background-color: #fff
-
-  td:last-child
-    background-color: #fff
-
-  th:last-child,
-  td:last-child
-    position: sticky
-    right: 0
-    z-index: 1
-</style>
+</script>

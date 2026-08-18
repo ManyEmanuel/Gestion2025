@@ -36,6 +36,7 @@
       :encabezadoId="encabezadoId"
       v-if="modulo == null ? false : modulo.leer"
     />
+    <SinPermisoBanner v-else modulo="Inventario general por expediente" />
     <ModalItem :encabezadoId="encabezadoId" />
     <ModalEditarItem :encabezadoId="encabezadoId" />
     <ModalAdjuntos :encabezadoId="encabezadoId" />
@@ -61,6 +62,7 @@ import ModalAdjuntos from "../components/ModalAdjuntos.vue";
 import ModalVisor from "../components/ModalVisor.vue";
 import ModalAmpliacion from "../components/ModalAmpliacion.vue";
 import ModalVerAmpliacion from "../components/ModalVerAmpliacion.vue";
+import SinPermisoBanner from "../../../components/SinPermisoBanner.vue";
 
 const $q = useQuasar();
 const inventarioStore = useInventarioAreaStore();

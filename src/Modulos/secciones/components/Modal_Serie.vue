@@ -5,7 +5,7 @@
     transition-show="scale"
     transition-hide="scale"
   >
-    <q-card style="width: 800px; max-width: 80vw">
+    <q-card flat bordered style="width: 800px; max-width: 80vw">
       <q-card-section class="row">
         <div class="text-h6">Series</div>
         <q-space />
@@ -41,12 +41,7 @@
           </div>
           <div class="col-12 justify-end">
             <div class="text-right q-gutter-xs">
-              <q-btn
-                color="red"
-                label="Cancelar"
-                @click="actualizarModal(false)"
-                icon="highlight_off"
-              />
+              <BtnCancelar @click="actualizarModal(false)" />
               <q-btn
                 :loading="loading"
                 type="submit"
@@ -73,6 +68,7 @@ import { ref } from "vue";
 import { storeToRefs } from "pinia";
 import { useSeriesStore } from "../../../stores/series_store";
 import { useSeccionStore } from "../../../stores/secciones_store";
+import BtnCancelar from "../../../components/BtnCancelar.vue";
 
 const serieStore = useSeriesStore();
 const seccionStore = useSeccionStore();

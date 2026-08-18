@@ -1,6 +1,6 @@
 <template>
   <div class="fullscreen flex flex-center bg-grey-2">
-    <q-card style="width: 360px; max-width: 90vw" class="q-pa-md">
+    <q-card flat bordered style="width: 360px; max-width: 90vw" class="q-pa-md">
       <q-card-section class="text-center">
         <div class="text-h6">Gestión Documental</div>
         <div class="text-caption text-grey-7">Archivo — acceso al sistema</div>

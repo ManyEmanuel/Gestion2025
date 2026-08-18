@@ -33,7 +33,7 @@
         </div>
       </div>
     </div>
-    <q-card>
+    <q-card flat bordered>
       <q-tabs v-model="tab" dense class="text-purple-ieen" align="justify">
         <q-tab name="C" label="Comúnes" />
         <q-tab name="S" label="Sustantivas" />
@@ -42,9 +42,11 @@
       <q-tab-panels v-model="tab" animated>
         <q-tab-panel name="C">
           <Tabla tipo="C" v-if="modulo == null ? false : modulo.leer" />
+          <SinPermisoBanner v-else modulo="Disposición documental" />
         </q-tab-panel>
         <q-tab-panel name="S">
           <Tabla tipo="S" v-if="modulo == null ? false : modulo.leer" />
+          <SinPermisoBanner v-else modulo="Disposición documental" />
         </q-tab-panel>
       </q-tab-panels>
     </q-card>
@@ -67,6 +69,7 @@ import Tabla from "../components/TablaComp.vue";
 import Modal from "../components/Modal_DispDoc.vue";
 import ModalEditar from "../components/Modal_DispDocEditar.vue";
 import { descargarReporte } from "../../../helpers/descargar_reporte";
+import SinPermisoBanner from "../../../components/SinPermisoBanner.vue";
 
 const $q = useQuasar();
 const disposicionDocStore = useDisposicionDocStore();

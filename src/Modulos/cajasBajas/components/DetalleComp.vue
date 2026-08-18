@@ -54,11 +54,10 @@
 <script setup>
 import { useQuasar } from "quasar";
 import { storeToRefs } from "pinia";
-import { onBeforeMount, ref, watch } from "vue";
+import { onBeforeMount, ref, watch, nextTick } from "vue";
 import { useDetalleCajaBaja } from "../../../stores/detalle_caja_baja_store";
 import { useInventarioAreaStore } from "../../../stores/inventario_area_store";
 import { useCajaBajaDocumentalStore } from "../../../stores/caja_baja_documental";
-import espera from "src/helpers/helper";
 
 const $q = useQuasar();
 const detalleCajaStore = useDetalleCajaBaja();
@@ -129,7 +128,6 @@ const agregarDetalle = async () => {
       caja.value.total_Paginas += element.total_Paginas;
     });
     caja.value.total_Expedientes = arrayDetalles.value.length;
-    await espera(30);
     limpiar();
     $q.loading.hide();
   }
@@ -138,7 +136,7 @@ const agregarDetalle = async () => {
 const limpiar = async () => {
   detalleCajaStore.initDetalle();
   inventarioId.value = null;
-  await espera(20);
+  await nextTick();
   myFormDet.value.reset();
 };
 </script>

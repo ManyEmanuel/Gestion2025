@@ -5,7 +5,7 @@
     transition-show="scale"
     transition-hide="scale"
   >
-    <q-card style="width: 800px; max-width: 80vw">
+    <q-card flat bordered style="width: 800px; max-width: 80vw">
       <q-card-section class="row">
         <div class="text-h6">Inventario general por expediente</div>
         <q-space />
@@ -152,12 +152,7 @@
           </div>
           <div class="col-12 justify-end">
             <div class="text-right q-gutter-xs">
-              <q-btn
-                color="red"
-                label="Cancelar"
-                @click="actualizarModal(false)"
-                icon="highlight_off"
-              />
+              <BtnCancelar @click="actualizarModal(false)" />
               <q-btn
                 :loading="loading"
                 type="submit"
@@ -188,6 +183,7 @@ import { useSeriesStore } from "../../../stores/series_store";
 import { useSubSerieStore } from "../../../stores/sub_series_store";
 import { useDisposicionDocStore } from "../../../stores/disposicion_documental_store";
 import { espera } from "../../../helpers/helper";
+import BtnCancelar from "../../../components/BtnCancelar.vue";
 const props = defineProps({
   encabezadoId: {
     type: Number,
@@ -278,16 +274,19 @@ const cargarInventario = async (val) => {
       (x) => x.value == `${val.seccion_Id}`
     );
     seccionId.value = Seccion_Id_Filtrada;
+    // TODO(ux-audit): revisar si este delay compensa una transición real o reactividad no otorgada
     await espera(130);
     const Serie_Id_Filtrada = listaSeries.value.find(
       (x) => x.value == `${val.serie_Id}`
     );
     serieId.value = Serie_Id_Filtrada;
+    // TODO(ux-audit): revisar si este delay compensa una transición real o reactividad no otorgada
     await espera(130);
     const Sub_Serie_Id_Filtrada = listaSubSeries.value.find(
       (x) => x.value == `${val.sub_Serie_Id}`
     );
     subSerieId.value = Sub_Serie_Id_Filtrada;
+    // TODO(ux-audit): revisar si este delay compensa una transición real o reactividad no otorgada
     await espera(150);
     loadDispDocumental();
     $q.loading.hide();

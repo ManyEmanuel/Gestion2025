@@ -1,6 +1,7 @@
 import { boot } from 'quasar/wrappers'
 
 import axios from 'axios'
+import { Notify } from 'quasar'
 
 // Be careful when using SSR for cross-request state pollution
 // due to creating a Singleton instance here;
@@ -21,19 +22,33 @@ api.interceptors.request.use((config) => {
   return config
 });
 
+// Router inyectado por el boot para poder redirigir a /login cuando expira la sesión.
+let routerInstance = null
+// Evita notificar/redirigir más de una vez cuando varias peticiones fallan a la vez con 401;
+// se libera al llegar a /login para que una sesión expirada posterior vuelva a avisar.
+let manejando401 = false
+
 api.interceptors.response.use(
   response => response,
   error => {
-    if (error.response.status === 401) {
-
-      console.log('Error 401: No autorizado');
+    if (error.response?.status === 401 && !manejando401) {
+      manejando401 = true
+      localStorage.removeItem('key')
+      localStorage.removeItem('usuario_nuevo')
+      Notify.create({ type: 'warning', message: 'Su sesión expiró. Vuelva a iniciar sesión.' })
+      routerInstance?.push('/login')
     }
     return Promise.reject(error);
   }
 );
 
 
-export default boot(({ app }) => {
+export default boot(({ app, router }) => {
+  routerInstance = router
+  router.afterEach((to) => {
+    if (to.path === '/login') manejando401 = false
+  })
+
   // for use inside Vue files (Options API) through this.$axios and this.$api
 
   app.config.globalProperties.$axios = axios

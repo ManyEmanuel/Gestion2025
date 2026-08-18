@@ -1,6 +1,6 @@
 <template>
   <div class="col-12 col-xs-6 col-md-4">
-    <q-card>
+    <q-card flat bordered>
       <q-tabs
         v-model="tab"
         dense
@@ -46,7 +46,7 @@
                     color="red-4"
                     icon="delete_outline"
                     size="10px"
-                    @click="eliminar(seccion.id)"
+                    @click="eliminar(seccion.id, seccion.descripcion)"
                   />
                 </div>
               </q-item-section>
@@ -84,7 +84,7 @@
                     color="red-4"
                     icon="delete_outline"
                     size="10px"
-                    @click="eliminar(seccion.id)"
+                    @click="eliminar(seccion.id, seccion.descripcion)"
                   />
                 </div>
               </q-item-section>
@@ -160,20 +160,17 @@ const editar = async (id) => {
   seccionStore.actualizarModal(true);
 };
 
-const eliminar = async (id) => {
+const eliminar = async (id, nombre) => {
   $q.dialog({
-    title: "Eliminación de registro",
-    message: "¿Esta seguro de eliminar el registro?",
-    icon: "Warning",
+    title: "Eliminar sección",
+    message: `¿Eliminar la sección "${nombre}"?`,
     persistent: true,
-    transitionShow: "scale",
-    transitionHide: "scale",
     ok: {
-      color: "positive",
-      label: "Sí! eliminar",
+      color: "negative",
+      label: "Eliminar",
     },
     cancel: {
-      color: "negative",
+      color: "grey",
       label: "Cancelar",
     },
   }).onOk(async () => {

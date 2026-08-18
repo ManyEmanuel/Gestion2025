@@ -5,7 +5,7 @@
     transition-show="scale"
     transition-hide="scale"
   >
-    <q-card style="width: 800px; max-width: 80vw">
+    <q-card flat bordered style="width: 800px; max-width: 80vw">
       <q-card-section class="row">
         <div class="text-h6">Solicitud de prestamo</div>
         <q-space />
@@ -85,12 +85,7 @@
       <q-card-section>
         <div class="col-12 justify-end">
           <div class="text-right q-gutter-xs">
-            <q-btn
-              color="red"
-              label="Cancelar"
-              @click="actualizarModal(false)"
-              icon="highlight_off"
-            />
+            <BtnCancelar @click="actualizarModal(false)" />
           </div>
         </div>
       </q-card-section>
@@ -102,6 +97,7 @@ import { useQuasar } from "quasar";
 import { storeToRefs } from "pinia";
 import { useCedulaPrestamoStore } from "../../../stores/cedula_prestamo_store";
 import Tabla from "../components/Tabla_Detalle_Ver.vue";
+import BtnCancelar from "../../../components/BtnCancelar.vue";
 
 const $q = useQuasar();
 const cedulaPrestamo = useCedulaPrestamoStore();

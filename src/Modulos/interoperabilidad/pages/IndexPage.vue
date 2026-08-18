@@ -19,7 +19,7 @@
             <q-card-section>
               <div class="text-subtitle1 text-purple-ieen">{{ tituloDe(e.esquema) }}</div>
               <div class="text-caption text-grey-8">{{ e.descripcion }}</div>
-              <q-chip dense size="sm" color="purple-ieen-3" text-color="white" class="q-mt-sm">
+              <q-chip dense size="sm" color="purple-ieen-1" text-color="white" class="q-mt-sm">
                 {{ e.esquema }} · v{{ e.version }}
               </q-chip>
             </q-card-section>
@@ -61,7 +61,7 @@
         </q-card-section>
       </q-card>
     </div>
-    <q-banner v-else class="bg-orange-2">No tiene permiso para exportar instrumentos.</q-banner>
+    <SinPermisoBanner v-else modulo="Interoperabilidad" />
   </q-page>
 </template>
 
@@ -71,6 +71,7 @@ import { onBeforeMount, computed } from "vue";
 import { storeToRefs } from "pinia";
 import { useAuthStore } from "../../../stores/auth_store";
 import { useInteroperabilidadStore } from "../../../stores/interoperabilidad_store";
+import SinPermisoBanner from "../../../components/SinPermisoBanner.vue";
 
 const $q = useQuasar();
 const authStore = useAuthStore();

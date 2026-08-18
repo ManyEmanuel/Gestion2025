@@ -5,7 +5,7 @@
     transition-show="scale"
     transition-hide="scale"
   >
-    <q-card style="width: 800px; max-width: 80vw">
+    <q-card flat bordered style="width: 800px; max-width: 80vw">
       <q-card-section class="row">
         <div class="text-h6">
           Registro de ampliación de vigencia del inventario
@@ -52,12 +52,7 @@
           </div>
           <div class="col-12 justify-end">
             <div class="text-right q-gutter-xs">
-              <q-btn
-                color="red"
-                label="Cancelar"
-                @click="actualizarModal(false)"
-                icon="highlight_off"
-              />
+              <BtnCancelar @click="actualizarModal(false)" />
               <q-btn
                 :loading="loading"
                 type="submit"
@@ -82,6 +77,7 @@ import { storeToRefs } from "pinia";
 import { useQuasar } from "quasar";
 import { ref } from "vue-demi";
 import { useInventarioAreaStore } from "../../../stores/inventario_area_store";
+import BtnCancelar from "../../../components/BtnCancelar.vue";
 
 const $q = useQuasar();
 const inventarioStore = useInventarioAreaStore();

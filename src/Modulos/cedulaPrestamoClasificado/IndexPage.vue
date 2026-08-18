@@ -29,7 +29,7 @@
     </div>
     <div class="row">
       <div class="col">
-        <q-card v-if="modulo == null ? false : modulo.leer">
+        <q-card flat bordered v-if="modulo == null ? false : modulo.leer">
           <q-tabs v-model="tab" class="text-purple-ieen" align="justify">
             <q-tab name="solicitudesArea" label="Solicitudes del area" />
             <q-tab name="SolicitudesAlArea" label="Solicitudes al area" />
@@ -47,6 +47,7 @@
             </q-tab-panel>
           </q-tab-panels>
         </q-card>
+        <SinPermisoBanner v-else modulo="Cédula de préstamo de expediente clasificados" />
       </div>
     </div>
     <Modal :clasificado="true" />
@@ -67,6 +68,7 @@ import Modal from "../cedulaPrestamo/components/ModalComp.vue";
 import ModalEditar from "../cedulaPrestamo/components/Modal_Editar.vue";
 import ModalVer from "../cedulaPrestamo/components/Modal_Ver.vue";
 import Tabla from "../cedulaPrestamo/components/TablaComp.vue";
+import SinPermisoBanner from "../../components/SinPermisoBanner.vue";
 const $q = useQuasar();
 const cedulaPrestamo = useCedulaPrestamoStore();
 const detalleCedulaStore = useDetalleCedulaPrestamoStore();

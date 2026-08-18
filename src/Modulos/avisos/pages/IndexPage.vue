@@ -55,11 +55,11 @@
         </template>
       </q-table>
     </div>
-    <q-banner v-else class="bg-orange-2">No tiene permiso para ver los avisos.</q-banner>
+    <SinPermisoBanner v-else modulo="Avisos al Archivo General" />
 
     <!-- Marcar enviado -->
     <q-dialog v-model="dialogoEnviar" persistent>
-      <q-card style="width: 500px; max-width: 90vw">
+      <q-card flat bordered style="width: 500px; max-width: 90vw">
         <q-card-section class="row items-center">
           <div class="text-h6">Marcar aviso como enviado</div>
           <q-space />
@@ -70,7 +70,7 @@
             <q-input v-model="acuse" label="Acuse / referencia del envío" hint="p.ej. oficio o folio de acuse"
               lazy-rules :rules="[(v) => !!v || 'El acuse es requerido']" autofocus />
             <div class="text-right q-mt-md q-gutter-sm">
-              <q-btn color="red" label="Cancelar" icon="highlight_off" v-close-popup />
+              <BtnCancelar />
               <q-btn :loading="guardando" type="submit" color="secondary" label="Confirmar" icon="save" />
             </div>
           </q-form>
@@ -86,6 +86,8 @@ import { onBeforeMount, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { useAuthStore } from "../../../stores/auth_store";
 import { useAvisosStore } from "../../../stores/avisos_store";
+import SinPermisoBanner from "../../../components/SinPermisoBanner.vue";
+import BtnCancelar from "../../../components/BtnCancelar.vue";
 
 const $q = useQuasar();
 const authStore = useAuthStore();

@@ -12,7 +12,7 @@
     </div>
     <div class="row">
       <div class="col">
-        <q-card v-if="modulo == null ? false : modulo.leer">
+        <q-card flat bordered v-if="modulo == null ? false : modulo.leer">
           <q-tabs v-model="tab" class="text-purple-ieen" align="justify">
             <q-tab name="concentracion" label="Concentración" />
             <q-tab name="historico" label="Histórico" />
@@ -28,6 +28,7 @@
             </q-tab-panel>
           </q-tab-panels>
         </q-card>
+        <SinPermisoBanner v-else modulo="Inventario general AI" />
       </div>
     </div>
     <ModalComp />
@@ -48,6 +49,7 @@ import TablaConcentracionComp from "../components/TablaConcentracionComp.vue";
 import TablaHistoricoComp from "../components/TablaHistoricoComp.vue";
 import ModalAdjuntos from "../components/ModalAdjuntos.vue";
 import ModalVisor from "../components/ModalVisor.vue";
+import SinPermisoBanner from "../../../components/SinPermisoBanner.vue";
 
 const $q = useQuasar();
 const inventarioStore = useInventarioAreaAIStore();

@@ -26,6 +26,7 @@
       </div>
     </div>
     <TablaComp v-if="modulo == null ? false : modulo.leer" />
+    <SinPermisoBanner v-else modulo="Transferencias primarias" />
     <ModalComp />
   </q-page>
 </template>
@@ -38,7 +39,7 @@ import { onBeforeMount } from "vue";
 import { storeToRefs } from "pinia";
 import TablaComp from "../components/TablaComp.vue";
 import ModalComp from "../components/ModalComp.vue";
-import { espera } from "../../../helpers/helper";
+import SinPermisoBanner from "../../../components/SinPermisoBanner.vue";
 
 const $q = useQuasar();
 const authStore = useAuthStore();
@@ -64,9 +65,8 @@ const leerPermisos = async () => {
   $q.loading.hide();
 };
 
-const actualizarModal = async (valor) => {
+const actualizarModal = (valor) => {
   $q.loading.show();
-  await espera();
   transferenciaPrimariaStore.initEncabezado();
   transferenciaPrimariaStore.actualizarModal(valor);
   transferenciaPrimariaStore.updateEditar(false);

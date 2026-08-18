@@ -6,7 +6,7 @@
           <q-breadcrumbs>
             <q-breadcrumbs-el icon="home" to="/" />
             <q-breadcrumbs-el
-              label="Trasnferencias primarias AI"
+              label="Transferencias primarias AI"
               icon="group"
             />
           </q-breadcrumbs>
@@ -14,6 +14,7 @@
       </div>
     </div>
     <TablaComp v-if="modulo == null ? false : modulo.leer" />
+    <SinPermisoBanner v-else modulo="Transferencias primarias AI" />
     <ModalComp />
   </q-page>
 </template>
@@ -25,6 +26,7 @@ import { storeToRefs } from "pinia";
 import { espera } from "../../../helpers/helper";
 import TablaComp from "../components/TablaComp.vue";
 import ModalComp from "../components/ModalComp.vue";
+import SinPermisoBanner from "../../../components/SinPermisoBanner.vue";
 
 const $q = useQuasar();
 const authStore = useAuthStore();

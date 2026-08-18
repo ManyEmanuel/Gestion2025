@@ -86,7 +86,7 @@
 <script setup>
 import { useQuasar } from "quasar";
 import { storeToRefs } from "pinia";
-import { onBeforeMount, ref, watch } from "vue";
+import { onBeforeMount, ref, watch, nextTick } from "vue";
 import { useDetalleCajaBajaStore } from "../../../stores/detalle_caja_baja_store";
 import { useInventarioAreaStore } from "../../../stores/inventario_area_store";
 import { useCajaBajaDocumentalStore } from "../../../stores/caja_baja_documental";
@@ -189,7 +189,7 @@ const limpiar = async () => {
   $q.loading.show();
   detalleStore.init_detalle();
   inventarioId.value = null;
-  await espera(20);
+  await nextTick();
   myFormDet.value.reset();
   $q.loading.hide();
 };
@@ -237,6 +237,7 @@ const agregarDetalle = async () => {
         caja.value.total_Paginas = 0;
         caja.value.total_Paginas += inventario.value.total_Paginas;
         caja.value.total_Expedientes = arrayDetalles.value.length;
+        // TODO(ux-audit): revisar si este delay compensa una transición real o reactividad no otorgada
         await espera(100);
         limpiar();
       } else {
@@ -302,6 +303,7 @@ const agregarDetalle = async () => {
           detalleStore.addDetalle({ ...detalle.value });
           caja.value.total_Paginas += inventario.value.total_Paginas;
           caja.value.total_Expedientes = arrayDetalles.value.length;
+          // TODO(ux-audit): revisar si este delay compensa una transición real o reactividad no otorgada
           await espera(100);
           total += 1;
         }
@@ -312,6 +314,7 @@ const agregarDetalle = async () => {
         type: "positive",
         message: `Se agregaron ${total} expediente(s)`,
       });
+      // TODO(ux-audit): revisar si este delay compensa una transición real o reactividad no otorgada
       await espera(100);
     }
     limpiar();

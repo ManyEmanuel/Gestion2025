@@ -8,7 +8,7 @@
         :loading="loadindg"
         row-key="id"
         rows-per-page-label="Filas por pagina"
-        no-data-label="No hay registros"
+        no-data-label="No hay transferencias secundarias registradas. Usa &quot;Nuevo&quot; para crear la primera."
         class="my-sticky-last-column-table"
       >
         <template v-slot:top>
@@ -83,7 +83,6 @@ import { useTransferenciaSecundariaEncabezadoStore } from "../../../stores/trans
 import { onBeforeMount, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
-import { espera } from "../../../helpers/helper";
 import ActosDialog from "../../../components/ActosDialog.vue";
 
 const mostrarActos = ref(false);
@@ -204,7 +203,6 @@ const pagination = ref({
 const ver = async (id) => {
   $q.loading.show();
   await transferenciaSecundariaStore.loadEncabezado(id);
-  await espera(50);
   $q.loading.hide();
   transferenciaSecundariaStore.actualizarModalVer(true);
 };
@@ -216,19 +214,4 @@ const toCajas = async (id) => {
     params: { transferenciaId: id },
   });
 };
-</script>
-<style lang="sass">
-.my-sticky-last-column-table
-
-  thead tr:last-child th:last-child
-    background-color: #fff
-
-  td:last-child
-    background-color: #fff
-
-  th:last-child,
-  td:last-child
-    position: sticky
-    right: 0
-    z-index: 1
-</style>
+</script>

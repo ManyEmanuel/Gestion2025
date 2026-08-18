@@ -26,6 +26,7 @@
       </div>
     </div>
     <TablaComp v-if="modulo == null ? false : modulo.leer" />
+    <SinPermisoBanner v-else modulo="Transferencias secundarias" />
     <ModalComp />
     <ModalVerComp />
   </q-page>
@@ -37,10 +38,10 @@ import { storeToRefs } from "pinia";
 import { useAreaStore } from "../../../stores/areas_store";
 import { useAuthStore } from "../../../stores/auth_store";
 import { useTransferenciaSecundariaEncabezadoStore } from "../../../stores/transferencia_secundaria_encabezado_store";
-import { espera } from "../../../helpers/helper";
 import TablaComp from "../components/TablaComp.vue";
 import ModalComp from "../components/ModalComp.vue";
 import ModalVerComp from "../components/ModalVerComp.vue";
+import SinPermisoBanner from "../../../components/SinPermisoBanner.vue";
 
 const $q = useQuasar();
 const authStore = useAuthStore();
@@ -66,7 +67,6 @@ const leerPermisos = async () => {
 const actualizarModal = async (valor) => {
   $q.loading.show();
   transferenciaSecundariaStore.initEncabezado();
-  await espera();
   await areaStore.loadListaAreas();
   await transferenciaSecundariaStore.loadArea();
   await transferenciaSecundariaStore.loadEnlace();

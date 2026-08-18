@@ -7,7 +7,7 @@
         :filter="filter"
         row-key="id"
         rows-per-page-label="Filas por pagina"
-        no-data-label="No hay registros"
+        no-data-label="No hay expedientes agregados. Usa el botón Agregar para añadir el primero."
         class="my-sticky-last-column-table"
       >
         <template v-slot:top-right>
@@ -29,16 +29,13 @@
               <div v-if="col.name === 'id'">
                 <!-- Corte: el backend nuevo no modela el borrado de un expediente del préstamo; se
                      deshabilita. (El alta/edición del detalle está diferida con inventarioAreaAI.) -->
-                <q-btn
+                <BtnEliminar
                   v-if="false"
-                  flat
-                  round
-                  color="purple-ieen"
-                  icon="delete"
-                  @click="eliminar(col.value)"
-                >
-                  <q-tooltip>Eliminar registro</q-tooltip>
-                </q-btn>
+                  label="Eliminar registro"
+                  titulo="Eliminación de registro"
+                  :mensaje="mensajeEliminar(props.row)"
+                  @confirmado="eliminar(props.row.id)"
+                />
               </div>
               <label v-else>{{ col.value }}</label>
             </q-td>
@@ -54,6 +51,7 @@ import { useQuasar } from "quasar";
 import { ref, onBeforeMount } from "vue";
 import { useSolicitudPrestamoAiStore } from "../../../stores/solicitud_prestamo_ai_store";
 import { useDetalleSolicitudAISotre } from "../../../stores/detalle_solicitud_prestamo_ai_store";
+import BtnEliminar from "../../../components/BtnEliminar.vue";
 
 const $q = useQuasar();
 const solicitudStore = useSolicitudPrestamoAiStore();
@@ -98,57 +96,28 @@ const columns = [
   },
 ];
 
+const mensajeEliminar = (row) =>
+  `¿Eliminar el expediente con clave "${row.Inventario_Clave_Clasificacion}"?`;
+
 const eliminar = async (id) => {
-  $q.dialog({
-    title: "Eliminación de registro",
-    message: "¿Esta seguro de eliminar el registro?",
-    icon: "Warning",
-    persistent: true,
-    transitionShow: "scale",
-    transitionHide: "scale",
-    ok: {
-      color: "positive",
-      label: "Sí! eliminar",
-    },
-    cancel: {
-      color: "negative",
-      label: "Cancelar",
-    },
-  }).onOk(async () => {
-    $q.loading.show();
-    let resp = null;
-    if (isEditar.value == true) {
-      resp = await detalleStore.delete(solicitud.value.id, id);
-      if (resp.success) {
-        $q.notify({
-          type: "positive",
-          message: resp.data,
-        });
-      } else {
-        $q.notify({
-          type: "negative",
-          message: resp.data,
-        });
-      }
+  $q.loading.show();
+  let resp = null;
+  if (isEditar.value == true) {
+    resp = await detalleStore.delete(solicitud.value.id, id);
+    if (resp.success) {
+      $q.notify({
+        type: "positive",
+        message: resp.data,
+      });
     } else {
-      detalleStore.delete_array(id);
+      $q.notify({
+        type: "negative",
+        message: resp.data,
+      });
     }
-    $q.loading.hide();
-  });
+  } else {
+    detalleStore.delete_array(id);
+  }
+  $q.loading.hide();
 };
 </script>
-<style lang="sass">
-.my-sticky-last-column-table
-
-  thead tr:last-child th:last-child
-    background-color: #fff
-
-  td:last-child
-    background-color: #fff
-
-  th:last-child,
-  td:last-child
-    position: sticky
-    right: 0
-    z-index: 1
-</style>

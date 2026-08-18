@@ -9,7 +9,7 @@
         :loading="isLoading"
         row-key="id"
         rows-per-page-label="Filas por pagina"
-        no-data-label="No hay registros"
+        no-data-label="No hay solicitudes registradas. Usa el botón Nuevo para crear la primera."
         class="my-sticky-last-column-table"
       >
         <template v-slot:top-right>
@@ -188,19 +188,4 @@ const verAceptado = async (id) => {
     params: { encabezadoId: id, estatus: "Aprobado" },
   });
 };
-</script>
-<style lang="sass">
-.my-sticky-last-column-table
-
-  thead tr:last-child th:last-child
-    background-color: #fff
-
-  td:last-child
-    background-color: #fff
-
-  th:last-child,
-  td:last-child
-    position: sticky
-    right: 0
-    z-index: 1
-</style>
+</script>

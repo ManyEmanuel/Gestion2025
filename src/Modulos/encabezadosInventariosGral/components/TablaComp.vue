@@ -8,7 +8,7 @@
         :loading="loadindg"
         row-key="id"
         rows-per-page-label="Filas por pagina"
-        no-data-label="No hay registros"
+        no-data-label="No hay inventarios registrados. Usa el botón Nuevo para crear el primero."
         class="my-sticky-last-column-table"
       >
         <template v-slot:top>
@@ -90,7 +90,6 @@ import { useRouter } from "vue-router";
 import { useEncabezadoInventarioStore } from "../../../stores/encabezado_inventario_area";
 import { useAreaStore } from "../../../stores/areas_store";
 import { useAuthStore } from "../../../stores/auth_store";
-import { espera } from "../../../helpers/helper";
 
 const $q = useQuasar();
 const router = useRouter();
@@ -255,7 +254,6 @@ const ver = async (id) => {
   $q.loading.show();
   await encabezadoInventariosStore.loadEncabezado(id);
   await areaStore.loadListaAreas();
-  await espera();
   encabezadoInventariosStore.actualizarModalGral(true);
   $q.loading.hide();
 };
@@ -268,20 +266,5 @@ const toDetalle = (id) => {
     },
   });
 };
-</script>
-<style lang="sass">
-.my-sticky-last-column-table
-
-  thead tr:last-child th:last-child
-    background-color: #fff
-
-  td:last-child
-    background-color: #fff
-
-  th:last-child,
-  td:last-child
-    position: sticky
-    right: 0
-    z-index: 1
-</style>
+</script>
 

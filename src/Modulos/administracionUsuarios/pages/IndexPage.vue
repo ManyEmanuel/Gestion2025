@@ -1,6 +1,10 @@
 <template>
   <q-page class="q-pa-md">
     <div v-if="modulo && modulo.leer">
+      <q-breadcrumbs class="q-mb-sm">
+        <q-breadcrumbs-el icon="home" to="/" />
+        <q-breadcrumbs-el label="Usuarios" icon="manage_accounts" />
+      </q-breadcrumbs>
       <div class="row items-center q-mb-md">
         <div class="text-h6 text-purple-ieen">Administración de usuarios</div>
         <q-space />
@@ -20,7 +24,7 @@
         row-key="id"
         :loading="cargando"
         rows-per-page-label="Filas por página"
-        no-data-label="No hay usuarios"
+        no-data-label="No hay usuarios registrados. Usa &quot;Nuevo usuario&quot; para crear el primero."
       >
         <template v-slot:top-right>
           <q-input dense debounce="300" v-model="filter" placeholder="Buscar..">
@@ -84,11 +88,11 @@
         </template>
       </q-table>
     </div>
-    <div v-else class="text-grey q-pa-lg">No tiene permisos para ver este módulo.</div>
+    <SinPermisoBanner v-else modulo="Administración de usuarios" />
 
     <!-- Alta / edición -->
     <q-dialog v-model="mostrarDialog" persistent>
-      <q-card style="min-width: 440px">
+      <q-card flat bordered style="min-width: 440px">
         <q-card-section class="text-h6">
           {{ editando ? "Editar usuario" : "Nuevo usuario" }}
         </q-card-section>
@@ -122,7 +126,7 @@
           />
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="Cancelar" v-close-popup />
+          <BtnCancelar />
           <q-btn color="purple-ieen" label="Guardar" :loading="guardando" @click="guardar" />
         </q-card-actions>
       </q-card>
@@ -130,7 +134,7 @@
 
     <!-- Contraseña temporal (se muestra UNA vez) -->
     <q-dialog v-model="mostrarTemp" persistent>
-      <q-card style="min-width: 380px">
+      <q-card flat bordered style="min-width: 380px">
         <q-card-section class="text-h6">Contraseña temporal</q-card-section>
         <q-card-section>
           <div class="text-caption text-grey-7 q-mb-sm">
@@ -158,6 +162,8 @@ import { storeToRefs } from "pinia";
 import { useQuasar } from "quasar";
 import { useAuthStore } from "../../../stores/auth_store";
 import { useUsuariosStore } from "../../../stores/usuarios_store";
+import SinPermisoBanner from "../../../components/SinPermisoBanner.vue";
+import BtnCancelar from "../../../components/BtnCancelar.vue";
 
 const $q = useQuasar();
 const authStore = useAuthStore();
@@ -247,11 +253,22 @@ const guardar = async () => {
   }
 };
 
-const alternarEstado = async (row) => {
-  $q.loading.show();
-  const resp = await usuariosStore.cambiarEstado(row.id, !row.activo);
-  $q.loading.hide();
-  $q.notify({ type: resp.success ? "positive" : "negative", message: resp.data });
+const alternarEstado = (row) => {
+  const activar = !row.activo;
+  $q.dialog({
+    title: activar ? "Activar usuario" : "Desactivar usuario",
+    message: activar
+      ? `¿Activar a "${row.userName}"? Podrá volver a iniciar sesión.`
+      : `¿Desactivar a "${row.userName}"? No podrá iniciar sesión hasta que se reactive.`,
+    cancel: { label: "Cancelar", color: "grey" },
+    ok: { label: activar ? "Activar" : "Desactivar", color: activar ? "positive" : "negative" },
+    persistent: true,
+  }).onOk(async () => {
+    $q.loading.show();
+    const resp = await usuariosStore.cambiarEstado(row.id, activar);
+    $q.loading.hide();
+    $q.notify({ type: resp.success ? "positive" : "negative", message: resp.data });
+  });
 };
 
 const confirmarReset = (row) => {

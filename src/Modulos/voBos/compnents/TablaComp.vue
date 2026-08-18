@@ -8,7 +8,7 @@
         :loading="loading"
         row-key="id"
         rows-per-page-label="Filas por pagina"
-        no-data-label="No hay registros"
+        no-data-label="No hay vistos buenos registrados. Usa &quot;Nuevo&quot; para crear el primero."
         class="my-sticky-last-column-table"
       >
         <template v-slot:top-right>
@@ -38,16 +38,13 @@
                 >
                   <q-tooltip>Editar registro</q-tooltip>
                 </q-btn>
-                <q-btn
+                <BtnEliminar
                   v-if="modulo.eliminar"
-                  flat
-                  round
-                  color="purple-ieen"
-                  icon="delete"
-                  @click="eliminar(col.value)"
-                >
-                  <q-tooltip>Eliminar registro</q-tooltip>
-                </q-btn>
+                  label="Eliminar visto bueno"
+                  titulo="Eliminar visto bueno"
+                  :mensaje="mensajeEliminar(props.row)"
+                  @confirmado="eliminarVoBo(col.value)"
+                />
               </div>
               <label v-else>{{ col.value }}</label>
             </q-td>
@@ -64,6 +61,7 @@ import { useQuasar } from "quasar";
 import { onMounted, ref } from "vue";
 import { useVistosBuenosStore } from "../../../stores/visto_bueno_store";
 import { useAuthStore } from "../../../stores/auth_store";
+import BtnEliminar from "../../../components/BtnEliminar.vue";
 
 import { espera } from "../../../helpers/helper";
 
@@ -118,53 +116,12 @@ const editar = async (id) => {
   $q.loading.hide();
 };
 
-const eliminar = async (id) => {
-  $q.dialog({
-    title: "Eliminación de registro",
-    message: "¿Esta seguro de eliminar el registro?",
-    icon: "Warning",
-    persistent: true,
-    transitionShow: "scale",
-    transitionHide: "scale",
-    ok: {
-      color: "positive",
-      label: "Sí! eliminar",
-    },
-    cancel: {
-      color: "negative",
-      label: "Cancelar",
-    },
-  }).onOk(async () => {
-    $q.loading.show();
-    const resp = await vistoStore.deleteSerie(id);
-    if (resp.success) {
-      $q.loading.hide();
-      $q.notify({
-        type: "positive",
-        message: resp.data,
-      });
-    } else {
-      $q.loading.hide();
-      $q.notify({
-        type: "negative",
-        message: resp.data,
-      });
-    }
-  });
+const mensajeEliminar = (row) => `¿Eliminar el visto bueno de "${row.empleado}"?`;
+
+const eliminarVoBo = async (id) => {
+  $q.loading.show();
+  const resp = await vistoStore.deleteSerie(id);
+  $q.loading.hide();
+  $q.notify({ type: resp.success ? "positive" : "negative", message: resp.data });
 };
 </script>
-<style lang="sass">
-.my-sticky-last-column-table
-
-  thead tr:last-child th:last-child
-    background-color: #fff
-
-  td:last-child
-    background-color: #fff
-
-  th:last-child,
-  td:last-child
-    position: sticky
-    right: 0
-    z-index: 1
-</style>

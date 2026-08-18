@@ -5,7 +5,7 @@
     transition-show="scale"
     transition-hide="scale"
   >
-    <q-card style="width: 800px; max-width: 80vw">
+    <q-card flat bordered style="width: 800px; max-width: 80vw">
       <q-card-section class="row">
         <div class="text-h6">Disposición documental</div>
         <q-space />
@@ -126,12 +126,7 @@
           </div>
           <div class="col-12 justify-end">
             <div class="text-right q-gutter-xs">
-              <q-btn
-                color="red"
-                label="Cancelar"
-                @click="actualizarModal(false)"
-                icon="highlight_off"
-              />
+              <BtnCancelar @click="actualizarModal(false)" />
               <q-btn
                 :loading="loading"
                 type="submit"
@@ -158,6 +153,7 @@ import { ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { useDisposicionDocStore } from "../../../stores/disposicion_documental_store";
 import { useSeccionStore } from "../../../stores/secciones_store";
+import BtnCancelar from "../../../components/BtnCancelar.vue";
 import { useSeriesStore } from "../../../stores/series_store";
 import { useSubSerieStore } from "../../../stores/sub_series_store";
 import { espera } from "../../../helpers/helper";
@@ -259,11 +255,13 @@ const cargaDisposicion = async (val) => {
       (x) => x.value == `${val.seccion_Id}`
     );
     seccionIdE.value = Seccion_Id_Filtrada;
+    // TODO(ux-audit): revisar si este delay compensa una transición real o reactividad no otorgada
     await espera();
     const Serie_Id_Filtrada = seriesStore.listaSeries.find(
       (x) => x.value == `${val.serie_Id}`
     );
     serieIdE.value = Serie_Id_Filtrada;
+    // TODO(ux-audit): revisar si este delay compensa una transición real o reactividad no otorgada
     await espera();
     if (val.subSerie_Id != null) {
       const subSerie_Id_Filtrada = subSerieStore.listaSubSeries.find(

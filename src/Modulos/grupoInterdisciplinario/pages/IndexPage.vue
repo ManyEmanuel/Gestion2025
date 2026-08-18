@@ -24,11 +24,11 @@
         <template v-slot:no-data><div class="full-width row flex-center q-pa-md text-grey-7">Sin grupos registrados.</div></template>
       </q-table>
     </div>
-    <q-banner v-else class="bg-orange-2">No tiene permiso para ver los grupos.</q-banner>
+    <SinPermisoBanner v-else modulo="Grupo interdisciplinario" />
 
     <!-- Dialogo Grupo -->
     <q-dialog v-model="dlgGrupo" persistent>
-      <q-card style="width: 640px; max-width: 92vw">
+      <q-card flat bordered style="width: 640px; max-width: 92vw">
         <q-card-section class="row items-center"><div class="text-h6">{{ grupoEdit.id ? 'Editar' : 'Nuevo' }} grupo</div><q-space /><q-btn icon="close" flat round dense v-close-popup /></q-card-section>
         <q-card-section><q-form @submit="guardarGrupo">
           <q-input v-model="grupoEdit.nombre" label="Nombre" lazy-rules :rules="[(v) => !!v || 'Requerido']" />
@@ -37,14 +37,14 @@
             <div class="col-6"><q-input v-model="grupoEdit.vigenciaHasta" label="Vigencia hasta" type="date" stack-label /></div>
           </div>
           <q-input v-model="grupoEdit.descripcion" label="Descripción" type="textarea" autogrow />
-          <div class="text-right q-mt-md q-gutter-sm"><q-btn color="red" label="Cancelar" icon="highlight_off" v-close-popup /><q-btn :loading="guardando" type="submit" color="secondary" label="Guardar" icon="save" /></div>
+          <div class="text-right q-mt-md q-gutter-sm"><BtnCancelar /><q-btn :loading="guardando" type="submit" color="secondary" label="Guardar" icon="save" /></div>
         </q-form></q-card-section>
       </q-card>
     </q-dialog>
 
     <!-- Dialogo Integrantes -->
     <q-dialog v-model="dlgIntegrantes">
-      <q-card style="width: 720px; max-width: 92vw">
+      <q-card flat bordered style="width: 720px; max-width: 92vw">
         <q-card-section class="row items-center"><div class="text-h6">Integrantes — {{ grupo && grupo.nombre }}</div><q-space /><q-btn icon="close" flat round dense v-close-popup /></q-card-section>
         <q-card-section>
           <q-list bordered separator v-if="grupo && grupo.integrantes.length">
@@ -75,6 +75,8 @@ import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { useAuthStore } from "../../../stores/auth_store";
 import { useGrupoStore } from "../../../stores/grupo_interdisciplinario_store";
+import SinPermisoBanner from "../../../components/SinPermisoBanner.vue";
+import BtnCancelar from "../../../components/BtnCancelar.vue";
 
 const $q = useQuasar();
 const router = useRouter();

@@ -5,7 +5,7 @@
     transition-show="scale"
     transition-hide="scale"
   >
-    <q-card style="width: 800px; max-width: 80vw">
+    <q-card flat bordered style="width: 800px; max-width: 80vw">
       <q-card-section class="row">
         <div class="text-h6">Inventario general por expediente</div>
         <q-space />
@@ -145,12 +145,7 @@
       <q-card-section>
         <div class="col-12 justify-end">
           <div class="text-right q-gutter-xs">
-            <q-btn
-              color="red"
-              label="Cancelar"
-              @click="actualizarModal(false)"
-              icon="highlight_off"
-            />
+            <BtnCancelar @click="actualizarModal(false)" />
             <q-btn
               :loading="loading"
               type="button"
@@ -175,6 +170,7 @@ import { useQuasar } from "quasar";
 import { storeToRefs } from "pinia";
 import { ref, toRef } from "vue";
 import { useInventarioAreaAIStore } from "../../../stores/inventario_area_ai_store";
+import BtnCancelar from "../../../components/BtnCancelar.vue";
 
 const $q = useQuasar();
 const inventarioStore = useInventarioAreaAIStore();

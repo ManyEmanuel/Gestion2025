@@ -5,7 +5,7 @@
     transition-show="scale"
     transition-hide="scale"
   >
-    <q-card style="width: 800px; max-width: 80vw">
+    <q-card flat bordered style="width: 800px; max-width: 80vw">
       <q-card-section class="row">
         <div class="text-h6">Solicitud de prestamo archivo institucional</div>
         <q-space />
@@ -95,12 +95,7 @@
       <q-card-section>
         <div class="col-12 justify-end">
           <div class="text-right q-gutter-xs">
-            <q-btn
-              color="red"
-              label="Cancelar"
-              @click="actualizarModal"
-              icon="highlight_off"
-            />
+            <BtnCancelar @click="actualizarModal" />
             <q-btn
               :loading="loading"
               type="button"
@@ -131,6 +126,7 @@ import { useAreaStore } from "../../../stores/areas_store";
 
 import RegistroDetalleComp from "../components/RegistroDetalleComp.vue";
 import TablaDetalleComp from "../components/TablaDetalleComp.vue";
+import BtnCancelar from "../../../components/BtnCancelar.vue";
 
 const $q = useQuasar();
 const solicitudPrestamoStore = useSolicitudPrestamoAiStore();

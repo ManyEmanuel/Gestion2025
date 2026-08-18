@@ -5,7 +5,7 @@
     transition-show="scale"
     transition-hide="scale"
   >
-    <q-card style="width: 800px; max-width: 80vw">
+    <q-card flat bordered style="width: 800px; max-width: 80vw">
       <q-card-section class="row">
         <div class="text-h6">
           Archivos adjuntos de {{ inventario.clave_Clasificacion }}
@@ -29,7 +29,7 @@
             :loading="loading"
             row-key="id"
             rows-per-page-label="Filas por pagina"
-            no-data-label="No hay registros"
+            no-data-label="No hay archivos adjuntos para este expediente."
           >
             <template v-slot:top>
               <q-btn

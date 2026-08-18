@@ -57,24 +57,24 @@
         </q-tab-panel>
       </q-tab-panels>
     </div>
-    <q-banner v-else class="bg-orange-2">No tiene permiso para ver la planeación.</q-banner>
+    <SinPermisoBanner v-else modulo="PADA e informe anual" />
 
     <!-- Dialogo Programa -->
     <q-dialog v-model="dlgPrograma" persistent>
-      <q-card style="width: 640px; max-width: 92vw">
+      <q-card flat bordered style="width: 640px; max-width: 92vw">
         <q-card-section class="row items-center"><div class="text-h6">{{ progEdit.id ? 'Editar' : 'Nuevo' }} programa</div><q-space /><q-btn icon="close" flat round dense v-close-popup /></q-card-section>
         <q-card-section><q-form @submit="guardarPrograma">
           <q-input v-model="progEdit.anio" label="Año" type="number" lazy-rules :rules="[(v) => !!v || 'Requerido']" />
           <q-input v-model="progEdit.objetivos" label="Objetivos" type="textarea" autogrow lazy-rules :rules="[(v) => !!v || 'Requerido']" />
           <q-input v-model="progEdit.alcance" label="Alcance" type="textarea" autogrow />
-          <div class="text-right q-mt-md q-gutter-sm"><q-btn color="red" label="Cancelar" icon="highlight_off" v-close-popup /><q-btn :loading="guardando" type="submit" color="secondary" label="Guardar" icon="save" /></div>
+          <div class="text-right q-mt-md q-gutter-sm"><BtnCancelar /><q-btn :loading="guardando" type="submit" color="secondary" label="Guardar" icon="save" /></div>
         </q-form></q-card-section>
       </q-card>
     </q-dialog>
 
     <!-- Dialogo Actividades -->
     <q-dialog v-model="dlgActividades">
-      <q-card style="width: 860px; max-width: 94vw">
+      <q-card flat bordered style="width: 860px; max-width: 94vw">
         <q-card-section class="row items-center"><div class="text-h6">Actividades — {{ programa && programa.anio }}</div><q-space /><q-btn icon="close" flat round dense v-close-popup /></q-card-section>
         <q-card-section>
           <q-list bordered separator v-if="programa && programa.actividades.length">
@@ -108,7 +108,7 @@
 
     <!-- Dialogo Informe -->
     <q-dialog v-model="dlgInforme" persistent>
-      <q-card style="width: 660px; max-width: 92vw">
+      <q-card flat bordered style="width: 660px; max-width: 92vw">
         <q-card-section class="row items-center"><div class="text-h6">{{ infEdit.id ? 'Editar' : 'Nuevo' }} informe</div><q-space /><q-btn icon="close" flat round dense v-close-popup /></q-card-section>
         <q-card-section><q-form @submit="guardarInforme">
           <q-input v-model="infEdit.anio" label="Año" type="number" lazy-rules :rules="[(v) => !!v || 'Requerido']" />
@@ -116,18 +116,18 @@
           <q-input v-model="infEdit.resultados" label="Resultados" type="textarea" autogrow lazy-rules :rules="[(v) => !!v || 'Requerido']" />
           <q-input v-model="infEdit.porcentajeCumplimiento" label="% de cumplimiento" type="number" />
           <q-input v-model="infEdit.observaciones" label="Observaciones" type="textarea" autogrow />
-          <div class="text-right q-mt-md q-gutter-sm"><q-btn color="red" label="Cancelar" icon="highlight_off" v-close-popup /><q-btn :loading="guardando" type="submit" color="secondary" label="Guardar" icon="save" /></div>
+          <div class="text-right q-mt-md q-gutter-sm"><BtnCancelar /><q-btn :loading="guardando" type="submit" color="secondary" label="Guardar" icon="save" /></div>
         </q-form></q-card-section>
       </q-card>
     </q-dialog>
 
     <!-- Dialogo Publicar -->
     <q-dialog v-model="dlgPublicar" persistent>
-      <q-card style="width: 520px; max-width: 90vw">
+      <q-card flat bordered style="width: 520px; max-width: 90vw">
         <q-card-section class="row items-center"><div class="text-h6">Publicar</div><q-space /><q-btn icon="close" flat round dense v-close-popup /></q-card-section>
         <q-card-section><q-form @submit="confirmarPublicar">
           <q-input v-model="urlPub" label="URL de publicación en el portal" lazy-rules :rules="[(v) => !!v || 'Requerido']" autofocus />
-          <div class="text-right q-mt-md q-gutter-sm"><q-btn color="red" label="Cancelar" icon="highlight_off" v-close-popup /><q-btn :loading="guardando" type="submit" color="deep-purple" label="Publicar" icon="publish" /></div>
+          <div class="text-right q-mt-md q-gutter-sm"><BtnCancelar /><q-btn :loading="guardando" type="submit" color="deep-purple" label="Publicar" icon="publish" /></div>
         </q-form></q-card-section>
       </q-card>
     </q-dialog>
@@ -140,6 +140,8 @@ import { onBeforeMount, ref, computed } from "vue";
 import { storeToRefs } from "pinia";
 import { useAuthStore } from "../../../stores/auth_store";
 import { usePadaStore } from "../../../stores/pada_store";
+import SinPermisoBanner from "../../../components/SinPermisoBanner.vue";
+import BtnCancelar from "../../../components/BtnCancelar.vue";
 
 const $q = useQuasar();
 const authStore = useAuthStore();

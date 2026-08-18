@@ -1,6 +1,6 @@
 <template>
   <q-dialog :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)">
-    <q-card style="width: 960px; max-width: 95vw">
+    <q-card flat bordered style="width: 960px; max-width: 95vw">
       <q-card-section class="row items-center bg-purple-ieen text-white">
         <div class="text-h6">Actos de disposición {{ nombre ? '— ' + nombre : '' }}</div>
         <q-space />
@@ -51,30 +51,30 @@
 
     <!-- Crear acto -->
     <q-dialog v-model="dlgCrear" persistent>
-      <q-card style="width: 560px; max-width: 92vw">
+      <q-card flat bordered style="width: 560px; max-width: 92vw">
         <q-card-section class="row items-center"><div class="text-h6">Nuevo {{ tipoCrear === 'acta' ? 'acta' : 'dictamen' }}</div><q-space /><q-btn icon="close" flat round dense v-close-popup /></q-card-section>
         <q-card-section><q-form @submit="guardarActo">
           <q-input v-model="actoNuevo.folio" label="Folio" lazy-rules :rules="[(v) => !!v || 'Requerido']" />
           <q-input v-model="actoNuevo.fundamentoLegal" label="Fundamento legal" type="textarea" autogrow lazy-rules :rules="[(v) => !!v || 'Requerido']" />
-          <div class="text-right q-mt-md q-gutter-sm"><q-btn color="red" label="Cancelar" icon="highlight_off" v-close-popup /><q-btn :loading="guardando" type="submit" color="secondary" label="Guardar" icon="save" /></div>
+          <div class="text-right q-mt-md q-gutter-sm"><BtnCancelar /><q-btn :loading="guardando" type="submit" color="secondary" label="Guardar" icon="save" /></div>
         </q-form></q-card-section>
       </q-card>
     </q-dialog>
 
     <!-- Publicar -->
     <q-dialog v-model="dlgPublicar" persistent>
-      <q-card style="width: 520px; max-width: 90vw">
+      <q-card flat bordered style="width: 520px; max-width: 90vw">
         <q-card-section class="row items-center"><div class="text-h6">Publicar acto</div><q-space /><q-btn icon="close" flat round dense v-close-popup /></q-card-section>
         <q-card-section><q-form @submit="confirmarPublicar">
           <q-input v-model="urlPub" label="URL de publicación (portal de transparencia)" lazy-rules :rules="[(v) => !!v || 'Requerido']" autofocus />
-          <div class="text-right q-mt-md q-gutter-sm"><q-btn color="red" label="Cancelar" icon="highlight_off" v-close-popup /><q-btn :loading="guardando" type="submit" color="deep-purple" label="Publicar" icon="publish" /></div>
+          <div class="text-right q-mt-md q-gutter-sm"><BtnCancelar /><q-btn :loading="guardando" type="submit" color="deep-purple" label="Publicar" icon="publish" /></div>
         </q-form></q-card-section>
       </q-card>
     </q-dialog>
 
     <!-- Verificación de firma -->
     <q-dialog v-model="dlgVerif">
-      <q-card style="width: 560px; max-width: 92vw">
+      <q-card flat bordered style="width: 560px; max-width: 92vw">
         <q-card-section class="row items-center"><div class="text-h6">Verificación de firma</div><q-space /><q-btn icon="close" flat round dense v-close-popup /></q-card-section>
         <q-card-section v-if="verificacion">
           <q-banner v-if="!verificacion.tieneFirmaAvanzada" class="bg-orange-2">Este acto no tiene firma electrónica avanzada (firmado sin proveedor).</q-banner>
@@ -103,6 +103,7 @@ import { ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { useAuthStore } from "../stores/auth_store";
 import { useActosStore } from "../stores/actos_store";
+import BtnCancelar from "./BtnCancelar.vue";
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },

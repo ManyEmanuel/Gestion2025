@@ -26,6 +26,7 @@
       </div>
     </div>
     <TablaComp v-if="modulo == null ? false : modulo.leer" />
+    <SinPermisoBanner v-else modulo="Vistos buenos" />
     <ModalComp />
   </q-page>
 </template>
@@ -37,7 +38,7 @@ import { onBeforeMount } from "vue";
 import { storeToRefs } from "pinia";
 import TablaComp from "../compnents/TablaComp.vue";
 import ModalComp from "../compnents/ModalComp.vue";
-import { espera } from "../../../helpers/helper";
+import SinPermisoBanner from "../../../components/SinPermisoBanner.vue";
 
 const $q = useQuasar();
 const vistoStore = useVistosBuenosStore();
@@ -54,12 +55,9 @@ const leerPermisos = async () => {
   $q.loading.hide();
 };
 
-const actualizarModal = async (valor) => {
-  $q.loading.show();
-  await espera();
+const actualizarModal = (valor) => {
   vistoStore.initVbo();
   vistoStore.actualizarModal(valor);
   vistoStore.updateEditar(false);
-  $q.loading.hide();
 };
 </script>

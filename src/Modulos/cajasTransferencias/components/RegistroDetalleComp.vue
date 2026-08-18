@@ -112,11 +112,10 @@
 <script setup>
 import { useQuasar } from "quasar";
 import { storeToRefs } from "pinia";
-import { onBeforeMount, onMounted, ref, watch } from "vue";
+import { nextTick, onBeforeMount, onMounted, ref, watch } from "vue";
 import { useDetalleCajaTransferenciaStore } from "../../../stores/detalle_caja_Transferencia";
 import { useInventarioAreaStore } from "../../../stores/inventario_area_store";
 import { useCajaTransferenciaStore } from "../../../stores/caja_trasnferencia_store";
-import { espera } from "src/helpers/helper";
 
 // Corte: transferenciaId lo pasa ModalComp por prop; createDetalle (agregar expediente al editar caja)
 // lo necesita para la ruta POST /transferenciasprimarias/{id}/expedientes del backend nuevo.
@@ -293,7 +292,6 @@ const agregarDetalle = async () => {
           detalle.value.total_Paginas = inventario.value.total_Paginas;
           detalleCajaStore.addDetalle({ ...detalle.value });
 
-          await espera(100);
           total += 1;
           let resp = await detalleCajaStore.createDetalle(
             props.transferenciaId,
@@ -333,7 +331,6 @@ const agregarDetalle = async () => {
           detalleCajaStore.addDetalle({ ...detalle.value });
           caja.value.total_Paginas += inventario.value.total_Paginas;
           caja.value.total_Expedientes = arrayDetalles.value.length;
-          await espera(100);
           total += 1;
         }
       }
@@ -343,13 +340,11 @@ const agregarDetalle = async () => {
         type: "positive",
         message: `Se agregaron ${total} expediente(s)`,
       });
-      await espera(100);
     } else {
       $q.notify({
         type: "positive",
         message: `Se agregaron ${total} expediente(s) nuevos`,
       });
-      await espera(100);
     }
     limpiar();
     $q.loading.hide();
@@ -409,7 +404,6 @@ const agregarDetalle = async () => {
           caja.value.total_Paginas = 0;
           caja.value.total_Paginas += inventario.value.total_Paginas;
           caja.value.total_Expedientes = arrayDetalles.value.length;
-          await espera(100);
           limpiar();
           $q.loading.hide();
         } else {
@@ -478,7 +472,6 @@ const agregarDetalle = async () => {
             detalleCajaStore.addDetalle({ ...detalle.value });
             caja.value.total_Paginas += inventario.value.total_Paginas;
             caja.value.total_Expedientes = arrayDetalles.value.length;
-            await espera(100);
             total += 1;
           }
         }
@@ -488,7 +481,6 @@ const agregarDetalle = async () => {
           type: "positive",
           message: `Se agregaron ${total} expediente(s)`,
         });
-        await espera(100);
       }
       limpiar();
       $q.loading.hide();
@@ -499,7 +491,7 @@ const agregarDetalle = async () => {
 const limpiar = async () => {
   detalleCajaStore.initDetalle();
   inventarioId.value = null;
-  await espera(20);
+  await nextTick();
   myFormDet.value.reset();
 };
 </script>

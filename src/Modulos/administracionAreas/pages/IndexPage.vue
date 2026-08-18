@@ -1,6 +1,10 @@
 <template>
   <q-page class="q-pa-md">
     <div v-if="modulo && modulo.leer">
+      <q-breadcrumbs class="q-mb-sm">
+        <q-breadcrumbs-el icon="home" to="/" />
+        <q-breadcrumbs-el label="Áreas" icon="account_tree" />
+      </q-breadcrumbs>
       <div class="row items-center q-mb-md">
         <div class="text-h6 text-purple-ieen">Administración de áreas</div>
         <q-space />
@@ -20,7 +24,7 @@
         row-key="id"
         :loading="cargando"
         rows-per-page-label="Filas por página"
-        no-data-label="No hay áreas"
+        no-data-label="No hay áreas registradas. Usa &quot;Nueva área&quot; para crear la primera."
       >
         <template v-slot:top-right>
           <q-input dense debounce="300" v-model="filter" placeholder="Buscar..">
@@ -41,24 +45,21 @@
             >
               <q-tooltip>Editar</q-tooltip>
             </q-btn>
-            <q-btn
+            <BtnEliminar
               v-if="modulo.eliminar"
-              flat
-              round
-              color="negative"
-              icon="delete"
-              @click="confirmarEliminar(props.row)"
-            >
-              <q-tooltip>Eliminar</q-tooltip>
-            </q-btn>
+              label="Eliminar área"
+              titulo="Eliminar área"
+              :mensaje="mensajeEliminar(props.row)"
+              @confirmado="eliminarArea(props.row)"
+            />
           </q-td>
         </template>
       </q-table>
     </div>
-    <div v-else class="text-grey q-pa-lg">No tiene permisos para ver este módulo.</div>
+    <SinPermisoBanner v-else modulo="Administración de áreas" />
 
     <q-dialog v-model="mostrarDialog" persistent>
-      <q-card style="min-width: 420px">
+      <q-card flat bordered style="min-width: 420px">
         <q-card-section class="text-h6">
           {{ editando ? "Editar área" : "Nueva área" }}
         </q-card-section>
@@ -80,7 +81,7 @@
           />
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="Cancelar" v-close-popup />
+          <BtnCancelar />
           <q-btn
             color="purple-ieen"
             label="Guardar"
@@ -99,6 +100,9 @@ import { storeToRefs } from "pinia";
 import { useQuasar } from "quasar";
 import { useAuthStore } from "../../../stores/auth_store";
 import { useAreaStore } from "../../../stores/areas_store";
+import SinPermisoBanner from "../../../components/SinPermisoBanner.vue";
+import BtnCancelar from "../../../components/BtnCancelar.vue";
+import BtnEliminar from "../../../components/BtnEliminar.vue";
 
 const $q = useQuasar();
 const authStore = useAuthStore();
@@ -169,18 +173,12 @@ const guardar = async () => {
   }
 };
 
-const confirmarEliminar = (row) => {
-  $q.dialog({
-    title: "Eliminar área",
-    message: `¿Eliminar el área "${row.nombre}"?`,
-    cancel: { label: "Cancelar", color: "grey" },
-    ok: { label: "Eliminar", color: "negative" },
-    persistent: true,
-  }).onOk(async () => {
-    $q.loading.show();
-    const resp = await areaStore.eliminarArea(row.id);
-    $q.loading.hide();
-    $q.notify({ type: resp.success ? "positive" : "negative", message: resp.data });
-  });
+const mensajeEliminar = (row) => `¿Eliminar el área "${row.nombre}"?`;
+
+const eliminarArea = async (row) => {
+  $q.loading.show();
+  const resp = await areaStore.eliminarArea(row.id);
+  $q.loading.hide();
+  $q.notify({ type: resp.success ? "positive" : "negative", message: resp.data });
 };
 </script>

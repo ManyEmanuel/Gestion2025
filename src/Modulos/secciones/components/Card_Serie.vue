@@ -1,6 +1,6 @@
 <template>
   <div class="col-12 col-xs-6 col-md-4">
-    <q-card class>
+    <q-card flat bordered class>
       <q-card-section> Series </q-card-section>
       <q-card-section>
         <q-list bordered padding class="rounded-borders">
@@ -33,7 +33,7 @@
                   color="red-4"
                   icon="delete_outline"
                   size="10px"
-                  @click="eliminar(serie.id)"
+                  @click="eliminar(serie.id, serie.descripcion)"
                 />
               </div>
             </q-item-section>
@@ -107,20 +107,17 @@ const editar = async (id) => {
   seriesStore.actualizarModal(true);
 };
 
-const eliminar = async (id) => {
+const eliminar = async (id, nombre) => {
   $q.dialog({
-    title: "Eliminación de registro",
-    message: "¿Esta seguro de eliminar el registro?",
-    icon: "Warning",
+    title: "Eliminar serie",
+    message: `¿Eliminar la serie "${nombre}"?`,
     persistent: true,
-    transitionShow: "scale",
-    transitionHide: "scale",
     ok: {
-      color: "positive",
-      label: "Sí! eliminar",
+      color: "negative",
+      label: "Eliminar",
     },
     cancel: {
-      color: "negative",
+      color: "grey",
       label: "Cancelar",
     },
   }).onOk(async () => {

@@ -77,6 +77,7 @@
       :transferenciaId="transferenciaId"
       v-if="modulo == null ? false : modulo.leer"
     />
+    <SinPermisoBanner v-else modulo="Cajas de transferencia primaria" />
     <ModalComp
       v-if="modulo == null ? false : modulo.registrar"
       :transferenciaId="transferenciaId"
@@ -96,6 +97,7 @@ import { descargarReporte } from "../../../helpers/descargar_reporte";
 
 import ModalComp from "../components/ModalComp.vue";
 import TablaComp from "../components/TablaComp.vue";
+import SinPermisoBanner from "../../../components/SinPermisoBanner.vue";
 
 const $q = useQuasar();
 const authStore = useAuthStore();

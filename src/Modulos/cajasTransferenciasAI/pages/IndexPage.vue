@@ -41,7 +41,7 @@
     </div>
     <div class="row">
       <div class="col">
-        <q-card v-if="modulo == null ? false : modulo.leer">
+        <q-card flat bordered v-if="modulo == null ? false : modulo.leer">
           <q-tabs v-model="tab" class="text-purple-ieen" align="justify">
             <q-tab name="encabezado" label="Por cajas" />
             <q-tab name="detalle" label="Detalles" />
@@ -65,6 +65,7 @@
             </q-tab-panel>
           </q-tab-panels>
         </q-card>
+        <SinPermisoBanner v-else modulo="Cajas de transferencia primaria AI" />
       </div>
     </div>
   </q-page>
@@ -73,6 +74,7 @@
 import { useQuasar } from "quasar";
 import { storeToRefs } from "pinia";
 import { useAuthStore } from "../../../stores/auth_store";
+import SinPermisoBanner from "../../../components/SinPermisoBanner.vue";
 import { useTransferenciaPrimariaEncabezadoStore } from "../../../stores/transferencia_primaria_encabezado_store";
 import { useCajaTransferenciaStore } from "../../../stores/caja_trasnferencia_store";
 import { useDetalleCajaTransferenciaStore } from "../../../stores/detalle_caja_Transferencia";

@@ -8,7 +8,7 @@
         :loading="loadindg"
         row-key="id"
         rows-per-page-label="Filas por pagina"
-        no-data-label="No hay registros"
+        no-data-label="No hay transferencias primarias AI registradas."
         class="my-sticky-last-column-table"
       >
         <template v-slot:top>
@@ -72,7 +72,6 @@ import { useTransferenciaPrimariaEncabezadoStore } from "../../../stores/transfe
 import { onBeforeMount, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
-import { espera } from "../../../helpers/helper";
 
 const $q = useQuasar();
 const authStore = useAuthStore();
@@ -179,7 +178,6 @@ const pagination = ref({
 const ver = async (id) => {
   $q.loading.show();
   await transferenciaPrimariaStore.loadEncabezado(id);
-  await espera(50);
   $q.loading.hide();
   transferenciaPrimariaStore.actualizarModalAI(true);
 };
@@ -201,18 +199,3 @@ const cargaDatos = async (dato) => {
   $q.loading.hide();
 };
 </script>
-<style lang="sass">
-.my-sticky-last-column-table
-
-  thead tr:last-child th:last-child
-    background-color: #fff
-
-  td:last-child
-    background-color: #fff
-
-  th:last-child,
-  td:last-child
-    position: sticky
-    right: 0
-    z-index: 1
-</style>

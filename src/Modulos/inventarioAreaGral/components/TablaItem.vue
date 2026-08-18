@@ -4,11 +4,12 @@
       <q-table
         :rows="inventarios"
         :columns="columns"
+        :visible-columns="visibleColumns"
         :filter="filter"
         :loading="loading"
         row-key="id"
         rows-per-page-label="Filas por pagina"
-        no-data-label="No hay registros"
+        no-data-label="No hay expedientes registrados en este inventario. Usa el botón Nuevo para agregar el primero."
         class="my-sticky-last-column-table"
       >
         <template v-slot:top>
@@ -16,6 +17,20 @@
             v-model="selected"
             color="purple-ieen"
             label="Seleccionar todos"
+          />
+          <q-select
+            v-model="columnasAdicionales"
+            :options="columnasOpcionales"
+            emit-value
+            map-options
+            multiple
+            dense
+            outlined
+            use-chips
+            options-dense
+            label="Columnas"
+            class="q-ml-md"
+            style="min-width: 260px; max-width: 420px"
           />
           <q-space />
           <q-input
@@ -87,7 +102,7 @@
 <script setup>
 import { storeToRefs } from "pinia";
 import { useQuasar } from "quasar";
-import { onBeforeMount, ref, watch } from "vue";
+import { computed, onBeforeMount, ref, watch } from "vue";
 import { useInventarioAreaStore } from "../../../stores/inventario_area_store";
 import { useAdjuntoInventarioStore } from "../../../stores/adjunto_inventario_store";
 import { useAuthStore } from "../../../stores/auth_store";
@@ -109,6 +124,47 @@ const { inventarios, loading } = storeToRefs(inventarioStore);
 onBeforeMount(() => {
   inventarioStore.loadInventarios(props.encabezadoId);
 });
+
+// Selector de columnas: "Seleccion" y "id" (acciones) siempre están visibles;
+// el resto lo elige el usuario. Por defecto se muestra un subconjunto reducido
+// en vez de las 24 columnas completas.
+const columnasOpcionales = [
+  { label: "Estatus", value: "estatus" },
+  { label: "Sección", value: "seccion" },
+  { label: "Serie", value: "serie" },
+  { label: "SubSerie", value: "sub_Serie" },
+  { label: "Clave de clasificación", value: "clave_Clasificacion" },
+  { label: "Nombre expediente", value: "nombre_Expediente" },
+  { label: "No. expediente interno", value: "no_Expediente_Interno" },
+  { label: "Descripción/Observaciones", value: "descripcion" },
+  { label: "Fecha inicio", value: "fecha_Inicio" },
+  { label: "Fecha término", value: "fecha_Termino" },
+  { label: "Ubicación física", value: "ubicacion" },
+  { label: "Valor documental", value: "valor_Documental" },
+  { label: "Vigencia trámite", value: "vigencia_Tramite" },
+  { label: "Vigencia concentración", value: "vigencia_Concentracion" },
+  { label: "Vigencia completa", value: "vigencia_Completa" },
+  { label: "Destino final", value: "disposicion_Documental" },
+  { label: "Fecha clasificación", value: "fecha_Clasificacion" },
+  { label: "Fecha desclasificación", value: "fecha_Desclasificacion" },
+  { label: "Fecha ampliación", value: "fecha_Ampliacion" },
+  { label: "Motivo de rechazo", value: "motivo_Rechazo" },
+  { label: "Clasificado", value: "clasificado_Texto" },
+  { label: "Total páginas", value: "total_Paginas" },
+];
+const columnasAdicionales = ref([
+  "estatus",
+  "clave_Clasificacion",
+  "nombre_Expediente",
+  "no_Expediente_Interno",
+  "fecha_Inicio",
+  "disposicion_Documental",
+]);
+const visibleColumns = computed(() => [
+  "Seleccion",
+  "id",
+  ...columnasAdicionales.value,
+]);
 
 const ver = async (id) => {
   $q.loading.show();
@@ -256,7 +312,7 @@ const columns = [
   },
   {
     name: "nombre_Expediente",
-    align: "center",
+    align: "left",
     label: "Nombre expediente",
     field: "nombre_Expediente",
     sortable: false,
@@ -270,7 +326,7 @@ const columns = [
   },
   {
     name: "descripcion",
-    align: "center",
+    align: "left",
     label: "Descripción/Observaciones",
     field: "descripcion",
     sortable: false,
@@ -291,7 +347,7 @@ const columns = [
   },
   {
     name: "ubicacion",
-    align: "center",
+    align: "left",
     label: "Ubicación fisica",
     field: "ubicacion",
     sortable: false,
@@ -354,7 +410,7 @@ const columns = [
   },
   {
     name: "motivo_Rechazo",
-    align: "center",
+    align: "left",
     label: "Motivo de rechazo",
     field: "motivo_Rechazo",
     sortable: false,
@@ -382,18 +438,3 @@ const columns = [
   },
 ];
 </script>
-<style lang="sass">
-.my-sticky-last-column-table
-
-  thead tr:last-child th:last-child
-    background-color: #fff
-
-  td:last-child
-    background-color: #fff
-
-  th:last-child,
-  td:last-child
-    position: sticky
-    right: 0
-    z-index: 1
-</style>

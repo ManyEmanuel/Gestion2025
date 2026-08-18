@@ -7,7 +7,7 @@
         :filter="filter"
         row-key="id"
         rows-per-page-label="Filas por pagina"
-        no-data-label="No hay registros"
+        no-data-label="No hay expedientes agregados a esta caja. Usa &quot;Agregar&quot; para registrar el primero."
         class="my-sticky-last-column-table"
       >
         <template v-slot:top-right>
@@ -30,16 +30,13 @@
                 <!-- Corte: en el backend nuevo el expediente agregado es inmutable (sin delete).
                      El eliminar solo aplica al armar el alta (array local, aún sin persistir);
                      al editar una caja ya guardada no se muestra. -->
-                <q-btn
+                <BtnEliminar
                   v-if="isEditar == false"
-                  flat
-                  round
-                  color="purple-ieen"
-                  icon="delete"
-                  @click="eliminar(col.value)"
-                >
-                  <q-tooltip>Eliminar registro</q-tooltip>
-                </q-btn>
+                  label="Eliminar expediente"
+                  titulo="Eliminar expediente"
+                  :mensaje="mensajeEliminar(props.row)"
+                  @confirmado="eliminarDetalle(col.value)"
+                />
               </div>
               <label v-else>{{ col.value }}</label>
             </q-td>
@@ -56,6 +53,7 @@ import { useQuasar } from "quasar";
 import { ref, onBeforeMount } from "vue";
 import { useCajaBajaDocumentalStore } from "../../../stores/caja_baja_documental";
 import { useDetalleCajaBajaStore } from "../../../stores/detalle_caja_baja_store";
+import BtnEliminar from "../../../components/BtnEliminar.vue";
 
 const $q = useQuasar();
 const cajaBajaStore = useCajaBajaDocumentalStore();
@@ -113,60 +111,17 @@ const columns = [
   },
 ];
 
-const eliminar = async (id) => {
-  $q.dialog({
-    title: "Eliminación de registro",
-    message: "¿Esta seguro de eliminar el registro?",
-    icon: "Warning",
-    persistent: true,
-    transitionShow: "scale",
-    transitionHide: "scale",
-    ok: {
-      color: "positive",
-      label: "Sí! eliminar",
-    },
-    cancel: {
-      color: "negative",
-      label: "Cancelar",
-    },
-  }).onOk(async () => {
+const mensajeEliminar = (row) => `¿Eliminar el expediente "${row.clave_Clasificacion}" de esta caja?`;
+
+const eliminarDetalle = async (id) => {
+  if (isEditar.value == true) {
     $q.loading.show();
-    let resp = null;
-    if (isEditar.value == true) {
-      resp = await detalleCajaBaja.deleteDetalle(id, caja.value.id);
-      if (resp.success) {
-        $q.loading.hide();
-        $q.notify({
-          type: "positive",
-          message: resp.data,
-        });
-      } else {
-        $q.loading.hide();
-        $q.notify({
-          type: "negative",
-          message: resp.data,
-        });
-      }
-    } else {
-      detalleCajaBaja.deleteDetalleArray(id);
-      $q.loading.hide();
-    }
-  });
+    const resp = await detalleCajaBaja.deleteDetalle(id, caja.value.id);
+    $q.loading.hide();
+    $q.notify({ type: resp.success ? "positive" : "negative", message: resp.data });
+  } else {
+    detalleCajaBaja.deleteDetalleArray(id);
+  }
 };
 </script>
 
-<style lang="sass">
-.my-sticky-last-column-table
-
-  thead tr:last-child th:last-child
-    background-color: #fff
-
-  td:last-child
-    background-color: #fff
-
-  th:last-child,
-  td:last-child
-    position: sticky
-    right: 0
-    z-index: 1
-</style>

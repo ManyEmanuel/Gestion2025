@@ -56,7 +56,7 @@ const routes = [
         component: () => import('../Modulos/cedulaPrestamo/pages/IndexPage')
       },
       {
-        path: '/cedulasPrestamo',
+        path: '/cedulasPrestamoClasificados',
         name: 'cedulasPrestamoClasificados',
         component: () => import('../Modulos/cedulaPrestamoClasificado/IndexPage')
       },

@@ -9,7 +9,7 @@
         :loading="isLoading"
         row-key="id"
         rows-per-page-label="Filas por pagina"
-        no-data-label="No hay registros"
+        :no-data-label="props.tipo == 0 ? 'No hay solicitudes registradas. Usa el botón Nueva solicitud para crear la primera.' : 'No hay solicitudes por revisar de otras áreas.'"
         class="my-sticky-last-column-table"
       >
         <template v-slot:top-right>
@@ -28,6 +28,8 @@
         <template v-slot:body="props">
           <q-tr :props="props">
             <q-td v-for="col in props.cols" :key="col.name" :props="props">
+              <!-- Sin editar/eliminar: el backend trata los préstamos como inmutables
+                   (se rechazan/devuelven, no se editan ni borran). -->
               <div v-if="col.name === 'id'">
                 <q-btn
                   v-if="tipo == 1"
@@ -69,29 +71,6 @@
                 >
                   <q-tooltip>Ver documentos</q-tooltip>
                 </q-btn>
-                <!-- Corte al backend nuevo: editar y eliminar préstamo se deshabilitan (v-if="false").
-                     El backend trata los préstamos como inmutables (se rechazan/devuelven, no se
-                     editan ni borran); no expone update ni delete de préstamo. -->
-                <q-btn
-                  v-if="false"
-                  flat
-                  round
-                  color="purple-ieen"
-                  icon="edit"
-                  @click="editar(col.value)"
-                >
-                  <q-tooltip>Editar registro</q-tooltip>
-                </q-btn>
-                <q-btn
-                  v-if="false"
-                  flat
-                  round
-                  color="purple-ieen"
-                  icon="delete"
-                  @click="eliminar(col.value)"
-                >
-                  <q-tooltip>Eliminar registro</q-tooltip>
-                </q-btn>
               </div>
               <label v-else>{{ col.value }}</label>
             </q-td>
@@ -111,7 +90,6 @@ import { useRouter } from "vue-router";
 import { useCedulaPrestamoStore } from "../../../stores/cedula_prestamo_store";
 import { useDetalleCedulaPrestamoStore } from "../../../stores/detalle_cedula_prestamo";
 import { useVistosBuenosStore } from "../../../stores/visto_bueno_store";
-import { espera } from "../../../helpers/helper";
 
 const $q = useQuasar();
 const router = useRouter();
@@ -234,67 +212,18 @@ const pagination = ref({
 
 const filter = ref("");
 
-const editar = async (id) => {
-  $q.loading.show();
-  await espera();
-  cedulaPrestamoStore.updateEditar(true);
-  await cedulaPrestamoStore.loadPrestamo(id);
-  await detallePrestamoStore.loadDetalles(id);
-  $q.loading.hide();
-  cedulaPrestamoStore.actualizarModalEditar(true);
-};
-
 const ver = async (id) => {
   $q.loading.show();
-  await espera();
   await cedulaPrestamoStore.loadPrestamo(id);
   await detallePrestamoStore.loadDetalles(id);
   $q.loading.hide();
   cedulaPrestamoStore.actualizarModalVer(true);
 };
 
-const verAceptado = async (id) => {
-  $q.loading.show();
-  await espera();
-  $q.loading.hide();
+const verAceptado = (id) => {
   router.push({
     name: "prestamoAceptado",
     params: { encabezadoId: id },
-  });
-};
-
-const eliminar = async (id) => {
-  $q.dialog({
-    title: "Eliminación de registro",
-    message: "¿Esta seguro de eliminar el registro?",
-    icon: "Warning",
-    persistent: true,
-    transitionShow: "scale",
-    transitionHide: "scale",
-    ok: {
-      color: "positive",
-      label: "Sí! eliminar",
-    },
-    cancel: {
-      color: "negative",
-      label: "Cancelar",
-    },
-  }).onOk(async () => {
-    $q.loading.show();
-    const resp = await cedulaPrestamoStore.deleteCedulaPrestamo(id);
-    if (resp.success) {
-      $q.loading.hide();
-      $q.notify({
-        type: "positive",
-        message: resp.data,
-      });
-    } else {
-      $q.loading.hide();
-      $q.notify({
-        type: "negative",
-        message: resp.data,
-      });
-    }
   });
 };
 
@@ -373,19 +302,4 @@ const rechazar = async (id) => {
   });
 };
 </script>
-
-<style lang="sass">
-.my-sticky-last-column-table
-
-  thead tr:last-child th:last-child
-    background-color: #fff
-
-  td:last-child
-    background-color: #fff
-
-  th:last-child,
-  td:last-child
-    position: sticky
-    right: 0
-    z-index: 1
-</style>
+

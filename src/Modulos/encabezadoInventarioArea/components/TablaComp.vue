@@ -8,7 +8,7 @@
         :loading="loadindg"
         row-key="id"
         rows-per-page-label="Filas por pagina"
-        no-data-label="No hay registros"
+        no-data-label="No hay inventarios registrados. Usa &quot;Nuevo&quot; para crear el primero."
         class="my-sticky-last-column-table"
       >
         <template v-slot:top-right>
@@ -28,18 +28,6 @@
           <q-tr :props="props">
             <q-td v-for="col in props.cols" :key="col.name" :props="props">
               <div v-if="col.name === 'id'">
-                <!-- Corte: el encabezado es inmutable en el backend nuevo (sin update/delete); se
-                     deshabilitan editar y eliminar. Alta = crear; el detalle sigue disponible. -->
-                <q-btn
-                  v-if="false"
-                  flat
-                  round
-                  color="purple-ieen"
-                  icon="edit"
-                  @click="editar(col.value)"
-                >
-                  <q-tooltip>Editar registro</q-tooltip>
-                </q-btn>
                 <q-btn
                   v-if="modulo == null ? false : modulo.leer"
                   flat
@@ -49,16 +37,6 @@
                   @click="toDetalle(col.value)"
                 >
                   <q-tooltip>Detalle</q-tooltip>
-                </q-btn>
-                <q-btn
-                  v-if="false"
-                  flat
-                  round
-                  color="purple-ieen"
-                  icon="delete"
-                  @click="eliminar(col.value)"
-                >
-                  <q-tooltip>Eliminar registro</q-tooltip>
                 </q-btn>
               </div>
               <label v-else>{{ col.value }}</label>
@@ -78,7 +56,6 @@ import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useEncabezadoInventarioStore } from "../../../stores/encabezado_inventario_area";
 import { useAuthStore } from "../../../stores/auth_store";
-import { espera } from "../../../helpers/helper";
 
 const $q = useQuasar();
 const router = useRouter();
@@ -180,14 +157,6 @@ const pagination = ref({
 });
 
 const filter = ref("");
-const editar = async (id) => {
-  $q.loading.show();
-  await encabezadoInventariosStore.loadEncabezado(id);
-  await espera();
-  encabezadoInventariosStore.updateEditar(true);
-  encabezadoInventariosStore.actualizarModal(true);
-  $q.loading.hide();
-};
 
 const toDetalle = (id) => {
   router.push({
@@ -198,54 +167,5 @@ const toDetalle = (id) => {
   });
 };
 
-const eliminar = async (id) => {
-  $q.dialog({
-    title: "Eliminación de registro",
-    message: "¿Esta seguro de eliminar el registro?",
-    icon: "Warning",
-    persistent: true,
-    transitionShow: "scale",
-    transitionHide: "scale",
-    ok: {
-      color: "positive",
-      label: "Sí! eliminar",
-    },
-    cancel: {
-      color: "negative",
-      label: "Cancelar",
-    },
-  }).onOk(async () => {
-    $q.loading.show();
-    const resp = await encabezadoInventariosStore.deleteEncabezado(id);
-    if (resp.success) {
-      $q.loading.hide();
-      $q.notify({
-        type: "positive",
-        message: resp.data,
-      });
-    } else {
-      $q.loading.hide();
-      $q.notify({
-        type: "negative",
-        message: resp.data,
-      });
-    }
-  });
-};
 </script>
-<style lang="sass">
-.my-sticky-last-column-table
-
-  thead tr:last-child th:last-child
-    background-color: #fff
-
-  td:last-child
-    background-color: #fff
-
-  th:last-child,
-  td:last-child
-    position: sticky
-    right: 0
-    z-index: 1
-</style>
 

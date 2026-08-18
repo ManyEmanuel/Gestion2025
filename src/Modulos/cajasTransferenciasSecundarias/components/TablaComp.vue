@@ -8,7 +8,7 @@
         :loading="loadindg"
         row-key="id"
         rows-per-page-label="Filas por pagina"
-        no-data-label="No hay registros"
+        no-data-label="No hay cajas registradas en esta transferencia secundaria. Usa &quot;Nueva caja&quot; para crear la primera."
         class="my-sticky-last-column-table"
       >
         <template v-slot:top-right>
@@ -65,16 +65,6 @@
                 >
                   <q-tooltip>Cédula por caja (Anexo 15)</q-tooltip>
                 </q-btn>
-                <!-- Corte: la caja es inmutable en el backend nuevo (sin delete); se deshabilita. -->
-                <q-btn
-                  v-if="false"
-                  flat
-                  round
-                  color="purple-ieen"
-                  icon="delete"
-                >
-                  <q-tooltip>Eliminar registro</q-tooltip>
-                </q-btn>
               </div>
               <label v-else>{{ col.value }}</label>
             </q-td>
@@ -93,7 +83,6 @@ import { genera_anexo_13 } from "../../../helpers/anexo_13";
 import { useTransferenciaSecundariaEncabezadoStore } from "../../../stores/transferencia_secundaria_encabezado_store";
 import { useCajaTransferenciaSecundariaterStore } from "../../../stores/caja_transferencia_secundaria_store";
 import { useDetalleCajaTransferenciaSecundariaStore } from "../../../stores/detalle_caja_transferencia_secundaria_store";
-import { espera } from "../../../helpers/helper";
 import { descargarReporte } from "../../../helpers/descargar_reporte";
 
 const $q = useQuasar();
@@ -174,7 +163,6 @@ const editar = async (id) => {
   cajaStore.updateEditar(true);
   await cajaStore.loadCaja(id);
   await detalleCajaStore.load_detalles(id);
-  await espera();
   cajaStore.actualizarModal(true);
   $q.loading.hide();
 };
@@ -207,18 +195,3 @@ const cedulaCaja = async (id) => {
 };
 </script>
 
-<style lang="sass">
-.my-sticky-last-column-table
-
-  thead tr:last-child th:last-child
-    background-color: #fff
-
-  td:last-child
-    background-color: #fff
-
-  th:last-child,
-  td:last-child
-    position: sticky
-    right: 0
-    z-index: 1
-</style>

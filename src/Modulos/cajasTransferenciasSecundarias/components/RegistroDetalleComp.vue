@@ -86,11 +86,10 @@
 <script setup>
 import { useQuasar } from "quasar";
 import { storeToRefs } from "pinia";
-import { onBeforeMount, ref, watch } from "vue";
+import { nextTick, onBeforeMount, ref, watch } from "vue";
 import { useDetalleCajaTransferenciaSecundariaStore } from "../../../stores/detalle_caja_transferencia_secundaria_store";
 import { useInventarioAreaStore } from "../../../stores/inventario_area_store";
 import { useCajaTransferenciaSecundariaterStore } from "../../../stores/caja_transferencia_secundaria_store";
-import { espera } from "src/helpers/helper";
 
 const $q = useQuasar();
 const detalleStore = useDetalleCajaTransferenciaSecundariaStore();
@@ -183,7 +182,7 @@ const limpiar = async () => {
   $q.loading.show();
   detalleStore.init_detalle();
   inventarioId.value = null;
-  await espera(20);
+  await nextTick();
   myFormDet.value.reset();
   $q.loading.hide();
 };
@@ -237,7 +236,6 @@ const agregarDetalle = async () => {
           caja.value.total_Paginas += element.total_Paginas;
         });
         caja.value.total_Expedientes = arrayDetalles.value.length;
-        await espera(100);
         limpiar();
       } else {
         $q.notify({
@@ -300,7 +298,6 @@ const agregarDetalle = async () => {
           detalleStore.addDetalle({ ...detalle.value });
           caja.value.total_Paginas += inventario.value.total_Paginas;
           caja.value.total_Expedientes = arrayDetalles.value.length;
-          await espera(100);
           total += 1;
         }
       }
@@ -310,7 +307,6 @@ const agregarDetalle = async () => {
         type: "positive",
         message: `Se agregaron ${total} expediente(s)`,
       });
-      await espera(100);
     }
     limpiar();
     $q.loading.hide();

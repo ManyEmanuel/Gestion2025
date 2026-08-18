@@ -5,7 +5,7 @@
     transition-show="scale"
     transition-hide="scale"
   >
-    <q-card style="width: 800px; max-width: 80vw">
+    <q-card flat bordered style="width: 800px; max-width: 80vw">
       <q-card-section class="row">
         <div class="text-h6">Enlaces de áreas</div>
         <q-space />
@@ -72,12 +72,7 @@
           </div>
           <div class="col-12 justify-end">
             <div class="text-right q-gutter-xs">
-              <q-btn
-                color="red"
-                label="Cancelar"
-                @click="actualizarModal(false)"
-                icon="highlight_off"
-              />
+              <BtnCancelar @click="actualizarModal(false)" />
               <q-btn
                 :loading="loading"
                 type="submit"
@@ -104,6 +99,7 @@ import { useQuasar } from "quasar";
 import { onMounted, ref, watch } from "vue";
 import { useEnlaceArchivoStore } from "../../../stores/enlace_archivo_store";
 import { useAreaStore } from "../../../stores/areas_store";
+import BtnCancelar from "../../../components/BtnCancelar.vue";
 import { espera } from "../../../helpers/helper";
 
 const $q = useQuasar();
@@ -141,6 +137,7 @@ watch(enlace.value, (val) => {
 const cargarEnlace = async (val) => {
   const areaFiltrada = areas.value.find((x) => x.value == `${val.area_Id}`);
   areaId.value = areaFiltrada;
+  // TODO(ux-audit): revisar si este delay compensa una transición real o reactividad no otorgada
   await espera(100);
   const empleadoFiltrado = empleados.value.find(
     (x) => x.value == `${val.empleado_Id}`

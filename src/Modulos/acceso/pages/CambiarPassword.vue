@@ -1,6 +1,6 @@
 <template>
   <div class="fullscreen flex flex-center bg-grey-2">
-    <q-card style="width: 380px; max-width: 90vw" class="q-pa-md">
+    <q-card flat bordered style="width: 380px; max-width: 90vw" class="q-pa-md">
       <q-card-section class="text-center">
         <div class="text-h6">Cambiar contraseña</div>
         <div class="text-caption text-grey-7">
@@ -43,7 +43,7 @@
           label="Guardar y continuar"
           :loading="cargando"
         />
-        <q-btn flat class="full-width" label="Cancelar" @click="cancelar" />
+        <BtnCancelar class="full-width" @click="cancelar" />
       </q-form>
     </q-card>
   </div>
@@ -54,9 +54,11 @@ import { defineComponent, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useQuasar } from "quasar";
 import { useAuthNuevoStore } from "src/stores/auth_nuevo_store";
+import BtnCancelar from "src/components/BtnCancelar.vue";
 
 export default defineComponent({
   name: "CambiarPassword",
+  components: { BtnCancelar },
   setup() {
     const router = useRouter();
     const $q = useQuasar();

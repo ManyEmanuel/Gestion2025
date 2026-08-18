@@ -9,7 +9,7 @@
         class="my-sticky-last-column-table"
         row-key="id"
         rows-per-page-label="Filas por paginasss"
-        no-data-label="No hay registros"
+        no-data-label="No hay expedientes en concentración para el área y año seleccionados."
       >
         <template v-slot:top>
           <q-select
@@ -89,7 +89,6 @@ import { onBeforeMount, onMounted, ref, watch } from "vue";
 import { useInventarioAreaAIStore } from "../../../stores/inventario_area_ai_store";
 import { useAdjuntoInventarioStore } from "../../../stores/adjunto_inventario_store";
 import { useAuthStore } from "../../../stores/auth_store";
-import { espera } from "../../../helpers/helper";
 import { useAreaStore } from "../../../stores/areas_store";
 import * as XLSX from "xlsx";
 
@@ -294,12 +293,9 @@ const pagination = ref({
 
 const filter = ref("");
 
-const editar = async (id) => {
-  $q.loading.show();
-  await espera();
+const editar = (id) => {
   inventarioStore.loadInventario(id);
   inventarioStore.actualizarModal(true);
-  $q.loading.hide();
 };
 
 const ListadoExcel = async () => {
@@ -366,18 +362,3 @@ const generarExcel = async () => {
   $q.loading.hide();
 };
 </script>
-<style lang="sass">
-.my-sticky-last-column-table
-
-  thead tr:last-child th:last-child
-    background-color: #fff
-
-  td:last-child
-    background-color: #fff
-
-  th:last-child,
-  td:last-child
-    position: sticky
-    right: 0
-    z-index: 1
-</style>

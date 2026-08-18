@@ -5,7 +5,7 @@
     transition-show="scale"
     transition-hide="scale"
   >
-    <q-card style="width: 800px; max-width: 80vw">
+    <q-card flat bordered style="width: 800px; max-width: 80vw">
       <q-card-section class="row">
         <div class="text-h6">
           Archivos adjuntos de {{ inventario.clave_Clasificacion }}
@@ -53,12 +53,7 @@
           </div>
           <div class="col-12 justify-end">
             <div class="text-right q-gutter-xs">
-              <q-btn
-                color="red"
-                label="Cancelar"
-                @click="actualizarModal(false)"
-                icon="highlight_off"
-              />
+              <BtnCancelar @click="actualizarModal(false)" />
               <q-btn
                 :loading="loading"
                 type="submit"
@@ -84,7 +79,7 @@
             :loading="loading"
             row-key="id"
             rows-per-page-label="Filas por pagina"
-            no-data-label="No hay registros"
+            no-data-label="No hay archivos adjuntos. Selecciona un archivo y presiona &quot;Guardar&quot; para adjuntar el primero."
           >
             <template v-slot:top>
               <q-btn
@@ -132,15 +127,12 @@
                     >
                       <q-tooltip>Ver archivo</q-tooltip>
                     </q-btn>
-                    <q-btn
-                      flat
-                      round
-                      color="purple-ieen"
-                      icon="delete"
-                      @click="eliminar(col.value)"
-                    >
-                      <q-tooltip>Eliminar archivo</q-tooltip>
-                    </q-btn>
+                    <BtnEliminar
+                      label="Eliminar archivo"
+                      titulo="Eliminar archivo"
+                      :mensaje="mensajeEliminar(props.row)"
+                      @confirmado="eliminarAdjunto(col.value)"
+                    />
                   </div>
                   <label v-else>{{ col.value }}</label>
                 </q-td>
@@ -159,6 +151,8 @@ import { useQuasar } from "quasar";
 import { onMounted, ref, watch } from "vue";
 import { useInventarioAreaStore } from "../../../stores/inventario_area_store";
 import { useAdjuntoInventarioStore } from "../../../stores/adjunto_inventario_store";
+import BtnCancelar from "../../../components/BtnCancelar.vue";
+import BtnEliminar from "../../../components/BtnEliminar.vue";
 import * as XLSX from "xlsx";
 
 const $q = useQuasar();
@@ -276,40 +270,19 @@ const descargar = async (id) => {
   $q.loading.hide();
 };
 
-const eliminar = async (id) => {
-  $q.dialog({
-    title: "Eliminación de registro",
-    message: "¿Esta seguro de eliminar el registro?",
-    icon: "Warning",
-    persistent: true,
-    transitionShow: "scale",
-    transitionHide: "scale",
-    ok: {
-      color: "positive",
-      label: "Sí! eliminar",
-    },
-    cancel: {
-      color: "negative",
-      label: "Cancelar",
-    },
-  }).onOk(async () => {
-    $q.loading.show();
-    const resp = await adjuntoStore.deleteAdjunto(inventario.value.id, id);
-    if (resp.success) {
-      $q.loading.hide();
-      $q.notify({
-        type: "positive",
-        message: resp.data,
-      });
-      inventarioStore.loadInventarios(props.encabezadoId);
-    } else {
-      $q.loading.hide();
-      $q.notify({
-        type: "negative",
-        message: resp.data,
-      });
-    }
-  });
+const mensajeEliminar = (row) => `¿Eliminar el archivo "${row.nombre}"?`;
+
+const eliminarAdjunto = async (id) => {
+  $q.loading.show();
+  const resp = await adjuntoStore.deleteAdjunto(inventario.value.id, id);
+  if (resp.success) {
+    $q.loading.hide();
+    $q.notify({ type: "positive", message: resp.data });
+    inventarioStore.loadInventarios(props.encabezadoId);
+  } else {
+    $q.loading.hide();
+    $q.notify({ type: "negative", message: resp.data });
+  }
 };
 </script>
 

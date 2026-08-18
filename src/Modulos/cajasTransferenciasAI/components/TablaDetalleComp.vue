@@ -8,7 +8,7 @@
         :loading="isLoading"
         row-key="id"
         rows-per-page-label="Filas por pagina"
-        no-data-label="No hay registros"
+        no-data-label="No hay expedientes en esta caja de transferencia"
         class="my-sticky-last-column-table"
       >
         <template v-slot:top-right>
@@ -153,19 +153,4 @@ const columns = [
 // Corte: se retiraron aprobar()/rechazar() por-expediente — el backend nuevo no modela aprobación
 // por-expediente de transferencia; la vista quedó de solo-lectura. El afectar (toda la transferencia)
 // vive en la página del módulo.
-</script>
-<style lang="sass">
-.my-sticky-last-column-table
-
-  thead tr:last-child th:last-child
-    background-color: #fff
-
-  td:last-child
-    background-color: #fff
-
-  th:last-child,
-  td:last-child
-    position: sticky
-    right: 0
-    z-index: 1
-</style>
+</script>

@@ -56,7 +56,8 @@
         </div>
       </div>
     </div>
-    <TablaItem :encabezadoId="encabezadoId" v-if="modulo.leer" />
+    <TablaItem :encabezadoId="encabezadoId" v-if="modulo == null ? false : modulo.leer" />
+    <SinPermisoBanner v-else modulo="Inventario general por expediente" />
     <ModalComp />
     <ModalAdjuntoComp />
     <ModalViewer />
@@ -81,6 +82,7 @@ import {
   genera_anexo_5,
 } from "../../../helpers/helper";
 import { descargarReporte } from "../../../helpers/descargar_reporte";
+import SinPermisoBanner from "../../../components/SinPermisoBanner.vue";
 
 const $q = useQuasar();
 const inventarioStore = useInventarioAreaStore();

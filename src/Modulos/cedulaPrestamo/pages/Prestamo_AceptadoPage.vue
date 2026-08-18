@@ -15,7 +15,7 @@
       </div>
     </div>
     <div class="col-12 col-xs-6 col-md-4">
-      <q-card>
+      <q-card flat bordered>
         <q-card-section>
           <div class="row">
             <div class="col">
@@ -113,7 +113,7 @@
       transition-show="scale"
       transition-hide="scale"
     >
-      <q-card style="width: 800px; max-width: 80vw">
+      <q-card flat bordered style="width: 800px; max-width: 80vw">
         <q-bar class="bg-purple-ieen text-white">
           Datos de comprobante
           <q-space />
@@ -175,12 +175,7 @@
 
         <q-card-actions align="right">
           <div class="text-right q-gutter-xs">
-            <q-btn
-              color="red"
-              label="Cancelar"
-              @click="comprobante = false"
-              icon="highlight_off"
-            />
+            <BtnCancelar @click="comprobante = false" />
             <q-btn
               :loading="loading"
               type="button"
@@ -213,6 +208,7 @@ import { genera_anexo_8 } from "../../../helpers/anexo_08";
 import Tabla from "../components/Tabla_Detalle_Aceptada.vue";
 import ModalAdjuntoComp from "../../inventarioAreaGral/components/ModalAdjuntosComp.vue";
 import ModalViewer from "../../inventarioAreaGral/components/ModalVisorComp.vue";
+import BtnCancelar from "../../../components/BtnCancelar.vue";
 const $q = useQuasar();
 const cedulaPrestamo = useCedulaPrestamoStore();
 const detalleCedulaStore = useDetalleCedulaPrestamoStore();
