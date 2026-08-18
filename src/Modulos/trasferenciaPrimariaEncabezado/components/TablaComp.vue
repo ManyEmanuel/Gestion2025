@@ -2,6 +2,7 @@
   <div class="row">
     <div class="col">
       <q-table
+        dense
         :rows="encabezadosFiltro"
         :columns="columns"
         :filter="filter"
@@ -225,7 +226,7 @@ const enviarTransferencia = async (id) => {
   $q.dialog({
     title: "Envio de transferencia",
     message: "¿Esta seguro de enviar la transferencia?",
-    icon: "Warning",
+    icon: "warning",
     persistent: true,
     transitionShow: "scale",
     transitionHide: "scale",

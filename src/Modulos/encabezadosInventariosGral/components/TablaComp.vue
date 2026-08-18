@@ -2,6 +2,7 @@
   <div class="row">
     <div class="col">
       <q-table
+        dense
         :rows="encabezadosAreaFiltro"
         :columns="columns"
         :filter="filter"
@@ -266,5 +267,5 @@ const toDetalle = (id) => {
     },
   });
 };
-</script>
+</script>
 

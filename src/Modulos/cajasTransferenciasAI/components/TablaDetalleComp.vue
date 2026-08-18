@@ -2,6 +2,7 @@
   <div class="row">
     <div class="col">
       <q-table
+        dense
         :rows="detallesAI"
         :columns="columns"
         :filter="filter"
@@ -153,4 +154,4 @@ const columns = [
 // Corte: se retiraron aprobar()/rechazar() por-expediente — el backend nuevo no modela aprobación
 // por-expediente de transferencia; la vista quedó de solo-lectura. El afectar (toda la transferencia)
 // vive en la página del módulo.
-</script>
+</script>

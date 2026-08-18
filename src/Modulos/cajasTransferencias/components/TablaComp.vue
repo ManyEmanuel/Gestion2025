@@ -221,7 +221,7 @@ const ListadoExcel = async (id) => {
     title: "Generación de listado de información",
     message:
       "Se generara un listado de los documentos en formato excel, ¿Desea continuar?",
-    icon: "Warning",
+    icon: "warning",
     persistent: true,
     transitionShow: "scale",
     transitionHide: "scale",

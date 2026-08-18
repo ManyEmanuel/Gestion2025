@@ -116,7 +116,7 @@ const afectar_transferencia = async () => {
       title: "Afectar transferencia",
       message:
         "¿Esta seguro de afectar la transferencia? afectará el inventario, una vez afectado no podrá añadir nuevas cajas en esta transferencia",
-      icon: "Warning",
+      icon: "warning",
       persistent: true,
       transitionShow: "scale",
       transitionHide: "scale",

@@ -122,7 +122,7 @@ const afectarBaja = async () => {
     title: "Afectar baja",
     message:
       "¿Esta seguro de afectar la baja?, se eliminará del sistema y no podra añadir nuevas cajas a esta baja",
-    icon: "Warning",
+    icon: "warning",
     persistent: true,
     transitionShow: "scale",
     transitionHide: "scale",

@@ -443,64 +443,68 @@ export default defineComponent({
 </script>
 
 <style lang="scss">
+// Los valores viven ahora en quasar.variables.scss (variables SCSS globales,
+// única fuente de verdad); estas clases solo generan las utilidades que
+// necesita color="purple-ieen" (Quasar no genera utilidades para nombres de
+// color que no sean los suyos, aunque estén declarados como variable SCSS).
 .text-purple-ieen {
-  color: #673e84 !important;
+  color: $purple-ieen !important;
 }
 .bg-purple-ieen {
-  background: #673e84 !important;
+  background: $purple-ieen !important;
 }
 .text-purple-ieen-1 {
-  color: #863399 !important;
+  color: $purple-ieen-1 !important;
 }
 .bg-purple-ieen-1 {
-  background: #863399 !important;
+  background: $purple-ieen-1 !important;
 }
 .text-purple-ieen-2 {
-  color: #a25eb5 !important;
+  color: $purple-ieen-2 !important;
 }
 .bg-purple-ieen-2 {
-  background: #a25eb5 !important;
+  background: $purple-ieen-2 !important;
 }
 .text-purple-ieen-3 {
-  color: #bb83ca !important;
+  color: $purple-ieen-3 !important;
 }
 .bg-purple-ieen-3 {
-  background: #bb83ca !important;
+  background: $purple-ieen-3 !important;
 }
 .text-pink-ieen-1 {
-  color: #b32572 !important;
+  color: $pink-ieen-1 !important;
 }
 .bg-pink-ieen-1 {
-  background: #b32572 !important;
+  background: $pink-ieen-1 !important;
 }
 .text-pink-ieen-2 {
-  color: #cc5599 !important;
+  color: $pink-ieen-2 !important;
 }
 .bg-pink-ieen-2 {
-  background: #cc5599 !important;
+  background: $pink-ieen-2 !important;
 }
 .text-pink-ieen-3 {
-  color: #dd85ba !important;
+  color: $pink-ieen-3 !important;
 }
 .bg-pink-ieen-3 {
-  background: #dd85ba !important;
+  background: $pink-ieen-3 !important;
 }
 .text-gray-ieen-1 {
-  color: #76777a !important;
+  color: $gray-ieen-1 !important;
 }
 .bg-gray-ieen-1 {
-  background: #76777a !important;
+  background: $gray-ieen-1 !important;
 }
 .text-gray-ieen-2 {
-  color: #98989a !important;
+  color: $gray-ieen-2 !important;
 }
 .bg-gray-ieen-2 {
-  background: #98989a !important;
+  background: $gray-ieen-2 !important;
 }
 .text-gray-ieen-3 {
-  color: #b1b1b1 !important;
+  color: $gray-ieen-3 !important;
 }
 .bg-gray-ieen-3 {
-  background: #b1b1b1 !important;
+  background: $gray-ieen-3 !important;
 }
 </style>

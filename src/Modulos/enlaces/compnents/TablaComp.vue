@@ -189,7 +189,7 @@ const activarEnlace = async (id) => {
   $q.dialog({
     title: "Activar enlace",
     message: "¿Esta seguro de activar al enlace?",
-    icon: "Warning",
+    icon: "warning",
     persistent: true,
     transitionShow: "scale",
     transitionHide: "scale",
@@ -226,7 +226,7 @@ const desactivarEnlace = async (id) => {
   $q.dialog({
     title: "Desactivar enlace",
     message: "¿Esta seguro de desactivar al enlace?",
-    icon: "Warning",
+    icon: "warning",
     persistent: true,
     transitionShow: "scale",
     transitionHide: "scale",

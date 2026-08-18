@@ -2,6 +2,7 @@
   <div class="row">
     <div class="col">
       <q-table
+        dense
         :rows="inventariosHistoricoFiltro"
         :columns="columns"
         :filter="filter"
@@ -302,7 +303,7 @@ const ListadoExcel = async () => {
     title: "Generación de listado de información",
     message:
       "Se generara un listado de la información de la tabla en formato excel, ¿Desea continuar?",
-    icon: "Warning",
+    icon: "warning",
     persistent: true,
     transitionShow: "scale",
     transitionHide: "scale",

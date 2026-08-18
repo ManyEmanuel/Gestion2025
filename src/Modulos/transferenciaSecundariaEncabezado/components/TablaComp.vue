@@ -2,6 +2,7 @@
   <div class="row">
     <div class="col">
       <q-table
+        dense
         :rows="encabezadosFiltro"
         :columns="columns"
         :filter="filter"
@@ -214,4 +215,4 @@ const toCajas = async (id) => {
     params: { transferenciaId: id },
   });
 };
-</script>
+</script>

@@ -112,7 +112,7 @@ const afectar = async () => {
     title: "Afectar transferencia",
     message:
       "¿Esta seguro de afectar la transferencia?, el inventario aprobado de esta transferencia pasará a archivo institucional",
-    icon: "Warning",
+    icon: "warning",
     persistent: true,
     transitionShow: "scale",
     transitionHide: "scale",

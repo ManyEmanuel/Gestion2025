@@ -2,6 +2,7 @@
   <div class="row">
     <div class="col">
       <q-table
+        dense
         :rows="inventariosArea"
         :columns="columns"
         :filter="filter"
@@ -250,4 +251,4 @@ const pagination = ref({
 });
 
 const filter = ref("");
-</script>
+</script>

@@ -40,6 +40,7 @@
   <div class="row">
     <div class="col">
       <q-table
+        dense
         :rows="inventarios"
         :columns="columns"
         :filter="filter"

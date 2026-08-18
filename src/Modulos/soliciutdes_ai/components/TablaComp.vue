@@ -2,6 +2,7 @@
   <div class="row">
     <div class="col">
       <q-table
+        dense
         :visible-columns="visible_Columns"
         :rows="misSolicitudes"
         :columns="columns"
@@ -188,4 +189,4 @@ const verAceptado = async (id) => {
     params: { encabezadoId: id, estatus: "Aprobado" },
   });
 };
-</script>
+</script>

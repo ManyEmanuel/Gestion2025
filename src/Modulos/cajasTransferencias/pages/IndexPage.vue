@@ -185,7 +185,7 @@ const enviarTransferencia = async () => {
     $q.dialog({
       title: "Envio de transferencia",
       message: "¿Esta seguro de enviar la transferencia?",
-      icon: "Warning",
+      icon: "warning",
       persistent: true,
       transitionShow: "scale",
       transitionHide: "scale",

@@ -46,7 +46,7 @@
                   v-if="modulo == null ? false : modulo.actualizar && tipo == 0"
                   flat
                   round
-                  color="purple-ieen"
+                  color="positive"
                   icon="check_circle"
                   @click="aceptarcion(col.value, props.row.folio_Solicitud)"
                 >
@@ -56,7 +56,7 @@
                   v-if="modulo == null ? false : modulo.actualizar && tipo == 0"
                   flat
                   round
-                  color="purple-ieen"
+                  color="negative"
                   icon="cancel"
                   @click="cancelacion(col.value, props.row.folio_Solicitud)"
                 >
@@ -262,7 +262,7 @@ const cancelacion = async (id, folio) => {
   $q.dialog({
     title: "Cancelar solicitud",
     message: "¿Está seguro de rechazar la solicitud con folio " + folio + " ?",
-    icon: "Warning",
+    icon: "warning",
     persistent: true,
     transitionShow: "scale",
     transitionHide: "scale",
@@ -312,4 +312,4 @@ const cancelacion = async (id, folio) => {
       });
   });
 };
-</script>
+</script>

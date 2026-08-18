@@ -123,7 +123,7 @@ const onSubmit = async () => {
     $q.dialog({
       title: "Registro generado con éxito",
       message: "¿Desea capturar el inventario a dar de Baja?",
-      icon: "Information",
+      icon: "info",
       persistent: true,
       transitionShow: "scale",
       transitionHide: "scale",

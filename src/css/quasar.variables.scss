@@ -12,9 +12,17 @@
 // to match your app's branding.
 // Tip: Use the "Theme Builder" on Quasar's documentation website.
 
-$primary   : #1976D2;
-$secondary : #26A69A;
-$accent    : #9C27B0;
+// Marca real del sistema (antes solo vivía como clases CSS sueltas en
+// MainLayout.vue, sin theming: el login y varios botones de acciones
+// secundarias en los módulos de cumplimiento quedaban con el azul/teal por
+// defecto de Quasar en vez de la marca). $secondary se deja con el teal por
+// defecto a propósito: en ~40 archivos ya funciona como acento coherente y
+// distinto de $primary para los botones "Guardar"/"Confirmar" — recolorearlo
+// a la familia morada borraría esa distinción visual entre "abrir/navegar"
+// (morado) y "confirmar" (teal), un patrón que ya funciona bien.
+$primary   : #673e84; // antes purple-ieen
+$secondary : #26A69A; // sin cambio (acento "Guardar" ya consistente)
+$accent    : #b32572; // antes pink-ieen-1 (sin uso previo, queda listo)
 
 $dark      : #1D1D1D;
 
@@ -22,3 +30,20 @@ $positive  : #21BA45;
 $negative  : #C10015;
 $info      : #31CCEC;
 $warning   : #F2C037;
+
+// Paleta extendida de marca (antes solo como CSS suelto en MainLayout.vue,
+// duplicando estos mismos hex). Se mantienen las clases utilitarias
+// .text-purple-ieen/.bg-purple-ieen (y las variantes rosa/gris) porque
+// cientos de componentes usan color="purple-ieen" como prop de Quasar, que
+// no reconoce nombres de color arbitrarios vía variables SCSS — pero ahora
+// esas clases referencian estas variables en vez de repetir el hex.
+$purple-ieen: #673e84;
+$purple-ieen-1: #863399;
+$purple-ieen-2: #a25eb5;
+$purple-ieen-3: #bb83ca;
+$pink-ieen-1: #b32572;
+$pink-ieen-2: #cc5599;
+$pink-ieen-3: #dd85ba;
+$gray-ieen-1: #76777a;
+$gray-ieen-2: #98989a;
+$gray-ieen-3: #b1b1b1;

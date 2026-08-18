@@ -2,6 +2,7 @@
   <div class="row">
     <div class="col">
       <q-table
+        dense
         :rows="isEditar == true ? detalles : arrayDetalles"
         :columns="columns"
         :filter="filter"

@@ -2,6 +2,7 @@
   <div class="row">
     <div class="col">
       <q-table
+        dense
         :rows="encabezadosAiFiltro"
         :columns="columns"
         :filter="filter"

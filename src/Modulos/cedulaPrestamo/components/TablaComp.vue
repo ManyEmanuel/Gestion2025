@@ -2,6 +2,7 @@
   <div class="row">
     <div class="col">
       <q-table
+        dense
         :visible-columns="visible_Columns"
         :rows="props.tipo == 0 ? misSolicitudes : solicitudesArea"
         :columns="columns"
@@ -45,7 +46,7 @@
                   v-if="tipo == 1 && props.row['estatus'] != 'Aprobado'"
                   flat
                   round
-                  color="purple-ieen"
+                  color="positive"
                   icon="check_circle"
                   @click="aprobar(col.value)"
                 >
@@ -55,7 +56,7 @@
                   v-if="tipo == 1 && props.row['estatus'] != 'Aprobado'"
                   flat
                   round
-                  color="purple-ieen"
+                  color="negative"
                   icon="cancel"
                   @click="rechazar(col.value)"
                 >
@@ -263,7 +264,7 @@ const rechazar = async (id) => {
   $q.dialog({
     title: "Rechazar registro",
     message: "¿Esta seguro de rechazar el registro?, Describe el motivo",
-    icon: "Warning",
+    icon: "warning",
     persistent: true,
     transitionShow: "scale",
     transitionHide: "scale",
@@ -302,4 +303,4 @@ const rechazar = async (id) => {
   });
 };
 </script>
-
+

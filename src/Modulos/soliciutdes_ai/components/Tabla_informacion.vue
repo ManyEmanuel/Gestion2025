@@ -108,7 +108,7 @@ const eliminar = async (id) => {
   $q.dialog({
     title: "Eliminación de registro",
     message: "¿Esta seguro de eliminar el registro?",
-    icon: "Warning",
+    icon: "warning",
     persistent: true,
     transitionShow: "scale",
     transitionHide: "scale",

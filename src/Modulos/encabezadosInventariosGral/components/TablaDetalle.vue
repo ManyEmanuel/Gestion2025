@@ -29,6 +29,7 @@
   <div class="row">
     <div class="col">
       <q-table
+        dense
         :rows="inventariosArea"
         :columns="columns"
         :filter="filter"
@@ -77,7 +78,7 @@
                   v-if="props.row['estatus'] == 'Pendiente'"
                   flat
                   round
-                  color="purple-ieen"
+                  color="positive"
                   icon="check_circle"
                   @click="aprobar(col.value)"
                 >
@@ -87,7 +88,7 @@
                   v-if="props.row['estatus'] == 'Pendiente'"
                   flat
                   round
-                  color="purple-ieen"
+                  color="negative"
                   icon="cancel"
                   @click="rechazar(col.value)"
                 >
@@ -160,7 +161,7 @@ const rechazar = async (id) => {
   $q.dialog({
     title: "Rechazar registro",
     message: "¿Esta seguro de rechazar el registro?, Describe el motivo",
-    icon: "Warning",
+    icon: "warning",
     persistent: true,
     transitionShow: "scale",
     transitionHide: "scale",
@@ -203,7 +204,7 @@ const aprobar = async (id) => {
   $q.dialog({
     title: "Aprobar registro",
     message: "¿Esta seguro de aprobar el registro?",
-    icon: "Warning",
+    icon: "warning",
     persistent: true,
     transitionShow: "scale",
     transitionHide: "scale",
@@ -393,5 +394,5 @@ const columns = [
     sortable: false,
   },
 ];
-</script>
+</script>
 
