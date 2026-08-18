@@ -1,6 +1,7 @@
 
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import { ANEXO11_FIRMANTE_NOMBRE, ANEXO11_FIRMANTE_CARGO } from "src/branding.js";
 
 const espera = (tiempo = 100) => {
   return new Promise((resolve) => {
@@ -15,7 +16,7 @@ const genera_anexo_11 = async (solicitud, rows, complemento, tipo, comprobante) 
   try {
     let img = new Image();
     let tituloArchivo = ""
-    img.src = require("../assets/IEEN300.png");
+    img.src = require("../assets/branding/logo.png");
     const doc = new jsPDF({ format: "letter" });
     if (tipo == 1) {
       tituloArchivo = "Anexo-11-" + solicitud.folio_Solicitud + "-cedula"
@@ -211,7 +212,7 @@ const genera_anexo_11 = async (solicitud, rows, complemento, tipo, comprobante) 
       doc.rect(123, y, 80, 20);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
-      doc.text("Jorge Arturo Langarica Zepeda\nCoordinador de Archivo del IEEN\nNombre, Firma y Cargo", 163, y + 12, null, null, "center")
+      doc.text(`${ANEXO11_FIRMANTE_NOMBRE}\n${ANEXO11_FIRMANTE_CARGO}\nNombre, Firma y Cargo`, 163, y + 12, null, null, "center")
 
       // Tercer cuadro con fondo y texto centrado
       y += 25;
@@ -319,7 +320,7 @@ const genera_anexo_11 = async (solicitud, rows, complemento, tipo, comprobante) 
       doc.text("Archivo de concentración", 108, 74, null, null, "center");
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
-      doc.text("Jorge Arturo Langarica Zepeda\nCoordinador de Archivo del IEEN\nNombre, firma y cargo", 108, 92, null, null, "center");
+      doc.text(`${ANEXO11_FIRMANTE_NOMBRE}\n${ANEXO11_FIRMANTE_CARGO}\nNombre, firma y cargo`, 108, 92, null, null, "center");
       doc.setFillColor(252, 213, 180);
       doc.rect(13, 100, 190, 15, "FD");
       doc.setFont("helvetica", "bold");

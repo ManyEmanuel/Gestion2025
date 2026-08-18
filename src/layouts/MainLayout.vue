@@ -10,7 +10,7 @@
           aria-label="Menu"
           @click="toggleLeftDrawer"
         />
-        <q-toolbar-title> Gestión documental </q-toolbar-title>
+        <q-toolbar-title>{{ SYSTEM_NAME }}</q-toolbar-title>
         <!-- Corte al backend nuevo: la campana de notificaciones se retiró (dependía de SignalR :9270 +
              endpoints legados /NotificacionesUniverso, dormantes). Reimplementar sobre el backend nuevo
              si se requiere. -->
@@ -109,7 +109,7 @@
           </q-expansion-item>
         </q-list>
       </q-scroll-area>
-      <q-img class="absolute-top" src="~assets/fondo.png" style="height: 160px">
+      <q-img class="absolute-top" src="~assets/branding/fondo.png" style="height: 160px">
         <div class="bg-transparent">
           <!-- <q-avatar size="56px" class="q-mb-sm">
             <img src="~assets/usuario.jpeg" />
@@ -131,7 +131,7 @@
     <q-footer reveal bordered class="bg-purple-ieen">
       <q-toolbar>
         <q-toolbar-title>
-          <div>&#169; Unidad Técnica de Informática y Estadística</div>
+          <div>{{ FOOTER_TEXT }}</div>
         </q-toolbar-title>
       </q-toolbar>
     </q-footer>
@@ -146,6 +146,7 @@ import { onBeforeMount } from "vue";
 import { useAuthStore } from "../stores/auth_store";
 import { storeToRefs } from "pinia";
 import EssentialLink from "components/EssentialLink.vue";
+import { SYSTEM_NAME, FOOTER_TEXT } from "src/branding.js";
 
 export default defineComponent({
   name: "MainLayout",
@@ -424,6 +425,8 @@ export default defineComponent({
 
     return {
       show,
+      SYSTEM_NAME,
+      FOOTER_TEXT,
 
       linksList,
       linksArchivoTramite,

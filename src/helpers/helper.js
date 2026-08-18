@@ -13,7 +13,7 @@ const espera = (tiempo = 100) => {
 const genera_anexo_4 = (encabezado, inventarios) => {
   try {
     let img = new Image();
-    img.src = require("../assets/IEEN300.png");
+    img.src = require("../assets/branding/logo.png");
     const doc = new jsPDF({ orientation: "landscape", format: "legal" });
     doc.addImage(img, "png", 10, 5, 35, 21);
     doc.setFontSize(14);
@@ -253,7 +253,7 @@ const genera_anexo_4 = (encabezado, inventarios) => {
 const genera_anexo_5 = (expedientes, responsable, generadora) => {
   try {
     let img = new Image();
-    img.src = require("../assets/IEEN300.png");
+    img.src = require("../assets/branding/logo.png");
     const doc = new jsPDF("landscape");
     let multiplo = 0;
     for (let j = 0; j < expedientes.length; j++) {
@@ -560,7 +560,7 @@ const genera_anexo_7 = async (solicitud, rows, complemento, tipo, comprobante) =
   try {
     let img = new Image();
     let tituloArchivo = ""
-    img.src = require("../assets/IEEN300.png");
+    img.src = require("../assets/branding/logo.png");
     const doc = new jsPDF({ format: "letter" });
     if (tipo == 1) {
       tituloArchivo = "Anexo-7" + solicitud.folio + "-cedula"
@@ -827,7 +827,7 @@ const genera_anexo_9 = (encabezado, inventarios) => {
     console.log(inventarios)
     let img = new Image();
 
-    img.src = require("../assets/IEEN300.png");
+    img.src = require("../assets/branding/logo.png");
     let totalPagesExp = "{total_pages_count_string}";
     const doc = new jsPDF({ orientation: "landscape", format: "legal" });
     doc.addImage(img, "png", 10, 4, 35, 21);
@@ -1039,7 +1039,7 @@ const genera_anexo_10 = (solicitud, rows) => {
   console.log(rows)
   try {
     let img = new Image();
-    img.src = require("../assets/IEEN300.png");
+    img.src = require("../assets/branding/logo.png");
     const doc = new jsPDF({ orientation: "landscape", format: "legal" });
     doc.addImage(img, "png", 166, 4, 28, 16);
     doc.setFontSize(12);

@@ -14,7 +14,7 @@ const genera_anexo_16 = async (rows, solicitud, horarios) => {
   try {
     let img = new Image();
     console.log("genera_anexo_16 -> solicitud", solicitud)
-    img.src = require("../assets/IEEN300.png");
+    img.src = require("../assets/branding/logo.png");
     const doc = new jsPDF({ format: "letter" });
     doc.addImage(img, "png", 13, 4, 28, 16);
     doc.setFontSize(12);

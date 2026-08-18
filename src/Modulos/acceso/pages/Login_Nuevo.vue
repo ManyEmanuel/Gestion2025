@@ -2,8 +2,8 @@
   <div class="fullscreen flex flex-center bg-grey-2">
     <q-card flat bordered style="width: 360px; max-width: 90vw" class="q-pa-md">
       <q-card-section class="text-center">
-        <h1 class="text-h6">Gestión Documental</h1>
-        <div class="text-caption text-grey-7">Archivo — acceso al sistema</div>
+        <h1 class="text-h6">{{ SYSTEM_NAME }}</h1>
+        <div class="text-caption text-grey-7">{{ LOGIN_SUBTITLE }}</div>
       </q-card-section>
 
       <q-form @submit.prevent="onSubmit" class="q-gutter-md">
@@ -42,6 +42,7 @@
 import { defineComponent, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthNuevoStore } from 'src/stores/auth_nuevo_store';
+import { SYSTEM_NAME, LOGIN_SUBTITLE } from 'src/branding.js';
 
 export default defineComponent({
   name: 'LoginNuevo',
@@ -66,7 +67,7 @@ export default defineComponent({
       }
     }
 
-    return { usuario, password, error, cargando, onSubmit };
+    return { usuario, password, error, cargando, onSubmit, SYSTEM_NAME, LOGIN_SUBTITLE };
   },
 });
 </script>

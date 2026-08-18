@@ -11,6 +11,12 @@
 
 const ESLintPlugin = require('eslint-webpack-plugin')
 
+// Carga .env (si existe) antes de leer process.env.* más abajo — permite configurar la marca del
+// despliegue (nombre, institución, etc.) en un archivo en vez de exportar variables a mano. Ver
+// .env.example. No falla si no hay .env (desarrollo local usa los defaults del código).
+// quiet: true evita que dotenv imprima sus "tips" promocionales (incluye anuncios de productos de
+// terceros del propio mantenedor del paquete) en cada arranque de "quasar dev"/"quasar build".
+require('dotenv').config({ quiet: true })
 
 const { configure } = require('quasar/wrappers');
 
@@ -56,8 +62,20 @@ module.exports = configure(function (ctx) {
       // URL base de la API. Corte COMPLETO al backend nuevo (UniversoArchivo): por defecto el backend
       // nuevo local (:5120). Para build/producción se define API_URL con su URL real:
       //   API_URL=https://<backend-nuevo>/api  quasar build
+      //
+      // Variables de marca: permiten desplegar este mismo código para otra institución sin tocar
+      // componentes Vue — solo definiendo estas variables (ver .env.example) antes del build. Los
+      // valores por defecto son los del IEEN Nayarit. Los assets (logo, fondo, favicons, colores) se
+      // configuran aparte reemplazando archivos — ver BRANDING.md.
       env: {
-        API_URL: process.env.API_URL || 'http://localhost:5120/api'
+        API_URL: process.env.API_URL || 'http://localhost:5120/api',
+        SYSTEM_NAME: process.env.SYSTEM_NAME || 'Gestión Documental',
+        INSTITUTION_NAME: process.env.INSTITUTION_NAME || 'Instituto Estatal Electoral de Nayarit',
+        INSTITUTION_SHORT_NAME: process.env.INSTITUTION_SHORT_NAME || 'IEEN',
+        LOGIN_SUBTITLE: process.env.LOGIN_SUBTITLE || 'Archivo — acceso al sistema',
+        FOOTER_TEXT: process.env.FOOTER_TEXT || '© Unidad Técnica de Informática y Estadística',
+        ANEXO11_FIRMANTE_NOMBRE: process.env.ANEXO11_FIRMANTE_NOMBRE || 'Jorge Arturo Langarica Zepeda',
+        ANEXO11_FIRMANTE_CARGO: process.env.ANEXO11_FIRMANTE_CARGO || 'Coordinador de Archivo del IEEN',
       },
 
       // transpile: false,
@@ -85,6 +103,14 @@ module.exports = configure(function (ctx) {
           .use(ESLintPlugin, [{ extensions: ['js', 'vue'] }])
       }
 
+    },
+
+    // Título de pestaña / metadatos del <head> (index.template.html) — mismo valor que SYSTEM_NAME,
+    // pero Quasar solo expone las variables de "build.env" al código de la app, no al template HTML,
+    // así que se repite aquí explícitamente para <%= productName %>. IMPORTANTE: htmlVariables va en
+    // la raíz de la config, no dentro de "build" — ahí Quasar lo ignora silenciosamente.
+    htmlVariables: {
+      productName: process.env.SYSTEM_NAME || 'Gestión Documental',
     },
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-webpack/quasar-config-js#Property%3A-devServer
@@ -164,9 +190,9 @@ module.exports = configure(function (ctx) {
 
 
       manifest: {
-        name: `archivo_app`,
-        short_name: `archivo_app`,
-        description: `sistema de archivo`,
+        name: process.env.SYSTEM_NAME || 'Gestión Documental',
+        short_name: process.env.SYSTEM_NAME || 'Gestión Documental',
+        description: process.env.INSTITUTION_NAME || 'Instituto Estatal Electoral de Nayarit',
         display: 'standalone',
         orientation: 'portrait',
         background_color: '#ffffff',

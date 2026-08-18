@@ -14,7 +14,7 @@ const genera_anexo_8 = (solicitud, rows, complemento, tipo, comprobante) => {
   try {
     let img = new Image();
     let tituloArchivo = ""
-    img.src = require("../assets/IEEN300.png");
+    img.src = require("../assets/branding/logo.png");
     const doc = new jsPDF({ format: "letter" });
     if (tipo == 1) {
       tituloArchivo = "Anexo-8" + solicitud.folio + "-cedula"

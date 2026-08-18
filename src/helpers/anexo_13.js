@@ -24,7 +24,7 @@ const genera_anexo_13 = async (tipo, transferencia, area, caja, detalles) => {
       await inventarioStore.loadInventariosConcentracionBaja();
     }
     let img = new Image();
-    img.src = require("../assets/IEEN300.png");
+    img.src = require("../assets/branding/logo.png");
     const doc = new jsPDF({
       orientation: 'portrait', // Orientación vertical
       format: 'letter',        // Tamaño carta
