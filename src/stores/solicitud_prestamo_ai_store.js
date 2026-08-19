@@ -10,19 +10,14 @@ import { api } from 'src/boot/axios';
 // Corte al backend nuevo: las escrituras REST responden 201/204 y problem+json en error (axios lanza).
 const mensajeError = (e, defecto = "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte") =>
   (e && e.response && e.response.data && (e.response.data.detail || e.response.data.title)) || defecto
-// Empleado y área del usuario autenticado, de los claims del JWT (solicitante registro + área solicitante
-// del alta de préstamo AI).
+import { useAuthNuevoStore } from 'src/stores/auth_nuevo_store'
+
+// Empleado y área del usuario autenticado (solicitante registro + área solicitante del alta de préstamo AI).
+// Horizonte-1 #F7: antes decodificaba el JWT de localStorage; el token ahora vive en una cookie httpOnly
+// que JS no puede leer -- se lee del estado ya cargado por auth_nuevo_store (GET /api/auth/me).
 function datosUsuarioToken() {
-  try {
-    const token = localStorage.getItem('key')
-    if (!token) return {}
-    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
-    const payload = JSON.parse(decodeURIComponent(escape(atob(base64))))
-    return { empleadoId: payload.empleado_id || null, areaId: payload.area || null }
-  } catch (e) {
-    console.error(e)
-    return {}
-  }
+  const { areaId, empleadoId } = useAuthNuevoStore()
+  return { empleadoId, areaId }
 }
 const soloFecha = (iso) => (iso ? String(iso).substring(0, 10) : null)
 const formatoTexto = (fisico, digital) =>

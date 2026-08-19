@@ -7,19 +7,15 @@ import { api } from 'src/boot/axios';
 const mensajeError = (e, defecto = "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte") =>
   (e && e.response && e.response.data && (e.response.data.detail || e.response.data.title)) || defecto
 
-// Empleado y área del usuario autenticado, leídos de los claims del JWT (el backend nuevo los exige
-// al crear un préstamo: empleadoRegistroId = quien registra; areaSolicitanteId = su área).
+import { useAuthNuevoStore } from 'src/stores/auth_nuevo_store'
+
+// Empleado y área del usuario autenticado (el backend nuevo los exige al crear un préstamo:
+// empleadoRegistroId = quien registra; areaSolicitanteId = su área).
+// Horizonte-1 #F7: antes decodificaba el JWT de localStorage; el token ahora vive en una cookie httpOnly
+// que JS no puede leer -- se lee del estado ya cargado por auth_nuevo_store (GET /api/auth/me).
 function datosUsuarioToken() {
-  try {
-    const token = localStorage.getItem('key')
-    if (!token) return {}
-    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
-    const payload = JSON.parse(decodeURIComponent(escape(atob(base64))))
-    return { empleadoId: payload.empleado_id || null, areaId: payload.area || null }
-  } catch (e) {
-    console.error(e)
-    return {}
-  }
+  const { areaId, empleadoId } = useAuthNuevoStore()
+  return { empleadoId, areaId }
 }
 
 const soloFecha = (iso) => (iso ? String(iso).substring(0, 10) : null)
@@ -367,6 +363,22 @@ export const useCedulaPrestamoStore = defineStore('CedulaPrestamo', {
         if (resp.status === 204 || resp.status === 200) {
           this.loadSolicitudesAreas(clasificado);
           return { success: true, data: "Solicitud rechazada" }
+        }
+        return { success: false, data: "Ocurrio un error, intentelo de nuevo" }
+      } catch (e) {
+        console.error(e)
+        return { success: false, data: mensajeError(e) }
+      }
+    },
+
+    // MIGRADO al backend nuevo (Horizonte-0 #11): antes el flujo de "Generar recibo" solo generaba un
+    // PDF local sin avisar al backend, así que un préstamo autorizado nunca transicionaba a "Devuelto"
+    // en el sistema de registro. POST /api/prestamos/{id}/devolver -> 204, sin body.
+    async devolver(id) {
+      try {
+        const resp = await api.post(`/prestamos/${id}/devolver`)
+        if (resp.status === 204 || resp.status === 200) {
+          return { success: true, data: "Préstamo devuelto" }
         }
         return { success: false, data: "Ocurrio un error, intentelo de nuevo" }
       } catch (e) {

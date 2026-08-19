@@ -27,6 +27,7 @@ function mapFilaInventarioAi(e) {
     area_Generadora: e.areaGeneradora,
     area_Generadora_Id: e.areaGeneradoraId,
     ubicacion_AI: e.ubicacion,
+    ubicacion_Fisica_Id: e.ubicacionFisicaId,
     valor_Documental: e.valorDocumental,
     vigencia_Concentracion: e.vigenciaConcentracion,
     vigencia_Tramite: null,
@@ -55,6 +56,11 @@ export const useInventarioAreaAIStore = defineStore('inventarioAreaAI', {
     inventariosConcentracionFiltro: [],
     inventariosHistorico: [],
     inventariosHistoricoFiltro: [],
+    // Horizonte-3 #DF-8: etiqueta QR + escaneo de código.
+    modalQr: false,
+    qrUrl: null,
+    qrClave: null,
+    qrNombre: null,
     inventario: {
       id: null,
       seccion: null,
@@ -68,6 +74,7 @@ export const useInventarioAreaAIStore = defineStore('inventarioAreaAI', {
       fecha_Inicio: null,
       fecha_Termino: null,
       ubicacion_AI: null,
+      ubicacion_Fisica_Id: null,
       vigencia_Tramite: null,
       vigencia_Concentracion: null,
       vigencia_Completa: null,
@@ -96,6 +103,7 @@ export const useInventarioAreaAIStore = defineStore('inventarioAreaAI', {
       this.inventario.fecha_Inicio = null
       this.inventario.fecha_Termino = null
       this.inventario.ubicacion_AI = null
+      this.inventario.ubicacion_Fisica_Id = null
       this.inventario.vigencia_Tramite = null
       this.inventario.vigencia_Concentracion = null
       this.inventario.vigencia_Completa = null
@@ -230,9 +238,84 @@ export const useInventarioAreaAIStore = defineStore('inventarioAreaAI', {
       }
     },
 
+    // Horizonte-2 #ES-16: PATCH /api/expedientes/{id}/ubicacion-fisica { ubicacionFisicaId } -> 204.
+    // Vínculo estructurado adicional al texto libre de arriba (updateUbicacion), que se conserva.
+    async updateUbicacionFisica(id, ubicacionFisicaId) {
+      try {
+        const resp = await api.patch(`/expedientes/${id}/ubicacion-fisica`, { ubicacionFisicaId: ubicacionFisicaId || null })
+        if (resp.status === 204 || resp.status === 200) {
+          this.loadInventariosConcentracion()
+          this.loadInventariosHistorico()
+          return { success: true, data: "Ubicación física actualizada con éxito" }
+        }
+        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+      } catch (e) {
+        console.error(e)
+        return { success: false, data: mensajeError(e) }
+      }
+    },
+
     actualizarModal(valor) {
       this.modal = valor
-    }
+    },
+
+    // Horizonte-3 #DF-8: etiqueta QR del expediente (identificador opaco). Revoca la URL de blob
+    // anterior antes de generar una nueva, para no acumular objetos sin liberar en la sesión.
+    async obtenerQr(id, clave, nombre) {
+      try {
+        const resp = await api.get(`/expedientes/${id}/qr`, { responseType: 'blob' })
+        if (resp.status === 200) {
+          if (this.qrUrl) window.URL.revokeObjectURL(this.qrUrl)
+          const blob = new window.Blob([resp.data], { type: 'image/png' })
+          this.qrUrl = window.URL.createObjectURL(blob)
+          this.qrClave = clave
+          this.qrNombre = nombre
+          this.modalQr = true
+          return { success: true }
+        }
+        return { success: false, data: "No se pudo generar el código QR." }
+      } catch (e) {
+        console.error(e)
+        return { success: false, data: mensajeError(e) }
+      }
+    },
+
+    actualizarModalQr(valor) {
+      this.modalQr = valor
+    },
+
+    // Horizonte-3 #DF-8: resuelve un código escaneado (lectora física o entrada manual) al expediente
+    // correspondiente. GET /api/expedientes/resolver-codigo?codigo=... (aislado por área en el backend).
+    async resolverCodigo(codigo) {
+      try {
+        const resp = await api.get('/expedientes/resolver-codigo', { params: { codigo } })
+        if (resp.status === 200) {
+          return { success: true, data: resp.data }
+        }
+        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+      } catch (e) {
+        return { success: false, data: mensajeError(e) }
+      }
+    },
+
+    // Horizonte-3 #DF-8: prepara el editor de ubicación física existente (ModalComp) desde un código
+    // escaneado. Carga primero la lista de la fase correspondiente (si aún no está en memoria) para que
+    // `inventario` quede con TODOS sus datos -- en particular la ubicación de texto libre ya existente --
+    // antes de abrir el modal; sin esto, "Guardar ubicación" la sobreescribiría con null (loadInventario
+    // solo busca en las listas ya cargadas, no expone un GET-por-id).
+    async prepararEdicionDesdeCodigo(resuelto) {
+      if (resuelto.fase === 'Concentracion') {
+        if (this.inventariosConcentracion.length === 0) await this.loadInventariosConcentracion()
+      } else if (resuelto.fase === 'Historico') {
+        if (this.inventariosHistorico.length === 0) await this.loadInventariosHistorico()
+      } else {
+        return { success: false, data: "Este expediente está en trámite; la ubicación física estructurada solo aplica en concentración o histórico." }
+      }
+      const resultado = await this.loadInventario(resuelto.id)
+      if (!resultado.success) return resultado
+      this.actualizarModal(true)
+      return { success: true }
+    },
 
   },
 });

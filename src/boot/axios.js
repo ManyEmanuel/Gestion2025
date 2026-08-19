@@ -13,14 +13,13 @@ import { Notify } from 'quasar'
 // (quasar.config.js > build.env.API_URL). Por defecto apunta al backend NUEVO local (:5120); en
 // build/producción se define API_URL con la URL del backend nuevo. Se retiró el default legado (:9270)
 // y la apiLog legada (:9120), que ya no se usan.
-const api = axios.create({ baseURL: process.env.API_URL || 'http://localhost:5120/api' })
-
-api.interceptors.request.use((config) => {
-  config.headers = {
-    'Authorization': `Bearer ${localStorage.getItem('key')}`
-  }
-  return config
-});
+// Horizonte-1 #F7: el JWT ya no se lee de localStorage ni se manda en el header Authorization -- vive en
+// una cookie httpOnly que el navegador adjunta solo si withCredentials=true (y el backend refleja el
+// origen exacto + AllowCredentials, ver Program.cs). El interceptor de request ya no toca Authorization.
+const api = axios.create({
+  baseURL: process.env.API_URL || 'http://localhost:5120/api',
+  withCredentials: true,
+})
 
 // Router inyectado por el boot para poder redirigir a /login cuando expira la sesión.
 let routerInstance = null
@@ -33,7 +32,8 @@ api.interceptors.response.use(
   error => {
     if (error.response?.status === 401 && !manejando401) {
       manejando401 = true
-      localStorage.removeItem('key')
+      // La cookie la borra el backend (o ya expiró); solo se limpia el flag local de sesión.
+      localStorage.removeItem('sesion_activa')
       localStorage.removeItem('usuario_nuevo')
       Notify.create({ type: 'warning', message: 'Su sesión expiró. Vuelva a iniciar sesión.' })
       routerInstance?.push('/login')

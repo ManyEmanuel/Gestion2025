@@ -5,19 +5,14 @@ import { api } from 'src/boot/axios';
 const mensajeError = (e, defecto = "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte") =>
   (e && e.response && e.response.data && (e.response.data.detail || e.response.data.title)) || defecto
 
-// Empleado y área del usuario autenticado, de los claims del JWT (para el área generadora y el enlace
-// del alta de transferencia).
+import { useAuthNuevoStore } from 'src/stores/auth_nuevo_store'
+
+// Empleado y área del usuario autenticado (para el área generadora y el enlace del alta de transferencia).
+// Horizonte-1 #F7: antes decodificaba el JWT de localStorage; el token ahora vive en una cookie httpOnly
+// que JS no puede leer -- se lee del estado ya cargado por auth_nuevo_store (GET /api/auth/me).
 function datosUsuarioToken() {
-  try {
-    const token = localStorage.getItem('key')
-    if (!token) return {}
-    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
-    const payload = JSON.parse(decodeURIComponent(escape(atob(base64))))
-    return { empleadoId: payload.empleado_id || null, areaId: payload.area || null }
-  } catch (e) {
-    console.error(e)
-    return {}
-  }
+  const { areaId, empleadoId } = useAuthNuevoStore()
+  return { empleadoId, areaId }
 }
 
 export const useTransferenciaPrimariaEncabezadoStore = defineStore('TransferenciaPrimariaEncabezado', {
@@ -133,80 +128,6 @@ export const useTransferenciaPrimariaEncabezadoStore = defineStore('Transferenci
           }
         }
         return { success: true }
-      } catch (e) {
-        console.error(e)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-      }
-    },
-
-    async loadRespArchivo() {
-      try {
-        const resp = await api.get("/Archivo/InventariosGeneralesAreasEncabezado/GetRespArchivo")
-        if (resp.status == 200) {
-          const { success, id, empleado } = resp.data
-          if (success === true) {
-            this.encabezado.coteja_Id = id
-            this.encabezado.coteja = empleado
-            return { success }
-
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-        }
-      } catch (e) {
-        console.error(e)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-      }
-    },
-
-    async loadResponsableArea() {
-      try {
-        const resp = await api.get("/ResponsablesAreas/ResposableByUsuario")
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            if (data) {
-              const { empleado_Id, empleado } = data;
-              this.encabezado.valida_Area_Id = empleado_Id;
-              this.encabezado.valida_Area = empleado;
-              return { success }
-            } else {
-              return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-            }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-        }
-      } catch (e) {
-        console.error(e)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-      }
-    },
-
-    async loadValida() {
-      try {
-        const resp = await api.get("/Archivo/InventariosGeneralesAreasEncabezado/GetSupervisa")
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            if (data) {
-              const { empleado_Id, empleado } = data;
-              this.encabezado.valida_Id = empleado_Id;
-              this.encabezado.valida = empleado;
-              return { success }
-            } else {
-              return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-            }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-        }
       } catch (e) {
         console.error(e)
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
@@ -344,23 +265,37 @@ export const useTransferenciaPrimariaEncabezadoStore = defineStore('Transferenci
       }
     },
 
+    // MIGRADO al backend nuevo (Horizonte-0 #9): la ruta legada Archivo/TransferenciasPrimariasEncabezados/
+    // GetDataAnexo9/{id} no existe en el backend nuevo (404 siempre) -> el Anexo 9 se generaba con datos
+    // vacíos/obsoletos sin avisar. GET /transferenciasprimarias/{id}/anexo9 devuelve un array plano (no el
+    // envoltorio legado {success,data}) con serie/subserie/valor documental/destino ya resueltos.
     async loadInventarios(id) {
       try {
-        const resp = await api.get(`Archivo/TransferenciasPrimariasEncabezados/GetDataAnexo9/${id}`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success) {
-            this.inventarios = data
-          } else {
-            return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-          }
-        } else {
+        const resp = await api.get(`/transferenciasprimarias/${id}/anexo9`)
+        if (resp.status !== 200 || !Array.isArray(resp.data)) {
           return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
         }
+        this.inventarios = resp.data.map((e) => {
+          const partes = (e.claveClasificacion || '').split('/')
+          return {
+            serie_Sub_Serie: e.serieSubSerie,
+            nombre_Expediente: e.nombreExpediente,
+            clave_Clasificacion: e.claveClasificacion,
+            no_Expediente_Interno: partes.length >= 2 ? partes[partes.length - 2] : null,
+            descripcion: e.descripcion,
+            fecha_Inicio: e.fechaInicio,
+            fecha_Termino: e.fechaTermino,
+            caja: e.noCaja,
+            valor_Documental: e.valorDocumental,
+            concentracion: e.vigenciaConcentracion,
+            historico_Baja: e.destinoFinal,
+            signatura_Topografica: e.signaturaTopografica,
+          }
+        })
+        return { success: true }
       } catch (error) {
-        this.isLoading = false
         console.error(error)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        return { success: false, data: mensajeError(error) }
       }
     },
 

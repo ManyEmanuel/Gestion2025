@@ -144,6 +144,7 @@ import { useQuasar } from "quasar";
 import { useRoute, useRouter } from "vue-router";
 import { onBeforeMount } from "vue";
 import { useAuthStore } from "../stores/auth_store";
+import { useAuthNuevoStore } from "../stores/auth_nuevo_store";
 import { storeToRefs } from "pinia";
 import EssentialLink from "components/EssentialLink.vue";
 import { SYSTEM_NAME, FOOTER_TEXT } from "src/branding.js";
@@ -159,6 +160,7 @@ export default defineComponent({
     const route = useRoute();
     const router = useRouter();
     const authStore = useAuthStore();
+    const authNuevoStore = useAuthNuevoStore();
     const { modulos, apps } = storeToRefs(authStore);
     const linksList = ref([]);
     const linksArchivoTramite = ref([]);
@@ -262,6 +264,14 @@ export default defineComponent({
               siglas: "AI-TP",
             });
             break;
+          case "AI-TP-CANDIDATOS":
+            linksArchivoTramite.value.push({
+              title: "Candidatos a transferencia",
+              icon: "move_to_inbox",
+              link: { name: "candidatosTransferencia" },
+              siglas: "AI-TP-CANDIDATOS",
+            });
+            break;
           case "AI-PRESTAMOS":
             linkListPrestamos.value.push({
               title: "Préstamos Archivo en Trámite",
@@ -321,6 +331,14 @@ export default defineComponent({
               siglas: "AI-BD",
             });
             break;
+          case "AI-BD-CANDIDATOS":
+            linkListArchivoConcentracion.value.push({
+              title: "Candidatos a baja",
+              icon: "delete_sweep",
+              link: { name: "candidatosBaja" },
+              siglas: "AI-BD-CANDIDATOS",
+            });
+            break;
 
           case "AI-PRESTAMOS-AI-AI":
             linkListPrestamos.value.push({
@@ -371,6 +389,30 @@ export default defineComponent({
               siglas: "AI-INTEROP",
             });
             break;
+          case "AI-TABLERO":
+            linkListCumplimiento.value.push({
+              title: "Tablero de vencimientos",
+              icon: "event_busy",
+              link: { name: "tablero" },
+              siglas: "AI-TABLERO",
+            });
+            break;
+          case "AI-UBICACIONES":
+            linkListCumplimiento.value.push({
+              title: "Ubicaciones físicas",
+              icon: "warehouse",
+              link: { name: "ubicacionesFisicas" },
+              siglas: "AI-UBICACIONES",
+            });
+            break;
+          case "AI-QR-ESCANEAR":
+            linkListCumplimiento.value.push({
+              title: "Escanear código",
+              icon: "qr_code_scanner",
+              link: { name: "escanearCodigo" },
+              siglas: "AI-QR-ESCANEAR",
+            });
+            break;
           case "AI-ADMIN-AREAS":
             linkListAdministracion.value.push({
               title: "Áreas",
@@ -411,13 +453,18 @@ export default defineComponent({
     const show = () => {
       // Corte: cliente autónomo (login propio). Cerrar sesión limpia el token y vuelve al /login
       // propio; se retiró la navegación al portal SSO (:9271) y a otros sistemas.
+      // Horizonte-1 #F7: antes bastaba localStorage.clear() (el JWT vivía ahí). Ahora vive en una
+      // cookie httpOnly -- hay que llamar a authNuevoStore.logout() para que el backend la expire y el
+      // estado en memoria (área/permisos/empleado) se limpie. logout() limpia su estado en memoria de
+      // forma síncrona antes de la llamada de red, así que el guard de rutas ve la sesión cerrada de
+      // inmediato aunque no se espere la promesa.
       $q.bottomSheet({
         message: "Aplicaciones",
         grid: true,
         actions: apps.value,
       }).onOk((action) => {
         if (action.label == "Cerrar sesión") {
-          localStorage.clear();
+          authNuevoStore.logout();
           router.push({ name: "login" });
         }
       });

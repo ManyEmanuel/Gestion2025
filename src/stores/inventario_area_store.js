@@ -1,33 +1,19 @@
 import { defineStore } from 'pinia';
 import { api } from 'src/boot/axios';
 
-// Corte al backend nuevo: área del usuario desde el claim `area` del JWT (para el selector de
-// expedientes de la caja de transferencia, que en el legado era por el área del usuario).
+import { useAuthNuevoStore } from 'src/stores/auth_nuevo_store'
+
+// Área del usuario (para el selector de expedientes de la caja de transferencia, que en el legado era
+// por el área del usuario). Horizonte-1 #F7: antes decodificaba el JWT de localStorage; el token ahora
+// vive en una cookie httpOnly que JS no puede leer -- se lee del estado ya cargado por auth_nuevo_store
+// (GET /api/auth/me).
 function areaUsuarioToken() {
-  try {
-    const token = localStorage.getItem('key')
-    if (!token) return null
-    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
-    const payload = JSON.parse(decodeURIComponent(escape(atob(base64))))
-    return payload.area || null
-  } catch (e) {
-    console.error(e)
-    return null
-  }
+  return useAuthNuevoStore().areaId
 }
 
-// Corte: empleado del usuario (claim `empleado_id` del JWT) — quien aprueba/rechaza expedientes.
+// Empleado del usuario — quien aprueba/rechaza expedientes.
 function empleadoUsuarioToken() {
-  try {
-    const token = localStorage.getItem('key')
-    if (!token) return null
-    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
-    const payload = JSON.parse(decodeURIComponent(escape(atob(base64))))
-    return payload.empleado_id || null
-  } catch (e) {
-    console.error(e)
-    return null
-  }
+  return useAuthNuevoStore().empleadoId
 }
 
 // Corte al backend nuevo: las escrituras REST responden 201/204 y problem+json en error (axios lanza).
@@ -50,6 +36,9 @@ export const useInventarioAreaStore = defineStore('InventarioArea', {
     aniosFiltro: [],
     inventariosArea: [],
     inventariosAreaFiltro: [],
+    // Id del encabezado resuelto por loadInventariosByAreaYear (área+año), para recargar/aprobar/
+    // rechazar sin depender de un prop de componente que nunca se poblaba (Horizonte-0 #1/#10).
+    encabezadoAreaAnioId: null,
     inventario: {
       id: null,
       seccion_Id: null,
@@ -155,59 +144,54 @@ export const useInventarioAreaStore = defineStore('InventarioArea', {
       }
     },
 
+    // MIGRADO al backend nuevo (Horizonte-0 #1/#10): la ruta legada /Archivo/InventariosGneralesAreas/
+    // GetByArea/{area}/{year} ya no existe (404 siempre). Dos pasos contra el backend nuevo: 1) resolver
+    // el encabezado del área para el año buscado (GET /encabezados/por-area/{areaId}, filtrando por
+    // `ano`), 2) listar sus expedientes (GET /expedientes/por-encabezado/{id}, mismo endpoint que ya usa
+    // loadInventarios). El id del encabezado resuelto se guarda en `encabezadoAreaAnioId` para que la UI
+    // pueda recargar correctamente tras aprobar/rechazar (antes dependía de un prop nunca poblado).
     async loadInventariosByAreaYear(area, year) {
       try {
         this.loading = true
-        this.inventarios = []
-        const resp = await api.get(`/Archivo/InventariosGneralesAreas/GetByArea/${area}/${year}`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success == true) {
-            if (data) {
-              const inventariosArray = data.map((inventario) => {
-                return {
-                  id: inventario.id,
-                  inventario_General_Area_Encabezado_Id: inventario.inventario_General_Area_Encabezado_Id,
-                  seccion_Id: inventario.seccion_Id,
-                  seccion: inventario.seccion,
-                  serie_Id: inventario.serie_Id,
-                  serie: inventario.serie,
-                  sub_Serie_Id: inventario.sub_Serie_Id,
-                  sub_Serie: inventario.sub_Serie,
-                  disposicion_Documental_Id: inventario.disposicion_Documental_Id,
-                  disposicion_Documental: inventario.disposicion_Documental,
-                  empleado: inventario.empleado,
-                  nombre_Expediente: inventario.nombre_Expediente,
-                  clave_Clasificacion: inventario.clave_Clasificacion,
-                  descripcion: inventario.descripcion,
-                  fecha_Inicio: inventario.fecha_Inicio,
-                  fecha_Termino: inventario.fecha_Termino,
-                  ubicacion: inventario.ubicacion,
-                  valor_Documental: inventario.valor_Documental,
-                  vigencia_Tramite: inventario.vigencia_Tramite,
-                  vigencia_Concentracion: inventario.vigencia_Concentracion,
-                  vigencia_Completa: inventario.vigencia_Completa,
-                  fecha_Clasificacion: inventario.fecha_Clasificacion,
-                  fecha_Desclasificacion: inventario.fecha_Desclasificacion,
-                  fecha_Ampliacion: inventario.fecha_Ampliacion,
-                  estatus: inventario.estatus,
-                  motivo_Rechazo: inventario.motivo_Rechazo,
-                  clasificado: inventario.clasificado,
-                  clasificado_Texto: inventario.clasificado_Texto,
-                  total_Paginas: inventario.total_Paginas,
-                }
-              });
-              this.inventariosArea = inventariosArray;
-            }
-            this.loading = false
-          } else {
-            this.loading = false
-            return { success, data }
-          }
-        } else {
+        this.inventariosArea = []
+        this.encabezadoAreaAnioId = null
+        const encResp = await api.get(`/encabezados/por-area/${area}`)
+        if (encResp.status !== 200 || !Array.isArray(encResp.data)) {
           this.loading = false
           return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
         }
+        const encabezado = encResp.data.find((e) => e.ano == year)
+        if (!encabezado) {
+          this.loading = false
+          return { success: true }
+        }
+        this.encabezadoAreaAnioId = encabezado.id
+        const resp = await api.get(`/expedientes/por-encabezado/${encabezado.id}`)
+        this.loading = false
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          this.inventariosArea = resp.data.map((e) => ({
+            id: e.id,
+            inventario_General_Area_Encabezado_Id: e.encabezadoId,
+            seccion_Id: e.seccionId, seccion: e.seccionClave,
+            serie_Id: e.serieId, serie: e.serieClave,
+            sub_Serie_Id: e.subSerieId, sub_Serie: e.subSerieClave,
+            disposicion_Documental_Id: null, disposicion_Documental: null, empleado: null,
+            nombre_Expediente: e.nombreExpediente,
+            clave_Clasificacion: e.claveClasificacion,
+            descripcion: e.descripcion,
+            fecha_Inicio: e.fechaInicio, fecha_Termino: e.fechaTermino,
+            ubicacion: null, valor_Documental: null,
+            vigencia_Tramite: e.vigenciaTramite, vigencia_Concentracion: e.vigenciaConcentracion,
+            vigencia_Completa: e.vigenciaTotal,
+            fecha_Clasificacion: null, fecha_Desclasificacion: null, fecha_Ampliacion: null,
+            estatus: e.estatus, motivo_Rechazo: e.motivoRechazo,
+            clasificado: e.clasificado,
+            clasificado_Texto: e.clasificado ? 'Clasificado' : 'Público',
+            total_Paginas: e.totalPaginas,
+          }))
+          return { success: true }
+        }
+        return { success: false, data: "Respuesta inesperada del servidor." }
       } catch (error) {
         this.loading = false
         console.error(error)
@@ -420,39 +404,6 @@ export const useInventarioAreaStore = defineStore('InventarioArea', {
       }
     },
 
-    async loadInventariosByAreaOptAI(secciones, areaId, year_Inicio, year_Fin) {
-      try {
-        this.inventariosOpt = []
-        const secciones_id = secciones.map(element => {
-          return element.value
-        })
-        const resp = await api.post(`/Archivo/InventariosGneralesAreas/ByAreaOptAI/${areaId}`, { "Secciones_Id": secciones_id, "Year_Inicio": year_Inicio, "Year_Fin": year_Fin })
-
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success == true) {
-            if (data) {
-              let inventarioOpt = data.map((inventario) => {
-                const { label, value } = inventario
-                return {
-                  label, value
-                }
-              })
-              this.inventariosOpt = inventarioOpt
-
-            }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-        }
-      } catch (error) {
-        console.error(error)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-      }
-    },
-
     async loadInventarioOptAi() {
       try {
         const resp = await api.get(`/Archivo/InventariosAreasAI/GetLista`)
@@ -529,34 +480,6 @@ export const useInventarioAreaStore = defineStore('InventarioArea', {
         this.inventariosOptFiltro = this.inventariosOpt.filter(x => x.anio == anio)
       } catch (error) {
         console.log(error)
-      }
-    },
-
-    async loadInventariosAreaOptAI(seccionId, areaId) {
-      try {
-        this.inventariosOpt = []
-        const resp = await api.get(`/Archivo/InventariosGneralesAreas/ByAreaOptAI/${seccionId}/${areaId}`)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success == true) {
-            if (data) {
-              const inventarioOpt = data.map((inventario) => {
-                const { label, value } = inventario
-                return {
-                  label, value
-                }
-              })
-              this.inventariosOpt = inventarioOpt
-            }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-        }
-      } catch (error) {
-        console.error(error)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
       }
     },
 
@@ -758,25 +681,33 @@ export const useInventarioAreaStore = defineStore('InventarioArea', {
       }
     },
 
+    // MIGRADO al backend nuevo (Horizonte-0 #3): la ruta legada /Archivo/InventariosGneralesAreas/{id}
+    // (PUT) no existe -> 404 garantizado. PATCH /expedientes/{id} (solo datos capturables; el backend
+    // rechaza la edición si el expediente ya no está en trámite sin enviar/rechazado).
     async updateInventario(inventario, id, encabezado_Id) {
       try {
-
-        const resp = await api.put(`/Archivo/InventariosGneralesAreas/${id}`, inventario)
-        if (resp.status == 200) {
-          const { success, data } = resp.data
-          if (success === true) {
-            console.log(encabezado_Id)
-            this.loadInventarios(encabezado_Id);
-            return { success, data }
-          } else {
-            return { success, data }
-          }
-        } else {
-          return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        const num = (v) => (v != null && v !== '' ? Number(v) : null)
+        const resp = await api.patch(`/expedientes/${id}`, {
+          seccionId: inventario.seccion_Id,
+          serieId: inventario.serie_Id,
+          subSerieId: inventario.sub_Serie_Id || null,
+          disposicionDocumentalId: inventario.disposicion_Documental_Id || null,
+          nombreExpediente: inventario.nombre_Expediente || null,
+          descripcion: inventario.descripcion || null,
+          fechaInicio: inventario.fecha_Inicio || null,
+          fechaTermino: inventario.fecha_Termino || null,
+          vigenciaTramite: Number(inventario.vigencia_Tramite) || 0,
+          vigenciaConcentracion: Number(inventario.vigencia_Concentracion) || 0,
+          totalPaginas: num(inventario.total_Paginas)
+        })
+        if (resp.status === 204 || resp.status === 200) {
+          this.loadInventarios(encabezado_Id)
+          return { success: true, data: "Expediente actualizado con éxito" }
         }
+        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
       } catch (e) {
         console.error(e)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+        return { success: false, data: mensajeError(e) }
       }
     },
 
@@ -842,6 +773,75 @@ export const useInventarioAreaStore = defineStore('InventarioArea', {
         }
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
       } catch (e) {
+        return { success: false, data: mensajeError(e) }
+      }
+    },
+
+    // MIGRADO al backend nuevo (Horizonte-0 #2): conecta la clasificación LGTAIP (reservado/confidencial)
+    // al endpoint que ya existía en el backend pero nunca se llamaba desde la UI. `nivel` es el entero del
+    // enum NivelClasificacion (1=Publica -> usar Desclasificar, 2=Reservada, 3=Confidencial); el backend no
+    // usa un JsonStringEnumConverter, así que se envía como número, no como texto.
+    async clasificarInventario(id, nivel, fundamento, plazoReservaAnios, encabezadoId) {
+      try {
+        const resp = await api.patch(`/expedientes/${id}/clasificacion`, {
+          nivel,
+          fundamento: fundamento || null,
+          plazoReservaAnios: plazoReservaAnios != null && plazoReservaAnios !== '' ? Number(plazoReservaAnios) : null,
+        })
+        if (resp.status === 204 || resp.status === 200) {
+          this.loadInventarios(encabezadoId)
+          return { success: true, data: "Clasificación actualizada" }
+        }
+        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+      } catch (e) {
+        console.error(e)
+        return { success: false, data: mensajeError(e) }
+      }
+    },
+
+    // Horizonte-3 #DF-6: alerta no bloqueante de posibles CURP/RFC en nombre/descripción. Falla
+    // silenciosa (no interrumpe la captura): es una ayuda, no un requisito para guardar.
+    async detectarDatosSensibles(nombreExpediente, descripcion) {
+      try {
+        const resp = await api.post('/expedientes/detectar-datos-sensibles', {
+          nombreExpediente: nombreExpediente || null, descripcion: descripcion || null
+        })
+        if (resp.status === 200) {
+          return { success: true, data: resp.data }
+        }
+        return { success: false, data: [] }
+      } catch (e) {
+        console.warn('detectar-datos-sensibles', e && e.message)
+        return { success: false, data: [] }
+      }
+    },
+
+    // Horizonte-3 #DF-1: hasta 3 sugerencias de Sección/Serie/Subserie por similitud de nombre con
+    // expedientes ya aprobados del área. Solo sugiere -- el usuario decide si aplicarla.
+    async sugerirClasificacion(nombreExpediente) {
+      try {
+        const resp = await api.post('/expedientes/sugerir-clasificacion', { nombreExpediente })
+        if (resp.status === 200) {
+          return { success: true, data: resp.data }
+        }
+        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+      } catch (e) {
+        console.error(e)
+        return { success: false, data: mensajeError(e) }
+      }
+    },
+
+    // Horizonte-3 #DF-5 v1: posibles duplicados por similitud de nombre/metadatos dentro de la misma
+    // área. Solo lista candidatos -- no fusiona nada.
+    async listarPosiblesDuplicados(id) {
+      try {
+        const resp = await api.get(`/expedientes/${id}/posibles-duplicados`)
+        if (resp.status === 200) {
+          return { success: true, data: resp.data }
+        }
+        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
+      } catch (e) {
+        console.error(e)
         return { success: false, data: mensajeError(e) }
       }
     },

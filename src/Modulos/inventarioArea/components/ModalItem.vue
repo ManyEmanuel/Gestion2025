@@ -20,6 +20,16 @@
       </q-card-section>
       <q-card-section>
         <q-form class="row q-col-gutter-xs" @submit="onSubmit">
+          <!-- Horizonte-3 #DF-6: alerta no bloqueante de posibles CURP/RFC en nombre/descripción. -->
+          <div class="col-12" v-if="hallazgosSensibles.length > 0">
+            <q-banner dense rounded class="bg-warning text-white q-mb-sm">
+              <template v-slot:avatar>
+                <q-icon name="warning" />
+              </template>
+              Se detectó un posible dato personal sensible ({{ hallazgosSensibles.join(", ") }}) en el
+              nombre o descripción. Verifique si el expediente debe clasificarse.
+            </q-banner>
+          </div>
           <div class="col-12 col-xs-12 col-md-12">
             <q-select
               v-model="seccionId"
@@ -52,6 +62,13 @@
               @filter="filtro_subserie"
               label="SubSerie"
               hint="Seleccione Subserie"
+              lazy-rules
+              :rules="[
+                (val) =>
+                  listaSubSeries.length === 0 ||
+                  !!val ||
+                  'La subserie es requerida (la serie seleccionada tiene subseries)',
+              ]"
             />
           </div>
           <div class="col-12 col-xs-6 col-md-6">
@@ -59,6 +76,8 @@
               v-model="inventario.nombre_Expediente"
               label="Nombre del expediente"
               hint="ingrese nombre del expediente"
+              lazy-rules
+              :rules="[(val) => !!val || 'El nombre del expediente es requerido']"
             />
           </div>
           <div class="col-12 col-xs-6 col-md-6">
@@ -66,7 +85,37 @@
               v-model="inventario.clave_Clasificacion"
               label="Clave de clasificación"
               hint="ingrese clave de clasificación"
+              lazy-rules
+              :rules="[(val) => !!val || 'La clave de clasificación es requerida']"
             />
+          </div>
+          <!-- Horizonte-3 #DF-1: sugerencia de Sección/Serie/Subserie por similitud con expedientes ya
+          aprobados. Solo sugiere -- aplicar una sugerencia prellena los selects, que siguen editables. -->
+          <div class="col-12" v-if="inventario.nombre_Expediente">
+            <q-btn
+              flat
+              dense
+              no-caps
+              color="primary"
+              icon="auto_awesome"
+              label="Sugerir clasificación"
+              :loading="sugiriendo"
+              @click="sugerirClasificacion"
+            />
+            <div v-if="sugerencias.length > 0" class="q-gutter-xs q-mt-xs">
+              <q-chip
+                v-for="(sug, idx) in sugerencias"
+                :key="idx"
+                clickable
+                color="primary"
+                text-color="white"
+                icon="check"
+                @click="aplicarSugerencia(sug)"
+              >
+                {{ sug.seccionNombre }} / {{ sug.serieNombre }}<template v-if="sug.subSerieNombre"> / {{ sug.subSerieNombre }}</template>
+                ({{ Math.round(sug.confianza * 100) }}%)
+              </q-chip>
+            </div>
           </div>
           <div class="col-12 col-xs-12 col-md-12">
             <q-input
@@ -137,6 +186,10 @@
               label="Destino final"
             />
           </div>
+          <!-- Horizonte-1 #H1: fecha_Clasificacion/Desclasificacion/Ampliacion no se envían a ningún
+          endpoint (onSubmit solo manda nivelClasificacion/fundamentoClasificacion/plazoReservaAnios; la
+          fecha de clasificación la fija el propio backend al recibir PATCH .../clasificacion). Exigirlas
+          aquí inventaría una restricción que el backend no usa -- se dejan sin :rules. -->
           <div class="col-12 col-xs-6 col-md-4">
             <q-input
               stack-label
@@ -165,7 +218,33 @@
             />
           </div>
           <div class="col-12 col-xs-6 col-md-4">
-            <q-checkbox label="Clasificado" v-model="inventario.clasificado" />
+            <q-select
+              v-model="nivelClasificacion"
+              :options="opciones_nivel_clasificacion"
+              emit-value
+              map-options
+              label="Clasificación de la información"
+              hint="LGTAIP: pública, reservada o confidencial"
+            />
+          </div>
+          <div class="col-12 col-xs-6 col-md-4" v-if="nivelClasificacion !== 1">
+            <q-input
+              v-model="fundamentoClasificacion"
+              label="Fundamento"
+              hint="Fundamento legal de la clasificación"
+              lazy-rules
+              :rules="[(val) => !!val || 'El fundamento es requerido']"
+            />
+          </div>
+          <div class="col-12 col-xs-6 col-md-4" v-if="nivelClasificacion === 2">
+            <q-input
+              v-model="plazoReservaAnios"
+              type="number"
+              label="Plazo de reserva (años)"
+              hint="Años de reserva de la información"
+              lazy-rules
+              :rules="[(val) => (!!val && Number(val) > 0) || 'El plazo de reserva es requerido']"
+            />
           </div>
           <div class="col-12 justify-end">
             <div class="text-right q-gutter-xs">
@@ -226,6 +305,85 @@ const actualizarModal = () => {
   inventarioStore.actualizarModal(false);
 };
 
+// Horizonte-3 #DF-6: alerta no bloqueante de posibles CURP/RFC en nombre/descripción, con debounce
+// para no llamar al backend en cada tecla.
+const hallazgosSensibles = ref([]);
+let debounceDatosSensibles = null;
+watch(
+  () => [inventario.value.nombre_Expediente, inventario.value.descripcion],
+  () => {
+    clearTimeout(debounceDatosSensibles);
+    debounceDatosSensibles = setTimeout(async () => {
+      const resp = await inventarioStore.detectarDatosSensibles(
+        inventario.value.nombre_Expediente,
+        inventario.value.descripcion
+      );
+      hallazgosSensibles.value = resp.success ? resp.data : [];
+    }, 500);
+  }
+);
+
+// Horizonte-3 #DF-1: sugerencia de Sección/Serie/Subserie por similitud de nombre.
+const sugiriendo = ref(false);
+const sugerencias = ref([]);
+// Evita que los watch de seccionId/serieId (que resetean los niveles siguientes al cambiar por
+// selección manual del usuario) pisen los valores que aplicarSugerencia acaba de fijar.
+const aplicandoSugerencia = ref(false);
+
+const sugerirClasificacion = async () => {
+  if (!inventario.value.nombre_Expediente) return;
+  sugiriendo.value = true;
+  const resp = await inventarioStore.sugerirClasificacion(inventario.value.nombre_Expediente);
+  sugiriendo.value = false;
+  if (resp.success) {
+    sugerencias.value = resp.data;
+    if (sugerencias.value.length === 0) {
+      $q.notify({ type: "info", message: "No se encontraron sugerencias con expedientes aprobados similares." });
+    }
+  } else {
+    $q.notify({ type: "negative", message: resp.data });
+  }
+};
+
+const aplicarSugerencia = async (sug) => {
+  aplicandoSugerencia.value = true;
+  $q.loading.show();
+  try {
+    seccionId.value = { label: sug.seccionNombre, value: sug.seccionId };
+    await loadSeries(sug.seccionId);
+    serieId.value = { label: sug.serieNombre, value: sug.serieId };
+    await loadSubSeries(sug.serieId);
+    if (sug.subSerieId) {
+      subSerieId.value = { label: sug.subSerieNombre, value: sug.subSerieId };
+    }
+  } finally {
+    $q.loading.hide();
+    aplicandoSugerencia.value = false;
+  }
+};
+
+// Clasificación LGTAIP (Horizonte-0 #2): antes era un checkbox local que nunca se enviaba al backend.
+// nivelClasificacion usa los valores enteros del enum NivelClasificacion (1=Publica/2=Reservada/
+// 3=Confidencial) tal como los espera PATCH /expedientes/{id}/clasificacion (sin JsonStringEnumConverter).
+const opciones_nivel_clasificacion = [
+  { label: "Pública", value: 1 },
+  { label: "Reservada", value: 2 },
+  { label: "Confidencial", value: 3 },
+];
+const nivelClasificacion = ref(1);
+const fundamentoClasificacion = ref(null);
+const plazoReservaAnios = ref(null);
+
+watch(modal, (val) => {
+  if (val === true) {
+    nivelClasificacion.value = 1;
+    fundamentoClasificacion.value = null;
+    plazoReservaAnios.value = null;
+    hallazgosSensibles.value = [];
+    sugerencias.value = [];
+  }
+});
+
 const options_secciones = ref(listaSecciones.value);
 const options_series = ref(listaSeries.value);
 const options_subseries = ref(listaSubSeries.value);
@@ -265,7 +423,7 @@ const loadDispDocumental = async () => {
 };
 
 watch(seccionId, (val) => {
-  if (val == null) return;
+  if (val == null || aplicandoSugerencia.value) return;
   serieId.value = null;
   subSerieId.value = null;
   seriesStore.initListaSeries();
@@ -274,7 +432,7 @@ watch(seccionId, (val) => {
 });
 
 watch(serieId, (val) => {
-  if (val == null) return;
+  if (val == null || aplicandoSugerencia.value) return;
   subSerieId.value = null;
   subSerieStore.initListaSubSerie();
   loadSubSeries(val.value);
@@ -357,6 +515,23 @@ const onSubmit = async () => {
     );
   }
   if (resp.success) {
+    if (nivelClasificacion.value !== 1 && resp.id) {
+      const respClasificacion = await inventarioStore.clasificarInventario(
+        resp.id,
+        nivelClasificacion.value,
+        fundamentoClasificacion.value,
+        plazoReservaAnios.value,
+        props.encabezadoId
+      );
+      if (!respClasificacion.success) {
+        $q.notify({
+          type: "warning",
+          message:
+            "El expediente se registró, pero no se pudo aplicar la clasificación: " +
+            respClasificacion.data,
+        });
+      }
+    }
     $q.notify({
       type: "positive",
       message: resp.data,

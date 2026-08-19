@@ -73,10 +73,20 @@
                   color="purple-ieen"
                   icon="edit"
                   @click="editar(col.value)"
-                
+
   aria-label="Editar registro"
 >
                   <q-tooltip>Editar registro</q-tooltip>
+                </q-btn>
+                <q-btn
+                  flat
+                  round
+                  color="purple-ieen"
+                  icon="qr_code_2"
+                  @click="imprimirQr(props.row)"
+                  aria-label="Imprimir etiqueta QR"
+                >
+                  <q-tooltip>Imprimir etiqueta QR</q-tooltip>
                 </q-btn>
               </div>
               <label v-else>{{ col.value }}</label>
@@ -300,6 +310,11 @@ const filter = ref("");
 const editar = (id) => {
   inventarioStore.loadInventario(id);
   inventarioStore.actualizarModal(true);
+};
+
+// Horizonte-3 #DF-8: etiqueta QR imprimible para pegar en la carpeta/caja física.
+const imprimirQr = (row) => {
+  inventarioStore.obtenerQr(row.id, row.clave_Clasificacion, row.nombre_Expediente);
 };
 
 const ListadoExcel = async () => {

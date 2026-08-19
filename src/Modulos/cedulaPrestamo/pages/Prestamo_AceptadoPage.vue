@@ -273,6 +273,20 @@ const generar_anexo = (tipo) => {
 
 const onSubmit = async () => {
   $q.loading.show();
+  // Horizonte-0 #11: antes esto solo generaba el PDF sin avisar al backend, así que el préstamo
+  // autorizado nunca transicionaba a "Devuelto" en el sistema de registro. Se avisa al backend primero;
+  // si falla, no se genera el comprobante ni se cierra el diálogo (mismo patrón que otros flujos ya
+  // corregidos: no producir un documento con apariencia de válido si la operación real falló).
+  const resp = await cedulaPrestamo.devolver(registro.value.id);
+  if (!resp.success) {
+    $q.loading.hide();
+    $q.notify({
+      type: "negative",
+      message: resp.data,
+    });
+    return;
+  }
+
   const rows = [];
   detalles.value.forEach((element) => {
     const arr_clave = element.inventario_Clave_Clasificacion.split("/");

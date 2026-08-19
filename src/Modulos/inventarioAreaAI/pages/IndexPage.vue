@@ -39,6 +39,7 @@
     <ModalComp />
     <ModalAdjuntos />
     <ModalVisor />
+    <ModalQr />
   </q-page>
 </template>
 <script setup>
@@ -54,6 +55,7 @@ import TablaConcentracionComp from "../components/TablaConcentracionComp.vue";
 import TablaHistoricoComp from "../components/TablaHistoricoComp.vue";
 import ModalAdjuntos from "../components/ModalAdjuntos.vue";
 import ModalVisor from "../components/ModalVisor.vue";
+import ModalQr from "../components/ModalQr.vue";
 import SinPermisoBanner from "../../../components/SinPermisoBanner.vue";
 
 const $q = useQuasar();

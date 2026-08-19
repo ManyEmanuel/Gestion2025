@@ -11,6 +11,18 @@
           Archivos adjuntos de {{ inventario.clave_Clasificacion }}
         </h2>
         <q-space />
+        <!-- Horizonte-3 #DF-5 v1: posibles duplicados por similitud de nombre/metadatos. Solo lista
+        candidatos para revisión manual -- no ofrece fusionar nada. -->
+        <q-btn
+          flat
+          dense
+          no-caps
+          icon="content_copy"
+          label="Ver posibles duplicados"
+          class="q-mr-sm"
+          :loading="buscandoDuplicados"
+          @click="verPosiblesDuplicados"
+        />
         <q-btn
           icon="close"
           @click="actualizarModal(false)"
@@ -147,6 +159,33 @@
       </card-seccion>
     </q-card>
   </q-dialog>
+
+  <!-- Horizonte-3 #DF-5 v1: resultados de posibles duplicados. -->
+  <q-dialog v-model="modalDuplicados">
+    <q-card flat bordered style="width: 700px; max-width: 90vw">
+      <q-card-section class="row">
+        <h2 class="text-h6">Posibles duplicados</h2>
+        <q-space />
+        <q-btn icon="close" flat round dense v-close-popup aria-label="Cerrar" />
+      </q-card-section>
+      <q-card-section>
+        <q-banner v-if="duplicados.length === 0" dense class="bg-grey-3">
+          No se encontraron expedientes con nombre o metadatos similares en el área.
+        </q-banner>
+        <q-list v-else bordered separator>
+          <q-item v-for="dup in duplicados" :key="dup.id">
+            <q-item-section>
+              <q-item-label>{{ dup.claveClasificacion }} — {{ dup.nombreExpediente }}</q-item-label>
+              <q-item-label caption>{{ dup.motivo }}</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-badge color="orange">{{ Math.round(dup.similitud * 100) }}% similitud</q-badge>
+            </q-item-section>
+          </q-item>
+        </q-list>
+      </q-card-section>
+    </q-card>
+  </q-dialog>
 </template>
 
 <script setup>
@@ -237,7 +276,23 @@ watch(file, (val) => {
     var reader = new FileReader();
     reader.readAsBinaryString(file.value);
     reader.onloadend = function () {
-      noPaginas.value = reader.result.match(/\/Type[\s]*\/Page[^s]/g).length;
+      // Horizonte-1 #H2: heurística de regex sobre el binario, no un parser de PDF real -- falla en PDFs
+      // con streams comprimidos u otros formatos (imagen, docx, xlsx). Antes la excepción quedaba sin
+      // capturar; ahora se avisa y el usuario captura el número manualmente en el campo ya editable.
+      try {
+        const coincidencias = reader.result.match(/\/Type[\s]*\/Page[^s]/g);
+        if (coincidencias == null) {
+          throw new Error("No se pudo detectar el número de páginas");
+        }
+        noPaginas.value = coincidencias.length;
+      } catch (e) {
+        console.error(e);
+        $q.notify({
+          type: "warning",
+          message:
+            "No se pudo calcular el número de páginas automáticamente. Captúrelo manualmente.",
+        });
+      }
     };
   }
 });
@@ -275,6 +330,22 @@ const descargar = async (id) => {
 };
 
 const mensajeEliminar = (row) => `¿Eliminar el archivo "${row.nombre}"?`;
+
+// Horizonte-3 #DF-5 v1: posibles duplicados por similitud de nombre/metadatos.
+const modalDuplicados = ref(false);
+const duplicados = ref([]);
+const buscandoDuplicados = ref(false);
+const verPosiblesDuplicados = async () => {
+  buscandoDuplicados.value = true;
+  const resp = await inventarioStore.listarPosiblesDuplicados(inventario.value.id);
+  buscandoDuplicados.value = false;
+  if (resp.success) {
+    duplicados.value = resp.data;
+    modalDuplicados.value = true;
+  } else {
+    $q.notify({ type: "negative", message: resp.data });
+  }
+};
 
 const eliminarAdjunto = async (id) => {
   $q.loading.show();

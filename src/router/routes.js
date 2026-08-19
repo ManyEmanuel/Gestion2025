@@ -86,6 +86,30 @@ const routes = [
         name: 'transferenciasPrimariasAI',
         component: () => import('../Modulos/transferenciaPrimariaAiEncabezado/pages/IndexPage')
       },
+      // Horizonte-2 #ES-10
+      {
+        path: '/candidatosTransferencia',
+        name: 'candidatosTransferencia',
+        component: () => import('../Modulos/candidatosTransferencia/pages/IndexPage.vue')
+      },
+      // Horizonte-2 #ES-11
+      {
+        path: '/candidatosBaja',
+        name: 'candidatosBaja',
+        component: () => import('../Modulos/candidatosBaja/pages/IndexPage.vue')
+      },
+      // Horizonte-2 #ES-16
+      {
+        path: '/ubicacionesFisicas',
+        name: 'ubicacionesFisicas',
+        component: () => import('../Modulos/ubicacionesFisicas/pages/IndexPage.vue')
+      },
+      // Horizonte-3 #DF-8
+      {
+        path: '/escanearCodigo',
+        name: 'escanearCodigo',
+        component: () => import('../Modulos/escanearCodigo/pages/IndexPage.vue')
+      },
       {
         path: '/cajasTransferencias/:transferenciaId',
         props: true,
@@ -146,6 +170,12 @@ const routes = [
         path: '/avisos',
         name: 'avisos',
         component: () => import('../Modulos/avisos/pages/IndexPage.vue')
+      },
+      // Horizonte-2 #QW-5
+      {
+        path: '/tablero',
+        name: 'tablero',
+        component: () => import('../Modulos/tablero/pages/IndexPage.vue')
       },
       {
         path: '/pada',

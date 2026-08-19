@@ -5,19 +5,14 @@ import { api } from 'src/boot/axios';
 const mensajeError = (e, defecto = "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte") =>
   (e && e.response && e.response.data && (e.response.data.detail || e.response.data.title)) || defecto
 
-// Empleado y área del usuario autenticado, de los claims del JWT (para el área generadora y el enlace
-// del alta de baja).
+import { useAuthNuevoStore } from 'src/stores/auth_nuevo_store'
+
+// Empleado y área del usuario autenticado (para el área generadora y el enlace del alta de baja).
+// Horizonte-1 #F7: antes decodificaba el JWT de localStorage; el token ahora vive en una cookie httpOnly
+// que JS no puede leer -- se lee del estado ya cargado por auth_nuevo_store (GET /api/auth/me).
 function datosUsuarioToken() {
-  try {
-    const token = localStorage.getItem('key')
-    if (!token) return {}
-    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
-    const payload = JSON.parse(decodeURIComponent(escape(atob(base64))))
-    return { empleadoId: payload.empleado_id || null, areaId: payload.area || null }
-  } catch (e) {
-    console.error(e)
-    return {}
-  }
+  const { areaId, empleadoId } = useAuthNuevoStore()
+  return { empleadoId, areaId }
 }
 
 export const useBajaDocumentalStore = defineStore('BajaDocumental', {

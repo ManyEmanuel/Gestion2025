@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { api } from 'src/boot/axios';
+import { useAuthNuevoStore } from 'src/stores/auth_nuevo_store';
 
 // Corte al backend nuevo: los permisos por módulo se derivan de los claims del JWT
 // (no del endpoint legado /PermisosModulosUsuarios). Mapa siglas del cliente -> grupo
@@ -15,12 +16,14 @@ const MAPA_SIGLAS_GRUPO = {
   'AI-INV-AREA-GRAL': 'inventario',
   'AI-TP': 'transferencia',
   'AI-TP-AI': 'transferencia',
+  'AI-TP-CANDIDATOS': 'transferencia',
   'AI-CJS-TRANS': 'transferencia',
   'AI-CJS-TRANS-AI': 'transferencia',
   'AI-TS': 'transferencia-secundaria',
   'AI-CJS-TRNS-SEC': 'transferencia-secundaria',
   'AI-BD': 'baja',
   'AI-CJS-BAJAS': 'baja',
+  'AI-BD-CANDIDATOS': 'baja',
   'AI-CAT-ENLACE': 'enlace',
   'AI-CAT-VOBO': 'visto-bueno',
   'AI-PRESTAMOS': 'prestamo',
@@ -34,6 +37,11 @@ const MAPA_SIGLAS_GRUPO = {
   'AI-PRESERVACION': 'preservacion',
   'AI-INTEROP': 'interoperabilidad',
   'AI-AVISOS': 'transferencia-secundaria',
+  'AI-TABLERO': 'tablero',
+  'AI-UBICACIONES': 'ubicacion-fisica',
+  // Horizonte-3 #DF-8: escanear código QR/barras. Reutiliza el permiso de inventario (leer para
+  // resolver el código, registrar para actualizar la ubicación física vía el editor existente).
+  'AI-QR-ESCANEAR': 'inventario',
   // Administración (ámbito global): áreas y su jerarquía. Grupo `administracion.areas` -> los flags
   // leer/registrar/actualizar/eliminar salen de archivo.administracion.areas.{ver,registrar,actualizar,eliminar}.
   'AI-ADMIN-AREAS': 'administracion.areas',
@@ -46,24 +54,17 @@ const MAPA_SIGLAS_GRUPO = {
 // cajas (AI-CJS-*) se navegan desde dentro de su encabezado, no van en el menú.
 const SIGLAS_MENU = [
   'AI-CAT-SECCIONES', 'AI-CAT-DISP-DOC', 'AI-CAT-ENLACE', 'AI-CAT-VOBO',
-  'AI-INV-AREA', 'AI-TP', 'AI-TP-AI', 'AI-INV-AREA-AI', 'AI-TS', 'AI-BD',
+  'AI-INV-AREA', 'AI-TP', 'AI-TP-AI', 'AI-TP-CANDIDATOS', 'AI-INV-AREA-AI', 'AI-TS', 'AI-BD', 'AI-BD-CANDIDATOS',
   'AI-PRESTAMOS', 'AI-PRESTAMOS-CLASI', 'AI-PRESTAMOS-AI', 'AI-PRESTAMOS-AI-AI',
-  'AI-AVISOS', 'AI-PADA', 'AI-GRUPO', 'AI-PRESERVACION', 'AI-INTEROP',
+  'AI-AVISOS', 'AI-PADA', 'AI-GRUPO', 'AI-PRESERVACION', 'AI-INTEROP', 'AI-TABLERO', 'AI-UBICACIONES', 'AI-QR-ESCANEAR',
   'AI-ADMIN-AREAS', 'AI-ADMIN-EMPLEADOS', 'AI-ADMIN-USUARIOS', 'AI-ADMIN-PERFILES',
 ];
 
+// Horizonte-1 #F7: antes decodificaba el JWT de localStorage; el token ahora vive en una cookie httpOnly
+// que JS no puede leer. Los permisos (congelados al login, igual que antes) se leen del estado ya
+// cargado por auth_nuevo_store desde GET /api/auth/me.
 function permisosDelToken() {
-  try {
-    const token = localStorage.getItem('key');
-    if (!token) return [];
-    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-    const payload = JSON.parse(decodeURIComponent(escape(atob(base64))));
-    const p = payload.permiso;
-    return Array.isArray(p) ? p : (p ? [p] : []);
-  } catch (e) {
-    console.log(e);
-    return [];
-  }
+  return useAuthNuevoStore().permisos || [];
 }
 
 export const useAuthStore = defineStore('AuthStore', {

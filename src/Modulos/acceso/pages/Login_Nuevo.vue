@@ -18,11 +18,19 @@
         <q-input
           v-model="password"
           label="Contraseña"
-          type="password"
+          :type="mostrarPassword ? 'text' : 'password'"
           name="password"
           autocomplete="current-password"
           :rules="[(v) => !!v || 'Requerido']"
-        />
+        >
+          <template v-slot:append>
+            <q-icon
+              :name="mostrarPassword ? 'visibility_off' : 'visibility'"
+              class="cursor-pointer"
+              @click="mostrarPassword = !mostrarPassword"
+            />
+          </template>
+        </q-input>
 
         <div v-if="error" class="text-negative text-caption" role="alert" aria-live="assertive">{{ error }}</div>
 
@@ -51,6 +59,7 @@ export default defineComponent({
     const authStore = useAuthNuevoStore();
     const usuario = ref('');
     const password = ref('');
+    const mostrarPassword = ref(false);
     const error = ref('');
     const cargando = ref(false);
 
@@ -67,7 +76,7 @@ export default defineComponent({
       }
     }
 
-    return { usuario, password, error, cargando, onSubmit, SYSTEM_NAME, LOGIN_SUBTITLE };
+    return { usuario, password, mostrarPassword, error, cargando, onSubmit, SYSTEM_NAME, LOGIN_SUBTITLE };
   },
 });
 </script>

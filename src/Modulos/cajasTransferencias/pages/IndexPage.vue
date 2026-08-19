@@ -138,9 +138,16 @@ const actualizarModal = (valor) => {
 };
 
 const generar_anexo_9 = async () => {
+  $q.loading.show();
+  const resp = await transferenciaPrimariaStore.loadInventarios(encabezado.value.id);
+  $q.loading.hide();
+  if (!resp.success) {
+    $q.notify({ type: "negative", message: resp.data });
+    return;
+  }
+
   const rows = [];
   let cajas = [];
-  await transferenciaPrimariaStore.loadInventarios(encabezado.value.id);
   inventarios.value.forEach((element) => {
     rows.push([
       element.serie_Sub_Serie,

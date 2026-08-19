@@ -21,9 +21,13 @@
           label="Nueva contraseña"
           type="password"
           autocomplete="new-password"
+          hint="Mínimo 12 caracteres, con mayúscula, minúscula y número"
           :rules="[
             (v) => !!v || 'Requerido',
-            (v) => (v && v.length >= 6) || 'Mínimo 6 caracteres',
+            (v) => (v && v.length >= 12) || 'Mínimo 12 caracteres',
+            (v) => (v && /[A-Z]/.test(v)) || 'Debe incluir al menos una mayúscula',
+            (v) => (v && /[a-z]/.test(v)) || 'Debe incluir al menos una minúscula',
+            (v) => (v && /[0-9]/.test(v)) || 'Debe incluir al menos un número',
           ]"
         />
         <q-input

@@ -76,19 +76,19 @@
                   <q-tooltip>Ver adjuntos</q-tooltip>
                 </q-btn>
                 <q-btn
-                  v-if="props.row['estatus'] == 'Rechazado'"
+                  v-if="['SinEnviar', 'Rechazado'].includes(props.row['estatus'])"
                   flat
                   round
                   color="positive"
                   icon="check_circle"
                   @click="aprobar(col.value)"
-                
+
   aria-label="Aprobar"
 >
                   <q-tooltip>Aprobar</q-tooltip>
                 </q-btn>
                 <q-btn
-                  v-if="props.row['estatus'] == 'Aprobado'"
+                  v-if="props.row['estatus'] == 'Enviado'"
                   flat
                   round
                   color="negative"

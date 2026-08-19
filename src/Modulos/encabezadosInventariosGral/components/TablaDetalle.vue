@@ -79,19 +79,19 @@
                   <q-tooltip>Ver adjuntos</q-tooltip>
                 </q-btn>
                 <q-btn
-                  v-if="props.row['estatus'] == 'Pendiente'"
+                  v-if="['SinEnviar', 'Rechazado'].includes(props.row['estatus'])"
                   flat
                   round
                   color="positive"
                   icon="check_circle"
                   @click="aprobar(col.value)"
-                
+
   aria-label="Aprobar"
 >
                   <q-tooltip>Aprobar</q-tooltip>
                 </q-btn>
                 <q-btn
-                  v-if="props.row['estatus'] == 'Pendiente'"
+                  v-if="props.row['estatus'] == 'Enviado'"
                   flat
                   round
                   color="negative"
@@ -120,12 +120,10 @@ import { useAdjuntoInventarioStore } from "../../../stores/adjunto_inventario_st
 import { useAreaStore } from "../../../stores/areas_store";
 import { useAuthStore } from "../../../stores/auth_store";
 
-const props = defineProps({
-  encabezadoId: {
-    type: Number,
-    required: true,
-  },
-});
+// Esta tabla se puebla por búsqueda de área+año (ver BuscarInventario), no por un encabezadoId recibido
+// del padre -- antes se declaraba un prop `encabezadoId` que ningún componente padre llegaba a pasar
+// (Horizonte-0 #1/#10); el id real del encabezado resuelto por la búsqueda vive en el store
+// (`encabezadoAreaAnioId`) y es lo que se usa para aprobar/rechazar/recargar.
 
 const $q = useQuasar();
 const inventarioStore = useInventarioAreaStore();
@@ -133,7 +131,7 @@ const adjuntoStore = useAdjuntoInventarioStore();
 const authStore = useAuthStore();
 const areaStore = useAreaStore();
 const { modulo } = storeToRefs(authStore);
-const { inventariosArea, loading } = storeToRefs(inventarioStore);
+const { inventariosArea, loading, encabezadoAreaAnioId } = storeToRefs(inventarioStore);
 const { areas } = storeToRefs(areaStore);
 const year = ref(new Date().getFullYear());
 const areaId = ref(null);
@@ -189,10 +187,11 @@ const rechazar = async (id) => {
     $q.loading.show();
     const resp = await inventarioStore.rechazarInventario(
       id,
-      props.encabezadoId,
+      encabezadoAreaAnioId.value,
       motivo
     );
     if (resp.success) {
+      await inventarioStore.loadInventariosByAreaYear(areaId.value.value, year.value);
       $q.loading.hide();
       $q.notify({
         type: "positive",
@@ -228,9 +227,10 @@ const aprobar = async (id) => {
     $q.loading.show();
     const resp = await inventarioStore.aprobarInventario(
       id,
-      props.encabezadoId
+      encabezadoAreaAnioId.value
     );
     if (resp.success) {
+      await inventarioStore.loadInventariosByAreaYear(areaId.value.value, year.value);
       $q.loading.hide();
       $q.notify({
         type: "positive",
