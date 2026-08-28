@@ -217,7 +217,9 @@
               hint="ingrese fecha ampliación"
             />
           </div>
-          <div class="col-12 col-xs-6 col-md-4">
+          <!-- Auditoría SEC-008: clasificar tiene permiso propio (archivo.inventario.clasificar); sin él
+               no se ofrecen estos campos, porque el backend rechazaría la clasificación con 403. -->
+          <div class="col-12 col-xs-6 col-md-4" v-if="puedeClasificar">
             <q-select
               v-model="nivelClasificacion"
               :options="opciones_nivel_clasificacion"
@@ -227,7 +229,7 @@
               hint="LGTAIP: pública, reservada o confidencial"
             />
           </div>
-          <div class="col-12 col-xs-6 col-md-4" v-if="nivelClasificacion !== 1">
+          <div class="col-12 col-xs-6 col-md-4" v-if="puedeClasificar && nivelClasificacion !== 1">
             <q-input
               v-model="fundamentoClasificacion"
               label="Fundamento"
@@ -236,7 +238,7 @@
               :rules="[(val) => !!val || 'El fundamento es requerido']"
             />
           </div>
-          <div class="col-12 col-xs-6 col-md-4" v-if="nivelClasificacion === 2">
+          <div class="col-12 col-xs-6 col-md-4" v-if="puedeClasificar && nivelClasificacion === 2">
             <q-input
               v-model="plazoReservaAnios"
               type="number"
@@ -272,12 +274,13 @@
 <script setup>
 import { useQuasar } from "quasar";
 import { storeToRefs } from "pinia";
-import { ref, toRef, watch } from "vue";
+import { computed, ref, toRef, watch } from "vue";
 import { useInventarioAreaStore } from "../../../stores/inventario_area_store";
 import { useSeccionStore } from "../../../stores/secciones_store";
 import { useSeriesStore } from "../../../stores/series_store";
 import { useSubSerieStore } from "../../../stores/sub_series_store";
 import { useDisposicionDocStore } from "../../../stores/disposicion_documental_store";
+import { useAuthStore } from "../../../stores/auth_store";
 import BtnCancelar from "../../../components/BtnCancelar.vue";
 const $q = useQuasar();
 const inventarioStore = useInventarioAreaStore();
@@ -285,6 +288,7 @@ const seccionStore = useSeccionStore();
 const seriesStore = useSeriesStore();
 const subSerieStore = useSubSerieStore();
 const disposicionDocStore = useDisposicionDocStore();
+const authStore = useAuthStore();
 const props = defineProps({
   encabezadoId: {
     type: Number,
@@ -370,6 +374,8 @@ const opciones_nivel_clasificacion = [
   { label: "Reservada", value: 2 },
   { label: "Confidencial", value: 3 },
 ];
+// Auditoría SEC-008: el permiso de clasificar dejó de ir junto con el de captura.
+const puedeClasificar = computed(() => authStore.tienePermiso("archivo.inventario.clasificar"));
 const nivelClasificacion = ref(1);
 const fundamentoClasificacion = ref(null);
 const plazoReservaAnios = ref(null);
