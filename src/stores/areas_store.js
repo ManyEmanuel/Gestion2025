@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { api } from 'src/boot/axios';
+import { obtenerCatalogo, invalidarCatalogo, CATALOGOS } from 'src/helpers/catalogo_cache';
 
 // Corte al backend nuevo: las escrituras REST responden 201/204 y problem+json en error (axios lanza).
 const mensajeError = (e, defecto = "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte") =>
@@ -48,20 +49,31 @@ export const useAreaStore = defineStore('Areas', {
 
     // MIGRADO al backend nuevo (corte): GET /api/areas -> array de { id, siglas, nombre }.
     // Selector reutilizable (préstamos, encabezados, transferencias, bajas, etc.).
-    async loadListaAreas() {
+    //
+    // Auditoría PERF-006: es el catálogo más pedido de la aplicación -- 12 peticiones en un recorrido de
+    // 24 pantallas, siempre con la misma respuesta. Ahora pasa por el caché de catálogos, que además
+    // comparte la petición en vuelo cuando dos componentes lo piden a la vez (las dos tablas de Inventario
+    // AI lo hacen al montar). `forzar` lo salta cuando hace falta releerlo.
+    async loadListaAreas(forzar = false) {
       try {
-        this.areas = []
-        const resp = await api.get('/areas')
-        if (resp.status == 200 && Array.isArray(resp.data)) {
-          this.areas = resp.data.map((area) => ({
+        // COPIA por llamada: el caché guarda un solo arreglo y alguna pantalla le hace unshift para
+        // añadir su opción "Ver todos" (encabezadosInventariosGral). Sin la copia, esa mutación se
+        // quedaría pegada al caché y la opción se duplicaría en cada visita. Con ella, el comportamiento
+        // es idéntico al de antes del caché.
+        this.areas = [...await obtenerCatalogo(CATALOGOS.areas, async () => {
+          const resp = await api.get('/areas')
+          if (resp.status != 200 || !Array.isArray(resp.data)) {
+            throw new Error('Respuesta inesperada del servidor.')
+          }
+          return resp.data.map((area) => ({
             label: `${area.siglas} - ${area.nombre}`,
             value: area.id
           }))
-          return { success: true }
-        }
-        return { success: false, data: "Respuesta inesperada del servidor." }
+        }, { forzar })]
+        return { success: true }
       } catch (error) {
         console.error(error)
+        this.areas = []
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
       }
     },
@@ -146,19 +158,24 @@ export const useAreaStore = defineStore('Areas', {
 
     // MIGRADO al backend nuevo (corte): GET /api/empleados -> array de { id, nombreCompleto }.
     // Selector reutilizable (vistos buenos, enlaces, préstamos, encabezados, etc.).
-    async loadEmpleadosTodos() {
+    // Auditoría PERF-006: mismo caso que las áreas -- catálogo estable pedido desde varias pantallas
+    // (préstamos, visto bueno, solicitudes). Medido: 6 peticiones en un solo recorrido.
+    async loadEmpleadosTodos(forzar = false) {
       try {
-        const resp = await api.get(`/empleados`)
-        if (resp.status == 200 && Array.isArray(resp.data)) {
-          this.empleados = resp.data.map((empleado) => ({
+        this.empleados = [...await obtenerCatalogo(CATALOGOS.empleados, async () => {
+          const resp = await api.get('/empleados')
+          if (resp.status != 200 || !Array.isArray(resp.data)) {
+            throw new Error('Respuesta inesperada del servidor.')
+          }
+          return resp.data.map((empleado) => ({
             label: empleado.nombreCompleto,
             value: empleado.id
           }))
-          return { success: true }
-        }
-        return { success: false, data: "Respuesta inesperada del servidor." }
+        }, { forzar })]
+        return { success: true }
       } catch (error) {
         console.error(error)
+        this.empleados = []
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
       }
     },
@@ -217,6 +234,8 @@ export const useAreaStore = defineStore('Areas', {
           areaPadreId: area.areaPadreId || null,
         })
         if (resp.status === 201 || resp.status === 200) {
+          // Auditoría PERF-006: el catálogo cacheado queda obsoleto tras escribir; se olvida.
+          invalidarCatalogo(CATALOGOS.areas)
           await this.loadArbol()
           return { success: true, data: "Área creada con éxito", id: resp.data && resp.data.id }
         }
@@ -236,6 +255,8 @@ export const useAreaStore = defineStore('Areas', {
           areaPadreId: area.areaPadreId || null,
         })
         if (resp.status === 204 || resp.status === 200) {
+          // Auditoría PERF-006: el catálogo cacheado queda obsoleto tras escribir; se olvida.
+          invalidarCatalogo(CATALOGOS.areas)
           await this.loadArbol()
           return { success: true, data: "Área actualizada con éxito" }
         }
@@ -251,6 +272,8 @@ export const useAreaStore = defineStore('Areas', {
       try {
         const resp = await api.delete(`/areas/${id}`)
         if (resp.status === 204 || resp.status === 200) {
+          // Auditoría PERF-006: el catálogo cacheado queda obsoleto tras escribir; se olvida.
+          invalidarCatalogo(CATALOGOS.areas)
           await this.loadArbol()
           return { success: true, data: "Área eliminada con éxito" }
         }
