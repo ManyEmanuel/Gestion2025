@@ -426,6 +426,14 @@ export default defineComponent({
               siglas: "AI-UBICACIONES",
             });
             break;
+          case "AI-BITACORA":
+            linkListCumplimiento.value.push({
+              title: "Bitácora de trazabilidad",
+              icon: "fact_check",
+              link: { name: "bitacora" },
+              siglas: "AI-BITACORA",
+            });
+            break;
           case "AI-QR-ESCANEAR":
             linkListCumplimiento.value.push({
               title: "Escanear código",

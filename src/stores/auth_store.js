@@ -38,6 +38,8 @@ const MAPA_SIGLAS_GRUPO = {
   'AI-INTEROP': 'interoperabilidad',
   'AI-AVISOS': 'transferencia-secundaria',
   'AI-TABLERO': 'tablero',
+  // Auditoría FUNC-001: consulta de la bitácora de trazabilidad (coordinación / OIC). Solo lectura.
+  'AI-BITACORA': 'bitacora',
   'AI-UBICACIONES': 'ubicacion-fisica',
   // Horizonte-3 #DF-8: escanear código QR/barras. Reutiliza el permiso de inventario (leer para
   // resolver el código, registrar para actualizar la ubicación física vía el editor existente).
@@ -57,6 +59,7 @@ const SIGLAS_MENU = [
   'AI-INV-AREA', 'AI-TP', 'AI-TP-AI', 'AI-TP-CANDIDATOS', 'AI-INV-AREA-AI', 'AI-TS', 'AI-BD', 'AI-BD-CANDIDATOS',
   'AI-PRESTAMOS', 'AI-PRESTAMOS-CLASI', 'AI-PRESTAMOS-AI', 'AI-PRESTAMOS-AI-AI',
   'AI-AVISOS', 'AI-PADA', 'AI-GRUPO', 'AI-PRESERVACION', 'AI-INTEROP', 'AI-TABLERO', 'AI-UBICACIONES', 'AI-QR-ESCANEAR',
+  'AI-BITACORA',
   'AI-ADMIN-AREAS', 'AI-ADMIN-EMPLEADOS', 'AI-ADMIN-USUARIOS', 'AI-ADMIN-PERFILES',
 ];
 

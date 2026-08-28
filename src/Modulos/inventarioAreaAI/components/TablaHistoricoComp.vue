@@ -92,6 +92,17 @@
                 >
                   <q-tooltip>Imprimir etiqueta QR</q-tooltip>
                 </q-btn>
+                <q-btn
+                  v-if="puedeVerBitacora"
+                  flat
+                  round
+                  color="purple-ieen"
+                  icon="fact_check"
+                  @click="verBitacora(col.value)"
+                  aria-label="Ver bitácora del expediente"
+                >
+                  <q-tooltip>Ver bitácora del expediente</q-tooltip>
+                </q-btn>
               </div>
               <label v-else>{{ col.value }}</label>
             </q-td>
@@ -108,6 +119,7 @@ import { computed, onBeforeMount, ref, watch } from "vue";
 import { useInventarioAreaAIStore } from "../../../stores/inventario_area_ai_store";
 import { useAdjuntoInventarioStore } from "../../../stores/adjunto_inventario_store";
 import { useAuthStore } from "../../../stores/auth_store";
+import { useRouter } from "vue-router";
 import { useAreaStore } from "../../../stores/areas_store";
 import * as XLSX from "xlsx";
 
@@ -115,6 +127,8 @@ const $q = useQuasar();
 const inventarioStore = useInventarioAreaAIStore();
 const adjuntoStore = useAdjuntoInventarioStore();
 const areaStore = useAreaStore();
+const authStore = useAuthStore();
+const router = useRouter();
 // Auditoría PERF-003: la tabla trabaja en modo servidor. `inventariosHistorico` es solo la página visible
 // y `totalHistorico` el número de expedientes que cumplen el filtro; área, año y búsqueda viajan a la API
 // en vez de filtrarse en memoria sobre el acervo completo.
@@ -310,6 +324,14 @@ const verAdjuntos = async (id) => {
 const editar = (id) => {
   inventarioStore.loadInventario(id);
   inventarioStore.actualizarModal(true);
+};
+
+// Auditoría FUNC-001: salto al rastro de trazabilidad de ESTE expediente. Sin este atajo, consultar la
+// bitácora de un expediente concreto obligaría a conseguir su identificador por fuera de la aplicación.
+const puedeVerBitacora = computed(() => authStore.tienePermiso("archivo.bitacora.ver"));
+
+const verBitacora = (id) => {
+  router.push({ name: "bitacora", query: { entidadTipo: "Expediente", entidadId: id } });
 };
 
 // Horizonte-3 #DF-8: etiqueta QR imprimible para pegar en la carpeta/caja física.
