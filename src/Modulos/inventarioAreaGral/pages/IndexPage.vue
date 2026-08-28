@@ -103,7 +103,11 @@ const props = defineProps({
   },
 });
 
+// Auditoría UX-003 (hallazgo al implementar la guardia por ruta): esta pantalla nunca cargaba su módulo,
+// así que se quedaba con lo que hubiera dejado la pantalla anterior. Entrar directo por URL (marcador,
+// recarga o enlace) dejaba `modulo` en null y le mostraba «No tiene permiso» incluso a un administrador.
 onMounted(() => {
+  authStore.loadModulo("AI-INV-AREA-GRAL");
   encabezadoInventariosStore.loadEncabezado(props.encabezadoId);
 });
 
