@@ -39,3 +39,7 @@ yarn-error.log*
 *.ntvs*
 *.njsproj
 *.sln
+
+# Configuración local de herramientas de desarrollo (launch.json del servidor de dev,
+# settings locales). Es de cada máquina, no del proyecto: la app se levanta igual sin ella.
+.claude/
