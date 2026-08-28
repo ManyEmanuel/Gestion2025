@@ -10,9 +10,22 @@
         </div>
       </div>
     </div>
-    <div class="row">
+    <div class="row items-center">
       <div class="col">
         <h1 class="text-h6 text-purple-ieen q-px-md">Inventario general AI</h1>
+      </div>
+      <div class="col-auto q-px-md">
+        <!-- Auditoría FUNC-002: el índice de expedientes clasificados como reservados (LGA 14 / Nay 13,
+             LGTAIP) es de publicación obligatoria y su endpoint no tenía ningún consumidor en el cliente.
+             El ámbito lo resuelve el servidor: global -> todas las áreas; usuario de área -> la suya. -->
+        <q-btn
+          v-if="puedeGenerarIndice"
+          type="button"
+          color="green-8"
+          icon-right="lock"
+          label="Índice de reservados"
+          @click="descargarIndiceReservados"
+        />
       </div>
     </div>
     <div class="row">
@@ -57,13 +70,15 @@ import ModalAdjuntos from "../components/ModalAdjuntos.vue";
 import ModalVisor from "../components/ModalVisor.vue";
 import ModalQr from "../components/ModalQr.vue";
 import SinPermisoBanner from "../../../components/SinPermisoBanner.vue";
+import { descargarReporte } from "../../../helpers/descargar_reporte";
 
 const $q = useQuasar();
-const inventarioStore = useInventarioAreaAIStore();
 const authStore = useAuthStore();
 const { modulo } = storeToRefs(authStore);
 const siglas = "AI-INV-AREA-AI";
 const tab = ref("concentracion");
+const puedeGenerarIndice = ref(false);
+
 onBeforeMount(() => {
   leerPermisos();
 });
@@ -71,6 +86,18 @@ onBeforeMount(() => {
 const leerPermisos = async () => {
   $q.loading.show();
   await authStore.loadModulo(siglas);
+  puedeGenerarIndice.value = authStore.tienePermiso("archivo.inventario.ver");
   $q.loading.hide();
+};
+
+// Auditoría FUNC-002: GET /api/reportes/indice-reservados estaba implementado y sin consumidor.
+// Generarlo deja renglón en la bitácora (el índice expone la relación de expedientes reservados).
+const descargarIndiceReservados = async () => {
+  $q.loading.show();
+  const resp = await descargarReporte("/reportes/indice-reservados", "Indice_Reservados.pdf");
+  $q.loading.hide();
+  if (!resp.success) {
+    $q.notify({ type: "negative", message: resp.data });
+  }
 };
 </script>
