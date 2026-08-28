@@ -109,7 +109,19 @@
           </q-expansion-item>
         </q-list>
       </q-scroll-area>
-      <q-img class="absolute-top" src="~assets/branding/fondo.png" style="height: 160px">
+      <!--
+        Auditoría UX-001: `loading="eager"` es obligatorio aquí, no una optimización. QImg solo renderiza
+        su slot por defecto cuando la imagen terminó de cargar (QImg.js: `if (isLoading === false)`), y con
+        el `lazy` nativo por defecto el navegador nunca llegaba a pedir este fondo -- el <img> se quedaba
+        en complete=false / naturalWidth=0. Resultado: el saludo y el perfil de la cabecera del menú NUNCA
+        se pintaban. Con carga anticipada la imagen resuelve y el bloque aparece.
+      -->
+      <q-img
+        class="absolute-top"
+        src="~assets/branding/fondo.png"
+        style="height: 160px"
+        loading="eager"
+      >
         <div class="bg-transparent">
           <!-- <q-avatar size="56px" class="q-mb-sm">
             <img src="~assets/usuario.jpeg" />
@@ -156,7 +168,12 @@ export default defineComponent({
   },
   setup() {
     const $q = useQuasar();
-    const leftDrawerOpen = ref(false);
+    // Auditoría UX-002: el modelo arrancaba en `false` mientras `show-if-above` dejaba el cajón ABIERTO
+    // en escritorio. Modelo y estado visual nacían desfasados, así que al pulsar "Menu" el cajón se
+    // cerraba y ya no volvía a abrirse: el usuario perdía TODA la navegación y solo la recuperaba
+    // recargando la página. Se inicializa el modelo con el mismo criterio que usa `show-if-above`
+    // (el breakpoint de 1024 del q-drawer), de modo que el botón queda en fase desde el primer clic.
+    const leftDrawerOpen = ref($q.screen.width >= 1024);
     const route = useRoute();
     const router = useRouter();
     const authStore = useAuthStore();
@@ -197,8 +214,12 @@ export default defineComponent({
         }
       }
 
-      Empleado.value = localStorage.getItem("empleado");
-      Perfil.value = localStorage.getItem("perfil");
+      // Auditoría UX-001: `empleado` y `perfil` en localStorage solo los escribía el validarToken del
+      // portal legado, que ya no se usa desde el corte al login propio. La cabecera del menú quedaba
+      // renderizando "Bienvenido(a)" y una línea de perfil vacías en TODAS las pantallas. Ahora se leen
+      // del estado que auth_nuevo_store carga desde GET /api/auth/me.
+      Empleado.value = authNuevoStore.usuario || localStorage.getItem("usuario_nuevo");
+      Perfil.value = authNuevoStore.perfilNombre;
       await loadMenu();
     });
 
