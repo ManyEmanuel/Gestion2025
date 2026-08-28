@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { api } from 'src/boot/axios';
+import { invalidarCatalogo, CATALOGOS } from 'src/helpers/catalogo_cache';
 
 // Corte al backend nuevo: las escrituras REST responden 201/204 y problem+json en error (axios lanza).
 const mensajeError = (e, defecto = "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte") =>
@@ -73,6 +74,8 @@ export const useEmpleadosStore = defineStore('EmpleadosAdmin', {
           concentracion: !!e.concentracion,
         })
         if (resp.status === 201 || resp.status === 200) {
+          // Auditoría PERF-006: el catálogo cacheado queda obsoleto tras escribir; se olvida.
+          invalidarCatalogo(CATALOGOS.empleados)
           await this.loadAdmin()
           return { success: true, data: "Empleado creado con éxito", id: resp.data && resp.data.id }
         }
@@ -96,6 +99,8 @@ export const useEmpleadosStore = defineStore('EmpleadosAdmin', {
           concentracion: !!e.concentracion,
         })
         if (resp.status === 204 || resp.status === 200) {
+          // Auditoría PERF-006: el catálogo cacheado queda obsoleto tras escribir; se olvida.
+          invalidarCatalogo(CATALOGOS.empleados)
           await this.loadAdmin()
           return { success: true, data: "Empleado actualizado con éxito" }
         }
@@ -111,6 +116,8 @@ export const useEmpleadosStore = defineStore('EmpleadosAdmin', {
       try {
         const resp = await api.delete(`/empleados/${id}`)
         if (resp.status === 204 || resp.status === 200) {
+          // Auditoría PERF-006: el catálogo cacheado queda obsoleto tras escribir; se olvida.
+          invalidarCatalogo(CATALOGOS.empleados)
           await this.loadAdmin()
           return { success: true, data: "Empleado eliminado con éxito" }
         }
