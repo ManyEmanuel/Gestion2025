@@ -136,6 +136,19 @@ export const useAuthStore = defineStore('AuthStore', {
       return permisosDelToken().includes(clave)
     },
 
+    // Auditoría UX-003: ¿el usuario puede entrar al módulo de esa sigla? Es la MISMA regla que usan el
+    // menú y `loadModulo().leer` (cualquier permiso del grupo), extraída para que la guardia del router
+    // decida antes de montar la pantalla en vez de dejarla cargar y fallar después contra el API.
+    // Una sigla no mapeada devuelve false, igual que en `loadModulo`: default restrictivo.
+    puedeVerModulo(siglas) {
+      const grupo = MAPA_SIGLAS_GRUPO[siglas]
+      if (!grupo) {
+        console.warn('puedeVerModulo: sigla no mapeada en MAPA_SIGLAS_GRUPO ->', siglas)
+        return false
+      }
+      return permisosDelToken().some((p) => p.startsWith(`archivo.${grupo}.`))
+    },
+
 
     // MIGRADO al backend nuevo (corte de clientes): el cliente ya es autónomo (login propio); se retiró
     // la integración con el portal SSO (/SistemasUsuarios/ByUSuario) y sus avatares en :9270. El lanzador
