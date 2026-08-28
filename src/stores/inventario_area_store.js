@@ -101,18 +101,36 @@ export const useInventarioAreaStore = defineStore('InventarioArea', {
       this.inventario.disposicion_Documental = null;
     },
 
+    // Auditoría PERF-003: GET /api/expedientes/por-encabezado/{id} ahora responde una PÁGINA. Estas dos
+    // pantallas son de captura y de aprobación MASIVA sobre un encabezado (selección múltiple, aprobar o
+    // rechazar en bloque, Anexo 9 del conjunto), así que siguen necesitando todos los expedientes de ese
+    // encabezado en memoria; lo que cambia es que ya no llegan en una sola respuesta sin tope, sino en
+    // páginas acotadas -- el encabezado más grande de los datos migrados tiene 1 461 expedientes.
+    async pedirExpedientesDeEncabezado(encabezadoId) {
+      const items = []
+      for (let pagina = 1; ; pagina++) {
+        const resp = await api.get(`/expedientes/por-encabezado/${encabezadoId}`, {
+          params: { pagina, tamanoPagina: 200 }
+        })
+        if (resp.status != 200 || !resp.data || !Array.isArray(resp.data.items)) return null
+        items.push(...resp.data.items)
+        if (items.length >= resp.data.total || resp.data.items.length === 0) break
+      }
+      return items
+    },
+
     // MIGRADO al backend nuevo (corte de clientes): GET /api/expedientes/por-encabezado/{id}
-    // devuelve un array (aislado por el área del encabezado) con nombres de clasificación
+    // devuelve los expedientes (aislado por el área del encabezado) con nombres de clasificación
     // resueltos. Se remapea a la forma de la tabla; los campos que el dominio nuevo no modela
     // (valor documental, empleado, ubicación, ampliaciones, disposición-por-id) van en null.
     async loadInventarios(encabezadoId) {
       try {
         this.loading = true
         this.inventarios = []
-        const resp = await api.get(`/expedientes/por-encabezado/${encabezadoId}`)
+        const expedientes = await this.pedirExpedientesDeEncabezado(encabezadoId)
         this.loading = false
-        if (resp.status == 200 && Array.isArray(resp.data)) {
-          this.inventarios = resp.data.map((e) => ({
+        if (expedientes) {
+          this.inventarios = expedientes.map((e) => ({
             id: e.id,
             inventario_General_Area_Encabezado_Id: e.encabezadoId,
             seccion_Id: e.seccionId, seccion: e.seccionClave,
@@ -166,10 +184,10 @@ export const useInventarioAreaStore = defineStore('InventarioArea', {
           return { success: true }
         }
         this.encabezadoAreaAnioId = encabezado.id
-        const resp = await api.get(`/expedientes/por-encabezado/${encabezado.id}`)
+        const expedientes = await this.pedirExpedientesDeEncabezado(encabezado.id)
         this.loading = false
-        if (resp.status == 200 && Array.isArray(resp.data)) {
-          this.inventariosArea = resp.data.map((e) => ({
+        if (expedientes) {
+          this.inventariosArea = expedientes.map((e) => ({
             id: e.id,
             inventario_General_Area_Encabezado_Id: e.encabezadoId,
             seccion_Id: e.seccionId, seccion: e.seccionClave,

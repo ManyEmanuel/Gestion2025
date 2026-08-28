@@ -3,19 +3,23 @@
     <div class="col">
       <q-table
         dense
-        :rows="inventariosConcentracionFiltro"
+        :rows="inventariosConcentracion"
         :columns="columns"
         :filter="filter"
         :loading="isLoadingConcentracion"
+        v-model:pagination="pagination"
+        :rows-number="totalConcentracion"
+        @request="onRequest"
         class="my-sticky-last-column-table"
         row-key="id"
-        rows-per-page-label="Filas por paginasss"
+        rows-per-page-label="Filas por página"
+        :rows-per-page-options="[10, 25, 50, 100, 200]"
         no-data-label="No hay expedientes en concentración para el área y año seleccionados."
       >
         <template v-slot:top>
           <q-select
-            v-model="areasLista"
-            :options="areas"
+            v-model="areaSeleccionada"
+            :options="areasOpciones"
             label="Área generadora"
             style="width: 25%"
             class="q-mr-sm"
@@ -23,8 +27,8 @@
           </q-select>
           <q-select
             v-model="anio"
-            :options="anioLista"
-            label="Áño"
+            :options="anioOpciones"
+            label="Año"
             style="width: 25%"
           >
           </q-select>
@@ -100,7 +104,7 @@
 <script setup>
 import { storeToRefs } from "pinia";
 import { useQuasar } from "quasar";
-import { onBeforeMount, onMounted, ref, watch } from "vue";
+import { computed, onBeforeMount, ref, watch } from "vue";
 import { useInventarioAreaAIStore } from "../../../stores/inventario_area_ai_store";
 import { useAdjuntoInventarioStore } from "../../../stores/adjunto_inventario_store";
 import { useAuthStore } from "../../../stores/auth_store";
@@ -111,62 +115,65 @@ const $q = useQuasar();
 const inventarioStore = useInventarioAreaAIStore();
 const adjuntoStore = useAdjuntoInventarioStore();
 const areaStore = useAreaStore();
-const {
-  inventariosConcentracion,
-  isLoadingConcentracion,
-  inventariosConcentracionFiltro,
-} = storeToRefs(inventarioStore);
+// Auditoría PERF-003: la tabla trabaja en modo servidor. `inventariosConcentracion` es solo la página
+// visible y `totalConcentracion` el número de expedientes que cumplen el filtro; área, año y búsqueda
+// viajan a la API en vez de filtrarse en memoria sobre el acervo completo.
+const { inventariosConcentracion, isLoadingConcentracion, totalConcentracion } =
+  storeToRefs(inventarioStore);
 const { areas } = storeToRefs(areaStore);
-const areasLista = ref({ value: 0, label: "Ver todos" });
-const anioLista = ref([]);
-const anio = ref("Ver todos");
+
+const VER_TODOS = "Ver todos";
+const areaSeleccionada = ref({ value: null, label: VER_TODOS });
+const anio = ref(VER_TODOS);
+const anios = ref([]);
+const filter = ref("");
+const pagination = ref({ page: 1, rowsPerPage: 25, rowsNumber: 0 });
+
+// Se componen sin tocar las listas del store: mutarlas duplicaba la opción "Ver todos" al volver a entrar.
+const areasOpciones = computed(() => [{ value: null, label: VER_TODOS }, ...areas.value]);
+const anioOpciones = computed(() => [VER_TODOS, ...anios.value]);
 
 onBeforeMount(() => {
   cargarDatos();
 });
 
 const cargarDatos = async () => {
-  await inventarioStore.loadInventariosConcentracion();
   await areaStore.loadListaAreas();
-  await cargarAños();
+  const resp = await inventarioStore.loadAniosInventario("Concentracion");
+  anios.value = resp.data || [];
+  await pedirPagina(pagination.value, filter.value);
 };
 
-const cargarAños = async () => {
-  let hoy = new Date();
-  let año = parseInt(hoy.getFullYear());
-  for (let i = 1992; i <= año; i++) {
-    if (i == 1992) {
-      anioLista.value.push("Ver todos");
-    }
-    anioLista.value.push(i);
+// El filtro cambia el conjunto, así que vuelve a la primera página: quedarse en la 7 de un conjunto que
+// ahora tiene 2 dejaría la tabla vacía sin explicación.
+watch([areaSeleccionada, anio], () => {
+  pedirPagina({ ...pagination.value, page: 1 }, filter.value);
+});
+
+const consultaActual = () => ({
+  areaGeneradoraId: areaSeleccionada.value?.value || null,
+  anio: anio.value === VER_TODOS ? null : anio.value,
+});
+
+const pedirPagina = async (p, busqueda) => {
+  // rowsPerPage 0 es "todas" en Quasar; se acota al máximo que admite la API.
+  const tamanoPagina = p.rowsPerPage > 0 ? p.rowsPerPage : 200;
+  const resp = await inventarioStore.loadInventariosConcentracion({
+    ...consultaActual(),
+    pagina: p.page,
+    tamanoPagina,
+    busqueda: busqueda || null,
+  });
+  if (!resp.success) {
+    $q.notify({ color: "negative", position: "top-right", message: resp.data, icon: "report_problem" });
+    return;
   }
-  areas.value.unshift({ value: 0, label: "Ver todos" });
+  pagination.value = { page: p.page, rowsPerPage: tamanoPagina, rowsNumber: totalConcentracion.value };
 };
 
-watch(areasLista, (val) => {
-  if (val.label != "Ver todos") {
-    console.log;
-    let textoArea = val.label.split("-");
-    cargarFiltros(textoArea[1].trim(), anio.value);
-  } else {
-    cargarFiltros(val.label, anio.value);
-  }
-});
-
-watch(anio, (val) => {
-  if (areasLista.value.label != "Ver todos") {
-    console.log;
-    let textoArea = areasLista.value.label.split("-");
-    cargarFiltros(textoArea[1].trim(), val);
-  } else {
-    cargarFiltros(areasLista.value.label, val);
-  }
-});
-
-const cargarFiltros = async (area, anio) => {
-  $q.loading.show();
-  await inventarioStore.loadInventariosConcentracionFiltro(area, anio);
-  $q.loading.hide();
+// q-table en modo servidor emite `request` al cambiar de página, de tamaño de página o de búsqueda.
+const onRequest = async (props) => {
+  await pedirPagina(props.pagination, props.filter);
 };
 
 const columns = [
@@ -298,16 +305,6 @@ const verAdjuntos = async (id) => {
   adjuntoStore.actualizarModalVer(true);
 };
 
-const pagination = ref({
-  //********** */
-  page: 1,
-  rowsPerPage: 10,
-  sortBy: "name",
-  descending: false,
-});
-
-const filter = ref("");
-
 const editar = (id) => {
   inventarioStore.loadInventario(id);
   inventarioStore.actualizarModal(true);
@@ -337,8 +334,19 @@ const ListadoExcel = async () => {
     },
   }).onOk(async () => {
     $q.loading.show();
-    if (inventariosConcentracionFiltro.value.length > 0) {
-      await generarExcel();
+    // Auditoría PERF-003: la tabla ya solo tiene la página visible, así que el listado se arma pidiendo al
+    // servidor todas las páginas del MISMO filtro -- si se exportara `rows` saldría solo lo que se ve.
+    const resp = await inventarioStore.descargarInventarioAiCompleto("Concentracion", {
+      ...consultaActual(),
+      busqueda: filter.value || null,
+    });
+    if (!resp.success) {
+      $q.loading.hide();
+      $q.notify({ color: "negative", position: "top-right", message: resp.data, icon: "report_problem" });
+      return;
+    }
+    if (resp.data.length > 0) {
+      await generarExcel(resp.data);
     } else {
       $q.notify({
         color: "negative",
@@ -351,9 +359,9 @@ const ListadoExcel = async () => {
   });
 };
 
-const generarExcel = async () => {
+const generarExcel = async (filas) => {
   $q.loading.show();
-  let datosInventario = inventariosConcentracionFiltro.value.map(
+  let datosInventario = filas.map(
     (inventario) => {
       return {
         Sección: inventario.seccion,
