@@ -52,10 +52,16 @@ export const useInventarioAreaAIStore = defineStore('inventarioAreaAI', {
     isEditar: false,
     isLoadingConcentracion: false,
     isLoadingHistorico: false,
+    // Auditoría PERF-003: la tabla ya no tiene el acervo completo en memoria -- estas listas son LA PÁGINA
+    // que se está mostrando. `total*` es el número de expedientes que cumplen el filtro (lo cuenta el
+    // servidor) y es lo que necesita q-table para dibujar el paginador. `consulta*` recuerda el último
+    // filtro/página pedidos, para poder recargar tras editar sin devolver al usuario al principio.
     inventariosConcentracion: [],
-    inventariosConcentracionFiltro: [],
+    totalConcentracion: 0,
+    consultaConcentracion: { pagina: 1, tamanoPagina: 25, areaGeneradoraId: null, anio: null, busqueda: null },
     inventariosHistorico: [],
-    inventariosHistoricoFiltro: [],
+    totalHistorico: 0,
+    consultaHistorico: { pagina: 1, tamanoPagina: 25, areaGeneradoraId: null, anio: null, busqueda: null },
     // Horizonte-3 #DF-8: etiqueta QR + escaneo de código.
     modalQr: false,
     qrUrl: null,
@@ -117,63 +123,55 @@ export const useInventarioAreaAIStore = defineStore('inventarioAreaAI', {
       this.inventario.fecha_Termino_Concentracion = null
     },
 
+    // Auditoría PERF-003: una PÁGINA del inventario de la fase, con los filtros resueltos en el servidor.
+    // Antes se pedía el acervo completo (6.48 MB / 7 622 expedientes en concentración) y se filtraba en
+    // memoria; el filtrado en memoria deja de ser viable en cuanto la tabla ya no tiene todo el conjunto.
+    async pedirPaginaInventarioAi(fase, consulta) {
+      const params = { fase, pagina: consulta.pagina, tamanoPagina: consulta.tamanoPagina }
+      if (consulta.areaGeneradoraId) params.areaGeneradoraId = consulta.areaGeneradoraId
+      if (consulta.anio) params.anio = consulta.anio
+      if (consulta.busqueda) params.busqueda = consulta.busqueda
+      const resp = await api.get('/expedientes/inventario-ai', { params })
+      if (resp.status != 200 || !resp.data || !Array.isArray(resp.data.items)) {
+        return null
+      }
+      return { filas: resp.data.items.map(mapFilaInventarioAi), total: resp.data.total }
+    },
+
     // MIGRADO al backend nuevo (corte de clientes): GET /api/expedientes/inventario-ai?fase=Concentracion
     // (ámbito global -> todas las áreas; usuario de área -> la suya) con nombres resueltos + ubicación física.
-    async loadInventariosConcentracion() {
+    async loadInventariosConcentracion(consulta) {
       try {
         this.isLoadingConcentracion = true
-        this.inventariosConcentracion = []
-        const resp = await api.get('/expedientes/inventario-ai?fase=Concentracion')
+        if (consulta) this.consultaConcentracion = { ...this.consultaConcentracion, ...consulta }
+        const pagina = await this.pedirPaginaInventarioAi('Concentracion', this.consultaConcentracion)
         this.isLoadingConcentracion = false
-        if (resp.status == 200 && Array.isArray(resp.data)) {
-          const arr = resp.data.map(mapFilaInventarioAi)
-          this.inventariosConcentracion = arr
-          this.inventariosConcentracionFiltro = arr
-          return { success: true }
+        if (!pagina) {
+          return { success: false, data: "Respuesta inesperada del servidor." }
         }
-        return { success: false, data: "Respuesta inesperada del servidor." }
+        this.inventariosConcentracion = pagina.filas
+        this.totalConcentracion = pagina.total
+        return { success: true }
       } catch (e) {
         this.isLoadingConcentracion = false
         console.error(e)
-        return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
-      }
-    },
-
-    async loadInventariosConcentracionFiltro(area, anio) {
-      try {
-        if (area == 'Ver todos') {
-          if (anio == 'Ver todos') {
-            this.inventariosConcentracionFiltro = this.inventariosConcentracion
-          } else {
-            this.inventariosConcentracionFiltro = this.inventariosConcentracion.filter(x => x.anio == anio)
-          }
-        } else {
-          if (anio == 'Ver todos') {
-            this.inventariosConcentracionFiltro = this.inventariosConcentracion.filter(x => x.area_Generadora == area)
-          } else {
-            this.inventariosConcentracionFiltro = this.inventariosConcentracion.filter(x => x.anio == anio && x.area_Generadora == area)
-          }
-        }
-      } catch (error) {
-        console.error(error)
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
       }
     },
 
     // MIGRADO al backend nuevo (corte de clientes): GET /api/expedientes/inventario-ai?fase=Historico.
-    async loadInventariosHistorico() {
+    async loadInventariosHistorico(consulta) {
       try {
         this.isLoadingHistorico = true
-        this.inventariosHistorico = []
-        const resp = await api.get('/expedientes/inventario-ai?fase=Historico')
+        if (consulta) this.consultaHistorico = { ...this.consultaHistorico, ...consulta }
+        const pagina = await this.pedirPaginaInventarioAi('Historico', this.consultaHistorico)
         this.isLoadingHistorico = false
-        if (resp.status == 200 && Array.isArray(resp.data)) {
-          const arr = resp.data.map(mapFilaInventarioAi)
-          this.inventariosHistorico = arr
-          this.inventariosHistoricoFiltro = arr
-          return { success: true }
+        if (!pagina) {
+          return { success: false, data: "Respuesta inesperada del servidor." }
         }
-        return { success: false, data: "Respuesta inesperada del servidor." }
+        this.inventariosHistorico = pagina.filas
+        this.totalHistorico = pagina.total
+        return { success: true }
       } catch (e) {
         this.isLoadingHistorico = false
         console.error(e)
@@ -181,23 +179,38 @@ export const useInventarioAreaAIStore = defineStore('inventarioAreaAI', {
       }
     },
 
-    async loadInventariosHistoricoFiltro(area, anio) {
+    // Años con expedientes en la fase (GET .../inventario-ai/anios). Antes el desplegable se rellenaba con
+    // TODOS los años de 1992 a hoy, ofreciera o no resultados.
+    async loadAniosInventario(fase) {
       try {
-        if (area == 'Ver todos') {
-          if (anio == 'Ver todos') {
-            this.inventariosHistoricoFiltro = this.inventariosHistorico
-          } else {
-            this.inventariosHistoricoFiltro = this.inventariosHistorico.filter(x => x.anio == anio)
-          }
-        } else {
-          if (anio == 'Ver todos') {
-            this.inventariosHistoricoFiltro = this.inventariosHistorico.filter(x => x.area_Generadora == area)
-          } else {
-            this.inventariosHistoricoFiltro = this.inventariosHistorico.filter(x => x.anio == anio && x.area_Generadora == area)
-          }
+        const resp = await api.get('/expedientes/inventario-ai/anios', { params: { fase } })
+        if (resp.status == 200 && Array.isArray(resp.data)) {
+          return { success: true, data: resp.data }
         }
-      } catch (error) {
-        console.error(error)
+        return { success: false, data: [] }
+      } catch (e) {
+        console.error(e)
+        return { success: false, data: [] }
+      }
+    },
+
+    // El listado a Excel debe seguir exportando TODO lo que cumple el filtro, no solo la página visible:
+    // se recorren las páginas del servidor con el mismo filtro. El tope por página es el máximo que admite
+    // la API (200), así que son pocas peticiones incluso para el área más grande.
+    async descargarInventarioAiCompleto(fase, consulta) {
+      try {
+        const filas = []
+        for (let pagina = 1; ; pagina++) {
+          const resp = await this.pedirPaginaInventarioAi(fase, { ...consulta, pagina, tamanoPagina: 200 })
+          if (!resp) {
+            return { success: false, data: "Respuesta inesperada del servidor." }
+          }
+          filas.push(...resp.filas)
+          if (filas.length >= resp.total || resp.filas.length === 0) break
+        }
+        return { success: true, data: filas }
+      } catch (e) {
+        console.error(e)
         return { success: false, data: "Ocurrio un error, intentelo de nuevo. Si el error persiste contacte a soporte" }
       }
     },
