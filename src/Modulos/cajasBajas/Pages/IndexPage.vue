@@ -117,21 +117,42 @@ const actualizarModal = async (valor) => {
   cajaBajaDocumentalStore.actualizarModal(valor);
 };
 
+// Auditoría UX-004: el texto anterior —«se eliminará del sistema y no podrá añadir nuevas cajas»— era
+// INCORRECTO y además omitía lo importante. Lo que ocurre de verdad al afectar, leído del dominio:
+//   1. Cada expediente pasa a FASE DE BAJA con su fecha (`InventarioGeneral.DarDeBaja`). NO se borra
+//      nada: el registro del expediente y su historial se conservan.
+//   2. La baja queda en estatus Afectada y ya no admite cajas nuevas.
+//   3. Es el acto que AMPARA la destrucción física de la documentación, respaldado por el dictamen de
+//      valoración y el acta de baja firmados que el backend exige antes de dejar afectar.
+//   4. No existe ninguna operación para revertirlo (no hay «desafectar» en el dominio ni en la API).
+// El recuento sale de las cajas ya cargadas: cada una trae su `total_Expedientes`.
 const afectarBaja = async () => {
+  const totalCajas = cajas.value.length;
+  const totalExpedientes = cajas.value.reduce((suma, caja) => suma + (caja.total_Expedientes || 0), 0);
+
   $q.dialog({
-    title: "Afectar baja",
+    title: "Afectar baja documental",
+    html: true,
     message:
-      "¿Esta seguro de afectar la baja?, se eliminará del sistema y no podra añadir nuevas cajas a esta baja",
+      `<p>Se afectará esta baja con <b>${totalCajas} caja(s)</b> y <b>${totalExpedientes} expediente(s)</b>.</p>` +
+      "<p>Al afectarla:</p>" +
+      "<ul>" +
+      "<li>Los expedientes pasan a <b>fase de baja</b> con la fecha de hoy. <b>No se eliminan</b> del sistema: su registro y su historial se conservan.</li>" +
+      "<li>Esta baja deja de admitir cajas nuevas.</li>" +
+      "<li>Es el acto que <b>ampara la destrucción física</b> de esa documentación, conforme al dictamen de valoración y al acta de baja firmados.</li>" +
+      "</ul>" +
+      "<p><b>Esta acción no se puede deshacer desde el sistema.</b></p>",
     icon: "warning",
     persistent: true,
     transitionShow: "scale",
     transitionHide: "scale",
     ok: {
-      color: "positive",
-      label: "Sí! afectar",
+      color: "negative",
+      label: "Sí, afectar la baja",
     },
     cancel: {
-      color: "negative",
+      color: "primary",
+      flat: true,
       label: "Cancelar",
     },
   }).onOk(async () => {
