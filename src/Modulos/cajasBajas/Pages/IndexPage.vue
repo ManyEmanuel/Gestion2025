@@ -127,8 +127,39 @@ const actualizarModal = async (valor) => {
 //   4. No existe ninguna operación para revertirlo (no hay «desafectar» en el dominio ni en la API).
 // El recuento sale de las cajas ya cargadas: cada una trae su `total_Expedientes`.
 const afectarBaja = async () => {
-  const totalCajas = cajas.value.length;
-  const totalExpedientes = cajas.value.reduce((suma, caja) => suma + (caja.total_Expedientes || 0), 0);
+  // Auditoría P3: se pregunta al servidor qué pasaría ANTES de mostrar el diálogo. Si algo lo impide, se
+  // dice aquí y no se ofrece confirmar: descubrirlo después de decidir, con un error genérico, era lo que
+  // hacía que este paso irreversible se pulsara a ciegas.
+  $q.loading.show();
+  const simulacion = await bajaDocumentalStore.simularAfectacion(props.bajaId);
+  $q.loading.hide();
+
+  if (!simulacion.success) {
+    $q.notify({ type: "negative", message: simulacion.data });
+    return;
+  }
+
+  const { puedeAfectarse, impedimentos, totalCajas, totalExpedientes, cambios } = simulacion.data;
+
+  if (!puedeAfectarse) {
+    $q.dialog({
+      title: "Todavía no se puede afectar esta baja",
+      html: true,
+      message:
+        "<p>Falta resolver lo siguiente antes de poder afectarla:</p><ul>" +
+        impedimentos.map((i) => `<li>${i}</li>`).join("") +
+        "</ul>",
+      icon: "block",
+      ok: { color: "primary", label: "Entendido" },
+    });
+    return;
+  }
+
+  // Vista previa de lo que cambiará: los primeros expedientes por nombre, y cuántos quedan.
+  const muestra = cambios.slice(0, 5)
+    .map((c) => `<li>${c.claveClasificacion || "(sin clave)"} — ${c.nombreExpediente || "(sin nombre)"}</li>`)
+    .join("");
+  const resto = cambios.length > 5 ? `<li>…y ${cambios.length - 5} expediente(s) más.</li>` : "";
 
   $q.dialog({
     title: "Afectar baja documental",
@@ -141,6 +172,8 @@ const afectarBaja = async () => {
       "<li>Esta baja deja de admitir cajas nuevas.</li>" +
       "<li>Es el acto que <b>ampara la destrucción física</b> de esa documentación, conforme al dictamen de valoración y al acta de baja firmados.</li>" +
       "</ul>" +
+      "<p>Expedientes que cambiarán de fase:</p>" +
+      `<ul>${muestra}${resto}</ul>` +
       "<p><b>Esta acción no se puede deshacer desde el sistema.</b></p>",
     icon: "warning",
     persistent: true,
