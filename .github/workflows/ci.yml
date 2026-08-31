@@ -1,0 +1,53 @@
+# Auditoría T-12 / T-13 — canalización de integración continua del cliente.
+#
+# Hasta la auditoría este proyecto no tenía NINGUNA prueba (`npm test` era un `echo`). Ahora tiene 29 con
+# Vitest, y esto es lo que hace que se ejecuten sin depender de que alguien se acuerde.
+#
+# Se comprueban tres cosas distintas, y las tres han fallado de verdad durante la remediación:
+#   - lint, que es lo que atrapa importes rotos y variables sin usar;
+#   - las pruebas, que fijan UX-001/UX-002 y la lógica de stores y permisos;
+#   - la compilación de producción, que es la única que atrapa un error de plantilla o un identificador
+#     duplicado en un `<script setup>` — el servidor de desarrollo lo detecta, pero solo si alguien lo mira.
+
+name: CI
+
+on:
+  push:
+    branches: ["main", "fix/**", "feat/**"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  lint-pruebas-y-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Traer el código
+        uses: actions/checkout@v4
+
+      - name: Instalar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "yarn"
+
+      # --frozen-lockfile: la instalación falla si yarn.lock no concuerda con package.json, que es lo que
+      # se quiere en CI. --ignore-engines es necesario por una restricción de motor de una dependencia
+      # TRANSITIVA del utillaje de pruebas (nopt exige un Node muy concreto); no viene de la aplicación.
+      - name: Instalar dependencias
+        run: yarn install --frozen-lockfile --ignore-engines
+
+      - name: Analizar el código
+        run: yarn lint
+
+      - name: Ejecutar las pruebas
+        run: yarn test
+
+      # El cliente se compila contra el backend por HTTP en tiempo de ejecución, así que aquí basta una
+      # URL de marcador: lo que se comprueba es que el proyecto COMPILA, no que hable con nada.
+      - name: Compilar para producción
+        run: npx quasar build
+        env:
+          API_URL: "http://localhost:5120/api"
