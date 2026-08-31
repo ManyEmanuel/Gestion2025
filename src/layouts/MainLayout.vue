@@ -420,6 +420,14 @@ export default defineComponent({
               siglas: "AI-BUSQUEDA",
             });
             break;
+          case "AI-CUMPLIMIENTO":
+            linkListCumplimiento.value.push({
+              title: "Estado de cumplimiento",
+              icon: "verified",
+              link: { name: "estadoCumplimiento" },
+              siglas: "AI-CUMPLIMIENTO",
+            });
+            break;
           case "AI-BITACORA":
             linkListCumplimiento.value.push({
               title: "Bitácora de trazabilidad",

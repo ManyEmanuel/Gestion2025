@@ -159,6 +159,13 @@ const routes = [
         meta: { siglas: 'AI-BUSQUEDA' },
         component: () => import('../Modulos/busqueda/pages/IndexPage.vue')
       },
+      // Auditoría P3: panel de estado de cumplimiento (visitas del OIC).
+      {
+        path: '/estadoCumplimiento',
+        name: 'estadoCumplimiento',
+        meta: { siglas: 'AI-CUMPLIMIENTO' },
+        component: () => import('../Modulos/panelCumplimiento/pages/IndexPage.vue')
+      },
       // Auditoría FUNC-001: la bitácora se registraba y no era consultable desde el cliente.
       // Acepta ?entidadTipo= y ?entidadId= para enlazar directo al rastro de una entidad concreta.
       {
