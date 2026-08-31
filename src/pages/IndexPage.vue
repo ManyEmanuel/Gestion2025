@@ -46,6 +46,7 @@ import { computed } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { useAuthStore } from "../stores/auth_store";
+import { useAuthNuevoStore } from "../stores/auth_nuevo_store";
 
 // Mismo mapa siglas → acceso que arma el menú lateral (MainLayout.vue); se repite aquí a propósito
 // porque MainLayout no expone sus refs para reutilizar y esto es solo texto/rutas, no lógica de negocio.
@@ -88,14 +89,12 @@ const router = useRouter();
 const authStore = useAuthStore();
 const { modulos } = storeToRefs(authStore);
 
-const nombreCorto = computed(() => {
-  // "empleado" viene del flujo SSO legado (ya no se usa); el login propio actual solo guarda
-  // "usuario_nuevo" (auth_nuevo_store.js), que es lo que realmente hay disponible hoy.
-  const empleado = localStorage.getItem("empleado");
-  if (empleado) return empleado.split(" ")[0];
-  return localStorage.getItem("usuario_nuevo") || "";
-});
-const perfil = computed(() => localStorage.getItem("perfil") || "");
+// Auditoría ARCH-001: antes se leían de localStorage las claves `empleado` y `perfil`, que solo escribía
+// el flujo SSO legado ya retirado — con él muerto, siempre estaban vacías y la portada saludaba a nadie.
+// Ahora salen del estado que `auth_nuevo_store` carga desde GET /api/auth/me.
+const authNuevoStore = useAuthNuevoStore();
+const nombreCorto = computed(() => (authNuevoStore.usuario || "").split(" ")[0]);
+const perfil = computed(() => authNuevoStore.perfilNombre || "");
 // "Bienvenido"/"Bienvenida" no se puede inferir del nombre (evitar suponer género); se usa la forma
 // neutra con paréntesis, igual que ya hace el resto de la app ("Bienvenido(a)").
 const generoSufijo = "(a)";
