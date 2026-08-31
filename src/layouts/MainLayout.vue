@@ -33,6 +33,10 @@
       >
         <q-list padding class="margin top">
           <q-item-label header>Menu </q-item-label>
+          <!-- Auditoría P2: la búsqueda global es transversal, no pertenece a ningún grupo del archivo,
+               así que va suelta y arriba: es lo primero que alguien necesita cuando no sabe dónde está
+               el expediente. -->
+          <EssentialLink v-for="link in linkListBusqueda" :key="link.title" v-bind="link" />
           <q-expansion-item
             expand-separator
             icon="menu_book"
@@ -153,7 +157,7 @@
 <script>
 import { defineComponent, ref } from "vue";
 import { useQuasar } from "quasar";
-import { useRoute, useRouter } from "vue-router";
+import { useRouter } from "vue-router";
 import { onBeforeMount } from "vue";
 import { useAuthStore } from "../stores/auth_store";
 import { useAuthNuevoStore } from "../stores/auth_nuevo_store";
@@ -174,7 +178,6 @@ export default defineComponent({
     // recargando la página. Se inicializa el modelo con el mismo criterio que usa `show-if-above`
     // (el breakpoint de 1024 del q-drawer), de modo que el botón queda en fase desde el primer clic.
     const leftDrawerOpen = ref($q.screen.width >= 1024);
-    const route = useRoute();
     const router = useRouter();
     const authStore = useAuthStore();
     const authNuevoStore = useAuthNuevoStore();
@@ -185,40 +188,23 @@ export default defineComponent({
     const linkListArchivoConcentracion = ref([]);
     const linkListCumplimiento = ref([]);
     const linkListAdministracion = ref([]);
+    const linkListBusqueda = ref([]);
     // Corte: SignalR (hub :9270) + campana de notificaciones retirados (notificaciones en tiempo real
     // deshabilitadas; el store legado /NotificacionesUniverso ya no se usa).
     const Empleado = ref(null);
     const Perfil = ref(null);
     const usuario = ref(null);
+    // Auditoría ARCH-001: aquí vivía el camino de entrada del portal SSO legado — leer `?key=` de la URL,
+    // guardarla en localStorage y validarla contra `/Accesos/ValidaToken`, un endpoint que el backend
+    // nuevo NO tiene (respondía 404 siempre). Estaba muerto desde el corte al login propio y solo servía
+    // para dejar en localStorage claves (`key`, `sistema`, `usuario`) que ya nadie leía.
+    //
+    // Auditoría UX-001: el saludo y el perfil se leían de esas mismas claves, así que con el flujo muerto
+    // la cabecera del menú quedaba vacía en TODAS las pantallas. Ahora salen del estado que
+    // `auth_nuevo_store` carga desde GET /api/auth/me, que es lo único que hoy dice la verdad.
     onBeforeMount(async () => {
-      if (route.query.key) {
-        $q.loading.show();
-        localStorage.setItem("key", route.query.key);
-        const resp = await authStore.validarToken(
-          route.query.key,
-          route.query.sistema
-        );
-        $q.loading.hide();
-      }
-
-      if (route.query.sistema) {
-        localStorage.setItem("sistema", route.query.sistema);
-      }
-
-      if (route.query.usr) {
-        localStorage.setItem("usuario", route.query.usr);
-        usuario.value = localStorage.getItem("usuario");
-      } else {
-        if (localStorage.getItem("usuario") != null) {
-          usuario.value = localStorage.getItem("usuario");
-        }
-      }
-
-      // Auditoría UX-001: `empleado` y `perfil` en localStorage solo los escribía el validarToken del
-      // portal legado, que ya no se usa desde el corte al login propio. La cabecera del menú quedaba
-      // renderizando "Bienvenido(a)" y una línea de perfil vacías en TODAS las pantallas. Ahora se leen
-      // del estado que auth_nuevo_store carga desde GET /api/auth/me.
-      Empleado.value = authNuevoStore.usuario || localStorage.getItem("usuario_nuevo");
+      usuario.value = authNuevoStore.usuario;
+      Empleado.value = authNuevoStore.usuario;
       Perfil.value = authNuevoStore.perfilNombre;
       await loadMenu();
     });
@@ -426,6 +412,14 @@ export default defineComponent({
               siglas: "AI-UBICACIONES",
             });
             break;
+          case "AI-BUSQUEDA":
+            linkListBusqueda.value.push({
+              title: "Buscar expedientes",
+              icon: "search",
+              link: { name: "buscar" },
+              siglas: "AI-BUSQUEDA",
+            });
+            break;
           case "AI-BITACORA":
             linkListCumplimiento.value.push({
               title: "Bitácora de trazabilidad",
@@ -509,6 +503,7 @@ export default defineComponent({
       linkListPrestamos,
       linkListArchivoConcentracion,
       linkListCumplimiento,
+      linkListBusqueda,
       linkListAdministracion,
       leftDrawerOpen,
       Empleado,

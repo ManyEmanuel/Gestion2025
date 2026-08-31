@@ -38,6 +38,9 @@ const MAPA_SIGLAS_GRUPO = {
   'AI-INTEROP': 'interoperabilidad',
   'AI-AVISOS': 'transferencia-secundaria',
   'AI-TABLERO': 'tablero',
+  // Auditoría P2: búsqueda global de expedientes. Reutiliza el permiso de inventario, que es lo que el
+  // endpoint exige.
+  'AI-BUSQUEDA': 'inventario',
   // Auditoría FUNC-001: consulta de la bitácora de trazabilidad (coordinación / OIC). Solo lectura.
   'AI-BITACORA': 'bitacora',
   'AI-UBICACIONES': 'ubicacion-fisica',
@@ -59,7 +62,7 @@ const SIGLAS_MENU = [
   'AI-INV-AREA', 'AI-TP', 'AI-TP-AI', 'AI-TP-CANDIDATOS', 'AI-INV-AREA-AI', 'AI-TS', 'AI-BD', 'AI-BD-CANDIDATOS',
   'AI-PRESTAMOS', 'AI-PRESTAMOS-CLASI', 'AI-PRESTAMOS-AI', 'AI-PRESTAMOS-AI-AI',
   'AI-AVISOS', 'AI-PADA', 'AI-GRUPO', 'AI-PRESERVACION', 'AI-INTEROP', 'AI-TABLERO', 'AI-UBICACIONES', 'AI-QR-ESCANEAR',
-  'AI-BITACORA',
+  'AI-BITACORA', 'AI-BUSQUEDA',
   'AI-ADMIN-AREAS', 'AI-ADMIN-EMPLEADOS', 'AI-ADMIN-USUARIOS', 'AI-ADMIN-PERFILES',
 ];
 
@@ -80,31 +83,10 @@ export const useAuthStore = defineStore('AuthStore', {
 
   actions: {
 
-    async validarToken(token, sistemaId) {
-      try {
-        const resp = await api.get(`/Accesos/ValidaToken/?token=${token}&SistemaId=${sistemaId}`)
-        if (resp.status == 200) {
-          const { success, data, empleado, perfil, perfil_Id, area, area_Id, puesto, puesto_Id } = resp.data
-          if (success === true) {
-            localStorage.setItem("empleado", empleado)
-            localStorage.setItem("perfil", perfil)
-            localStorage.setItem("perfil_Id", perfil_Id)
-            localStorage.setItem("area", area)
-            localStorage.setItem("area_Id", area_Id)
-            localStorage.setItem("puesto", puesto)
-            localStorage.setItem("puesto_Id", puesto_Id)
-            return success;
-          } else {
-            return { success }
-          }
-        } else {
-          return { success: false, data: "Ocurrió un error, inténtelo de nuevo. Si el error persiste, contacte a soporte" }
-        }
-      } catch (error) {
-        console.log(error)
-        return { success: false, data: "Ocurrió un error, inténtelo de nuevo. Si el error persiste, contacte a soporte" }
-      }
-    },
+    // Auditoría ARCH-001: aquí estaba `validarToken`, que llamaba a `/Accesos/ValidaToken` del portal SSO
+    // legado. Ese endpoint NO existe en el backend nuevo (404 siempre) desde el corte al login propio, y
+    // lo único que hacía era sembrar en localStorage claves (`empleado`, `perfil`, `area`, `puesto`…) que
+    // ya nadie leía. Retirado: la identidad viene de GET /api/auth/me vía `auth_nuevo_store`.
 
     // MIGRADO al backend nuevo (corte de clientes): el MENÚ se construye desde los permisos del JWT
     // (claims `permiso` = archivo.<grupo>.<acción>), NO del endpoint legado del portal

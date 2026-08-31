@@ -8,7 +8,8 @@
   "scripts": {
     "lint": "eslint --ext .js,.vue ./",
     "format": "prettier --write \"**/*.{js,vue,scss,html,md,json}\" --ignore-path .gitignore",
-    "test": "echo \"No test specified\" && exit 0"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@quasar/cli": "^2.2.1",
@@ -29,12 +30,16 @@
   "devDependencies": {
     "@babel/eslint-parser": "^7.13.14",
     "@quasar/app-webpack": "^3.0.0",
+    "@vitejs/plugin-vue": "^5",
+    "@vue/test-utils": "^2",
     "dotenv": "^17.4.2",
     "eslint": "^8.10.0",
     "eslint-config-prettier": "^8.1.0",
     "eslint-plugin-vue": "^8.5.0",
     "eslint-webpack-plugin": "^3.1.1",
-    "prettier": "^2.5.1"
+    "jsdom": "^25",
+    "prettier": "^2.5.1",
+    "vitest": "^2"
   },
   "browserslist": [
     "last 10 Chrome versions",

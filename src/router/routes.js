@@ -152,6 +152,13 @@ const routes = [
         meta: { siglas: 'AI-INV-AREA-AI' },
         component: () => import('../Modulos/inventarioAreaAI/pages/IndexPage')
       },
+      // Auditoría P2: búsqueda global de expedientes (no exige saber área ni año).
+      {
+        path: '/buscar',
+        name: 'buscar',
+        meta: { siglas: 'AI-BUSQUEDA' },
+        component: () => import('../Modulos/busqueda/pages/IndexPage.vue')
+      },
       // Auditoría FUNC-001: la bitácora se registraba y no era consultable desde el cliente.
       // Acepta ?entidadTipo= y ?entidadId= para enlazar directo al rastro de una entidad concreta.
       {
