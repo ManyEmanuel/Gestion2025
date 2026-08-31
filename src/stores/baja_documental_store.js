@@ -250,6 +250,22 @@ export const useBajaDocumentalStore = defineStore('BajaDocumental', {
     // Enviada->Afectada. Un solo botón "Afectar" hace enviar y luego afectar. Si enviar falla por una
     // razón real (p.ej. sin expedientes) y afectar también falla, se surface el error de enviar (más
     // específico); si la baja ya estaba enviada, enviar falla silenciosamente y afectar procede.
+    // Auditoría P3: simulación previa. Afectar es irreversible; esto dice qué cambiará y qué lo impide
+    // ANTES de que el usuario decida, en vez de dejarle descubrir el impedimento después de confirmar.
+    // El servidor la resuelve con las MISMAS reglas que aplica la afectación real.
+    async simularAfectacion(id) {
+      try {
+        const resp = await api.get(`/bajasdocumentales/${id}/simulacion-afectacion`)
+        if (resp.status === 200 && resp.data) {
+          return { success: true, data: resp.data }
+        }
+        return { success: false, data: "Respuesta inesperada del servidor." }
+      } catch (e) {
+        console.error(e)
+        return { success: false, data: mensajeError(e) }
+      }
+    },
+
     async afectar(id) {
       let enviarError = null
       try {
